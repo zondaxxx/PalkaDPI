@@ -1,5 +1,5 @@
 <resources>
-    <string name="byedpi_docs">https://github.com/hufrea/byedpi/blob/v0.13/README.md</string>
+    <string name="byedpi_docs">https://github.com/hufrea/byedpi/blob/main/README.md</string>
     <string name="app_name">ByeByeDPI</string>
     <string name="vpn_connect">Подключить</string>
     <string name="vpn_disconnect">Отключить</string>
@@ -22,7 +22,7 @@
     <string name="dbs_ip_setting">DNS</string>
     <string name="bye_dpi_proxy_ip_setting">Адрес прослушивания</string>
     <string name="byedpi_proxy_port_setting">Порт</string>
-    <string name="byedpi_max_connections_setting">Максимальное количество подключений</string>
+    <string name="byedpi_max_connections_setting">Максимальное к-во подключений</string>
     <string name="byedpi_buffer_size_setting">Размер буфера</string>
     <string name="byedpi_default_ttl_setting">TTL по умолчанию</string>
     <string name="byedpi_no_domain_setting">Без домена</string>
