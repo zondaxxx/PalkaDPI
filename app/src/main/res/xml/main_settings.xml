@@ -60,6 +60,16 @@
             android:title="@string/autoconnect_settings"
             android:defaultValue="false" />
 
+        <Preference
+            android:key="proxy_test"
+            android:title="@string/title_test"
+            android:summary="@string/summary_test">
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:targetPackage="io.github.dovecoteescapee.byedpi"
+                android:targetClass="io.github.dovecoteescapee.byedpi.activities.TestActivity" />
+        </Preference>
+
     </androidx.preference.PreferenceCategory>
 
     <androidx.preference.PreferenceCategory

@@ -90,4 +90,6 @@
     <string name="cmd_history_unpin">Открепить</string>
     <string name="cmd_history_pinned">Закреплено</string>
     <string name="cmd_history_delete">Удалить</string>
+    <string name="title_test">Тестирование команд</string>
+    <string name="summary_test">Автоматический подбор подходящих наборов команд</string>
 </resources>
