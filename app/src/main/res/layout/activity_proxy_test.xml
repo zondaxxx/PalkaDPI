@@ -10,7 +10,7 @@
         android:id="@+id/startStopButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Старт" />
+        android:text="@string/test_start" />
 
     <TextView
         android:id="@+id/progressTextView"

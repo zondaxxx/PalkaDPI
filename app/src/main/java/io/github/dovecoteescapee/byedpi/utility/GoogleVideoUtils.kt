@@ -8,7 +8,7 @@ import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 
-class GoogleVideoDomainGenerator {
+class GoogleVideoUtils {
 
     companion object {
         private val lettersListA = listOf(
@@ -92,8 +92,8 @@ class GoogleVideoDomainGenerator {
             val url = URL(urlStr)
             connection = url.openConnection() as HttpURLConnection
             connection.requestMethod = "GET"
-            connection.connectTimeout = 5000
-            connection.readTimeout = 5000
+            connection.connectTimeout = 2000
+            connection.readTimeout = 2000
 
             val responseCode = connection.responseCode
             if (responseCode == HttpURLConnection.HTTP_OK) {

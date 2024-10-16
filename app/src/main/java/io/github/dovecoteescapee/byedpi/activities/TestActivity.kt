@@ -14,10 +14,12 @@ import io.github.dovecoteescapee.byedpi.core.ByeDpiProxy
 import io.github.dovecoteescapee.byedpi.core.ByeDpiProxyCmdPreferences
 import io.github.dovecoteescapee.byedpi.core.ByeDpiProxyPreferences
 import io.github.dovecoteescapee.byedpi.core.ByeDpiProxyUIPreferences
-import io.github.dovecoteescapee.byedpi.utility.GoogleVideoDomainGenerator
+import io.github.dovecoteescapee.byedpi.utility.GoogleVideoUtils
 import io.github.dovecoteescapee.byedpi.utility.getPreferences
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -55,7 +57,7 @@ class TestActivity : AppCompatActivity() {
         sites = loadSitesFromFile().toMutableList()
         cmds = loadCmdsFromFile()
 
-        val domainGenerator = GoogleVideoDomainGenerator()
+        val domainGenerator = GoogleVideoUtils()
         lifecycleScope.launch {
             val autoGCS = domainGenerator.generateGoogleVideoDomain()
             if (autoGCS != null) {
@@ -104,8 +106,110 @@ class TestActivity : AppCompatActivity() {
         editor.apply()
     }
 
+    private fun enableCmdInPreferences() {
+        val sharedPreferences = getPreferences()
+        val editor = sharedPreferences.edit()
+        editor.putBoolean("byedpi_enable_cmd_settings", true)
+        editor.apply()
+    }
+
     private fun getByeDpiPreferences(): ByeDpiProxyPreferences =
         ByeDpiProxyPreferences.fromSharedPreferences(getPreferences())
+
+    private fun loadSitesFromFile(): List<String> {
+        val inputStream = assets.open("sites.txt")
+        return inputStream.bufferedReader().useLines { it.toList() }
+    }
+
+    private fun loadCmdsFromFile(): List<String> {
+        val inputStream = assets.open("cmds.txt")
+        return inputStream.bufferedReader().useLines { it.toList() }
+    }
+
+    private fun startTesting() {
+        isTesting = true
+        startStopButton.text = getString(R.string.test_stop)
+        resultsTextView.text = ""
+        progressTextView.text = ""
+
+        enableCmdInPreferences()
+
+        testJob = lifecycleScope.launch {
+            val successfulCmds = mutableListOf<String>()
+            var cmdIndex = 0
+
+            for (cmd in cmds) {
+                cmdIndex++
+                progressTextView.text = "${getString(R.string.test_process)} $cmdIndex/${cmds.size}"
+
+                appendTextToResults("$cmd:\n")
+
+                startProxyWithCmd(cmd)
+
+                val proxyStarted = waitForProxyToStart()
+                if (!proxyStarted) {
+                    appendTextToResults(getString(R.string.test_proxy_error))
+                    stopTesting()
+                }
+
+                val checkResults = sites.map { site ->
+                    async {
+                        val isAccessible = checkSiteAccessibility(site)
+                        if (isAccessible) {
+                            appendTextToResults("$site - ok\n")
+                        } else {
+                            appendTextToResults("$site - error\n")
+                        }
+                        isAccessible
+                    }
+                }
+
+                val results = checkResults.awaitAll()
+
+                val successfulCount = results.count { it }
+                val successPercentage = (successfulCount * 100) / sites.size
+                if (successPercentage >= 50) {
+                    successfulCmds.add(cmd)
+                }
+
+                appendTextToResults("$successfulCount/${cmds.size}\n\n")
+                stopProxy()
+            }
+
+            progressTextView.text = getString(R.string.test_complete)
+            appendTextToResults("${getString(R.string.test_good_cmds)}\n")
+            appendTextToResults("${successfulCmds.joinToString("\n\n")}\n\n")
+            appendTextToResults("${getString(R.string.test_complete_info)}")
+            stopTesting()
+        }
+    }
+
+    private fun stopTesting() {
+        isTesting = false
+        startStopButton.text = getString(R.string.test_start)
+
+        if (::testJob.isInitialized && testJob.isActive) {
+            testJob.cancel()
+        }
+
+        lifecycleScope.launch {
+            stopProxy()
+        }
+
+        originalCmdArgs?.let {
+            updateCmdInPreferences(it)
+        }
+    }
+
+    private fun appendTextToResults(text: String) {
+        val scrollView = findViewById<ScrollView>(R.id.scrollView)
+
+        resultsTextView.append(text)
+
+        scrollView.post {
+            scrollView.fullScroll(ScrollView.FOCUS_DOWN)
+        }
+    }
 
     private suspend fun checkSiteAccessibility(site: String): Boolean {
         return withContext(Dispatchers.IO) {
@@ -130,98 +234,6 @@ class TestActivity : AppCompatActivity() {
                 Log.e("CheckSite", "Error $site: proxy", e)
                 false
             }
-        }
-    }
-
-    private fun loadSitesFromFile(): List<String> {
-        val inputStream = assets.open("sites.txt")
-        return inputStream.bufferedReader().useLines { it.toList() }
-    }
-
-    private fun loadCmdsFromFile(): List<String> {
-        val inputStream = assets.open("cmds.txt")
-        return inputStream.bufferedReader().useLines { it.toList() }
-    }
-
-    private fun appendTextToResults(text: String) {
-        val scrollView = findViewById<ScrollView>(R.id.scrollView)
-
-        resultsTextView.append(text)
-
-        scrollView.post {
-            scrollView.fullScroll(ScrollView.FOCUS_DOWN)
-        }
-    }
-
-    private fun startTesting() {
-        isTesting = true
-        startStopButton.text = "Стоп"
-        resultsTextView.text = ""
-        progressTextView.text = ""
-
-        testJob = lifecycleScope.launch {
-            val successfulCmds = mutableListOf<String>()
-            var cmdIndex = 0
-
-            for (cmd in cmds) {
-                cmdIndex++
-                progressTextView.text = "Проверка $cmdIndex из ${cmds.size}"
-
-                val successfulSites = mutableListOf<String>()
-
-                appendTextToResults("$cmd:\n")
-
-                startProxyWithCmd(cmd)
-
-                val proxyStarted = waitForProxyToStart()
-                if (!proxyStarted) {
-                    appendTextToResults("Не удалось запустить прокси\n\n")
-                    stopProxy()
-                    continue
-                }
-
-                for (site in sites) {
-                    val isAccessible = checkSiteAccessibility(site)
-                    if (isAccessible) {
-                        successfulSites.add(site)
-                        appendTextToResults("$site - доступен\n")
-                    } else {
-                        appendTextToResults("$site - недоступен\n")
-                    }
-                }
-
-                val successPercentage = (successfulSites.size * 100) / sites.size
-                val logMessage = if (successPercentage >= 50) {
-                    successfulCmds.add("$cmd ($successPercentage%)")
-                    "Успех: $successPercentage%"
-                } else {
-                    "Провал: $successPercentage%"
-                }
-
-                appendTextToResults("$logMessage\n\n")
-                stopProxy()
-            }
-
-            progressTextView.text = "Проверка завершена"
-            appendTextToResults("Успешные команды:\n\n${successfulCmds.joinToString("\n\n")}")
-            stopTesting()
-        }
-    }
-
-    private fun stopTesting() {
-        isTesting = false
-        startStopButton.text = "Старт"
-
-        if (::testJob.isInitialized && testJob.isActive) {
-            testJob.cancel()
-        }
-
-        lifecycleScope.launch {
-            stopProxy()
-        }
-
-        originalCmdArgs?.let {
-            updateCmdInPreferences(it)
         }
     }
 
