@@ -11,9 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import io.github.dovecoteescapee.byedpi.R
 import io.github.dovecoteescapee.byedpi.core.ByeDpiProxy
-import io.github.dovecoteescapee.byedpi.core.ByeDpiProxyCmdPreferences
 import io.github.dovecoteescapee.byedpi.core.ByeDpiProxyPreferences
-import io.github.dovecoteescapee.byedpi.core.ByeDpiProxyUIPreferences
 import io.github.dovecoteescapee.byedpi.utility.GoogleVideoUtils
 import io.github.dovecoteescapee.byedpi.utility.getPreferences
 import kotlinx.coroutines.Dispatchers
@@ -44,7 +42,7 @@ class TestActivity : AppCompatActivity() {
     private val proxy = ByeDpiProxy()
     private var proxyJob: Job? = null
     private var proxyIp: String = "127.0.0.1"
-    private var proxyPort: Int = 1080
+    private var proxyPort: Int = 1081
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -144,12 +142,12 @@ class TestActivity : AppCompatActivity() {
 
                 appendTextToResults("$cmd:\n")
 
-                startProxyWithCmd(cmd)
-
-                val proxyStarted = waitForProxyToStart()
-                if (!proxyStarted) {
+                try {
+                    startProxyWithCmd("--ip $proxyIp --port $proxyPort $cmd")
+                } catch (e: Exception) {
                     appendTextToResults(getString(R.string.test_proxy_error))
                     stopTesting()
+                    break
                 }
 
                 val checkResults = sites.map { site ->
@@ -193,7 +191,9 @@ class TestActivity : AppCompatActivity() {
         }
 
         lifecycleScope.launch {
-            stopProxy()
+            if (isProxyRunning()) {
+                stopProxy()
+            }
         }
 
         originalCmdArgs?.let {
@@ -237,51 +237,57 @@ class TestActivity : AppCompatActivity() {
         }
     }
 
-    private fun startProxyWithCmd(cmd: String) {
-        updateCmdInPreferences(cmd)
+    private suspend fun startProxyWithCmd(cmd: String) {
         Log.i("TestDPI", "Starting test proxy with cmd: $cmd")
+        updateCmdInPreferences(cmd)
         val preferences = getByeDpiPreferences()
+
+        if (isProxyRunning()) {
+            Log.i("TestDPI", "Previous proxy is running, stopping")
+            stopProxy()
+        }
 
         proxyJob = lifecycleScope.launch(Dispatchers.IO) {
             try {
-                val code = proxy.startProxy(preferences)
-
-                when (preferences) {
-                    is ByeDpiProxyUIPreferences -> {
-                        proxyIp = preferences.ip
-                        proxyPort = preferences.port
-                    }
-                    is ByeDpiProxyCmdPreferences -> {
-                        proxyIp = "127.0.0.1"
-                        proxyPort = 1080
-                    }
-                }
-
-                Log.i("TestDPI", "Proxy stopped with code: $code")
+                proxy.startProxy(preferences)
             } catch (e: Exception) {
                 Log.e("TestDPI", "Error starting proxy", e)
             }
         }
+
+        waitForProxyToStart()
     }
 
     private suspend fun stopProxy() {
         Log.i("TestDPI", "Stopping test proxy")
+        proxyJob = null
+
         try {
-            withContext(Dispatchers.IO) {
-                proxy.stopProxy()
-            }
-            proxyJob = null
-            Log.i("TestDPI", "Proxy stopped")
+            proxy.stopProxy()
         } catch (e: Exception) {
             Log.e("TestDPI", "Error stopping proxy", e)
-            proxyJob = null
         }
+
+        waitForProxyToStop()
     }
 
     private suspend fun waitForProxyToStart(timeout: Long = 5000): Boolean {
         val startTime = System.currentTimeMillis()
         while (System.currentTimeMillis() - startTime < timeout) {
             if (isProxyRunning()) {
+                Log.i("TestDPI", "Proxy started")
+                return true
+            }
+            delay(100)
+        }
+        return false
+    }
+
+    private suspend fun waitForProxyToStop(timeout: Long = 5000): Boolean {
+        val startTime = System.currentTimeMillis()
+        while (System.currentTimeMillis() - startTime < timeout) {
+            if (!isProxyRunning()) {
+                Log.i("TestDPI", "Proxy stopped")
                 return true
             }
             delay(100)

@@ -27,11 +27,14 @@ class ByeDpiProxy {
                 throw IllegalStateException("Proxy is not running")
             }
 
-            val result = jniStopProxy(fd)
-            if (result == 0) {
+            try {
+                val result = jniStopProxy(fd)
+                return result
+            } catch (e: Exception) {
+                return -1
+            } finally {
                 fd = -1
             }
-            return result
         }
     }
 
