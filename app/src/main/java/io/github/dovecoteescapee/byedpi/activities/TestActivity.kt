@@ -21,6 +21,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.net.HttpURLConnection
 import java.net.InetSocketAddress
 import java.net.Proxy
@@ -55,9 +56,19 @@ class TestActivity : AppCompatActivity() {
         sites = loadSitesFromFile().toMutableList()
         cmds = loadCmdsFromFile()
 
-        val domainGenerator = GoogleVideoUtils()
         lifecycleScope.launch {
+            val previousLogs = loadLogFromFile()
+
+            if (previousLogs.isNotEmpty()) {
+                progressTextView.text = getString(R.string.test_complete)
+                resultsTextView.text = previousLogs
+            }
+        }
+
+        lifecycleScope.launch {
+            val domainGenerator = GoogleVideoUtils()
             val autoGCS = domainGenerator.generateGoogleVideoDomain()
+
             if (autoGCS != null) {
                 (sites as MutableList<String>).add(autoGCS)
                 Log.i("TestActivity", "Added auto-generated Google domain: $autoGCS")
@@ -130,17 +141,19 @@ class TestActivity : AppCompatActivity() {
         resultsTextView.text = ""
         progressTextView.text = ""
 
+        clearLogFile()
         enableCmdInPreferences()
 
         testJob = lifecycleScope.launch {
-            val successfulCmds = mutableListOf<String>()
+            val successfulCmds = mutableListOf<Pair<String, Int>>()
             var cmdIndex = 0
 
             for (cmd in cmds) {
                 cmdIndex++
                 progressTextView.text = "${getString(R.string.test_process)} $cmdIndex/${cmds.size}"
 
-                appendTextToResults("$cmd:\n")
+                appendTextToResults("$cmd\n")
+                appendTextToResults("... ")
 
                 try {
                     startProxyWithCmd("--ip $proxyIp --port $proxyPort $cmd")
@@ -153,11 +166,6 @@ class TestActivity : AppCompatActivity() {
                 val checkResults = sites.map { site ->
                     async {
                         val isAccessible = checkSiteAccessibility(site)
-                        if (isAccessible) {
-                            appendTextToResults("$site - ok\n")
-                        } else {
-                            appendTextToResults("$site - error\n")
-                        }
                         isAccessible
                     }
                 }
@@ -166,17 +174,24 @@ class TestActivity : AppCompatActivity() {
 
                 val successfulCount = results.count { it }
                 val successPercentage = (successfulCount * 100) / sites.size
+
                 if (successPercentage >= 50) {
-                    successfulCmds.add(cmd)
+                    successfulCmds.add(cmd to successPercentage)
                 }
 
-                appendTextToResults("$successfulCount/${cmds.size}\n\n")
+                appendTextToResults("$successfulCount/${sites.size} ($successPercentage%)\n\n")
                 stopProxy()
             }
 
+            successfulCmds.sortByDescending { it.second }
+
             progressTextView.text = getString(R.string.test_complete)
-            appendTextToResults("${getString(R.string.test_good_cmds)}\n")
-            appendTextToResults("${successfulCmds.joinToString("\n\n")}\n\n")
+            appendTextToResults("${getString(R.string.test_good_cmds)}\n\n")
+
+            for ((cmd, success) in successfulCmds) {
+                appendTextToResults("$cmd\n$success%\n\n")
+            }
+
             appendTextToResults("${getString(R.string.test_complete_info)}")
             stopTesting()
         }
@@ -205,6 +220,7 @@ class TestActivity : AppCompatActivity() {
         val scrollView = findViewById<ScrollView>(R.id.scrollView)
 
         resultsTextView.append(text)
+        saveLogToFile(text)
 
         scrollView.post {
             scrollView.fullScroll(ScrollView.FOCUS_DOWN)
@@ -306,6 +322,25 @@ class TestActivity : AppCompatActivity() {
                 false
             }
         }
+    }
+
+    private fun saveLogToFile(log: String) {
+        val file = File(filesDir, "proxy_test.log")
+        file.appendText(log)
+    }
+
+    private fun loadLogFromFile(): String {
+        val file = File(filesDir, "proxy_test.log")
+        return if (file.exists()) {
+            file.readText()
+        } else {
+            ""
+        }
+    }
+
+    private fun clearLogFile() {
+        val file = File(filesDir, "proxy_test.log")
+        file.writeText("")
     }
 }
 
