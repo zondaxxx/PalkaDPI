@@ -82,16 +82,29 @@
             app:useSimpleSummaryProvider="true"
             app:fragment="io.github.dovecoteescapee.byedpi.fragments.ByeDpiCommandLineSettingsFragment" />
 
+        <Preference
+            android:key="proxy_test"
+            android:title="@string/title_test"
+            android:summary="@string/summary_test">
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:targetPackage="io.github.dovecoteescapee.byedpi"
+                android:targetClass="io.github.dovecoteescapee.byedpi.activities.TestActivity" />
+        </Preference>
+
     </androidx.preference.PreferenceCategory>
 
     <androidx.preference.PreferenceCategory
         android:title="@string/about_category">
 
         <Preference
-            android:key="version"
-            android:title="@string/version"
-            app:useSimpleSummaryProvider="true"
-            tools:summary="1.0.0" />
+            android:key="telegram_group"
+            android:title="@string/telegram_link"
+            android:icon="@drawable/ic_telegram">
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:data="https://t.me/byebyedpi_group" />
+        </Preference>
 
         <Preference
             android:key="source_code"
@@ -101,6 +114,12 @@
                 android:action="android.intent.action.VIEW"
                 android:data="https://github.com/romanvht/ByeDPIAndroid" />
         </Preference>
+
+        <Preference
+            android:key="version"
+            android:title="@string/version"
+            app:useSimpleSummaryProvider="true"
+            tools:summary="1.0.0" />
 
     </androidx.preference.PreferenceCategory>
 

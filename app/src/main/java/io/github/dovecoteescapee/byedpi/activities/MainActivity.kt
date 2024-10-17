@@ -160,9 +160,7 @@ class MainActivity : AppCompatActivity() {
             requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
         }
 
-        val autoConnect = getPreferences().getBoolean("auto_connect", false)
-
-        if(autoConnect) {
+        if (getPreferences().getBoolean("auto_connect", false) && appStatus.first != AppStatus.Running) {
             this.start()
         }
     }

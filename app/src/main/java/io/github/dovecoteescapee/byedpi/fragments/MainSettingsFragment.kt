@@ -55,12 +55,15 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
         val switchCommandLineSettings = findPreferenceNotNull<SwitchPreference>(
             "byedpi_enable_cmd_settings"
         )
+
         val uiSettings = findPreferenceNotNull<Preference>("byedpi_ui_settings")
         val cmdSettings = findPreferenceNotNull<Preference>("byedpi_cmd_settings")
+        val proxyTest = findPreferenceNotNull<Preference>("proxy_test")
 
         val setByeDpiSettingsMode = { enable: Boolean ->
             uiSettings.isEnabled = !enable
             cmdSettings.isEnabled = enable
+            proxyTest.isEnabled = enable
         }
 
         setByeDpiSettingsMode(switchCommandLineSettings.isChecked)
