@@ -52,12 +52,7 @@
         <activity
             android:name=".activities.TestSettingsActivity"
             android:label="@string/title_settings"
-            android:launchMode="singleTop"
-            android:parentActivityName=".activities.TestActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".activities.TestActivity" />
-        </activity>
+            android:exported="false"/>
 
         <service android:name=".services.ByeDpiVpnService"
             android:permission="android.permission.BIND_VPN_SERVICE"
