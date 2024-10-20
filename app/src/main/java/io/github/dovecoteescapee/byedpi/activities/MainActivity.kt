@@ -16,7 +16,9 @@ import android.view.MenuItem
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
+import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.lifecycleScope
 import io.github.dovecoteescapee.byedpi.R
 import io.github.dovecoteescapee.byedpi.data.*
@@ -147,8 +149,10 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        val theme = getPreferences()
-            .getString("app_theme", null)
+        val lang = getPreferences().getString("language", "system")
+        MainSettingsFragment.setLang(lang ?: "system")
+
+        val theme = getPreferences().getString("app_theme", null)
         MainSettingsFragment.setTheme(theme ?: "system")
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
@@ -160,9 +164,7 @@ class MainActivity : AppCompatActivity() {
             requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
         }
 
-        val autoConnect = getPreferences().getBoolean("auto_connect", false)
-
-        if(autoConnect) {
+        if (getPreferences().getBoolean("auto_connect", false) && appStatus.first != AppStatus.Running) {
             this.start()
         }
     }

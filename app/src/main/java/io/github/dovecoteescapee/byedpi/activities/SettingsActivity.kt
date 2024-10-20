@@ -34,7 +34,13 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         R.id.action_reset_settings -> {
-            getPreferences().edit().clear().apply()
+            val prefs = getPreferences()
+            val currentLanguage = prefs.getString("language", "system")
+            val editor = prefs.edit()
+
+            editor.clear()
+            editor.putString("language", currentLanguage)
+            editor.apply()
 
             supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
             supportFragmentManager
