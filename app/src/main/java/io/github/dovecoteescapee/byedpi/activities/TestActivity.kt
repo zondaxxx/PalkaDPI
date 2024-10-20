@@ -35,12 +35,11 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import java.io.File
+import java.net.HttpURLConnection
 import java.net.InetSocketAddress
 import java.net.Proxy
-import java.util.concurrent.TimeUnit
+import java.net.URL
 
 class TestActivity : AppCompatActivity() {
     private lateinit var sites: List<String>
@@ -56,7 +55,6 @@ class TestActivity : AppCompatActivity() {
     private var testJob: Job? = null
     private var proxyIp: String = "127.0.0.1"
     private var proxyPort: Int = 10080
-    private val httpClient = createHttpClient()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -325,20 +323,11 @@ class TestActivity : AppCompatActivity() {
         clipboard.setPrimaryClip(clip)
     }
 
-    private fun createHttpClient(): OkHttpClient {
-        val proxy = Proxy(Proxy.Type.SOCKS, InetSocketAddress(proxyIp, proxyPort))
-
-        return OkHttpClient.Builder()
-            .proxy(proxy)
-            .connectTimeout(2, TimeUnit.SECONDS)
-            .readTimeout(2, TimeUnit.SECONDS)
-            .writeTimeout(2, TimeUnit.SECONDS)
-            .build()
-    }
-
     private suspend fun checkSitesAsync(sites: List<String>, fullLog: Boolean): List<Pair<String, Boolean>> {
         return sites.map { site ->
             lifecycleScope.async {
+                if (!isProxyRunning()) Pair(site, false)
+
                 val result = checkSiteAccessibility(site)
 
                 if (fullLog) {
@@ -351,27 +340,42 @@ class TestActivity : AppCompatActivity() {
         }.awaitAll()
     }
 
-    private suspend fun checkSiteAccessibility(site: String): Boolean {
-        return withContext(Dispatchers.IO) {
-            val formattedUrl = if (!site.startsWith("http://") && !site.startsWith("https://")) {
-                "https://$site"
-            } else {
-                site
-            }
+    private suspend fun checkSiteAccessibility(site: String): Boolean = withContext(Dispatchers.IO) {
+        val formattedUrl = if (!site.startsWith("http://") && !site.startsWith("https://")) {
+            "https://$site"
+        } else {
+            site
+        }
 
-            try {
-                val request = Request.Builder().url(formattedUrl).build()
-                val response = httpClient.newCall(request).execute()
-                val code = response.code
-                response.close()
-                Log.i("CheckSite", "Good response $site ($code)")
-                true
-            } catch (e: Exception) {
-                Log.e("CheckSite", "Error response $site")
+        try {
+            val url = URL(formattedUrl)
+            val proxy = Proxy(Proxy.Type.SOCKS, InetSocketAddress(proxyIp, proxyPort))
+            val connection = url.openConnection(proxy) as? HttpURLConnection
+            if (connection != null) {
+                connection.apply {
+                    requestMethod = "GET"
+                    connectTimeout = 2000
+                    readTimeout = 2000
+                    instanceFollowRedirects = false
+                    connect()
+                }
+
+                val responseCode = connection.responseCode
+                val contentLength = connection.contentLength
+
+                connection.disconnect()
+
+                Log.i("CheckSite", "Good response $site ($responseCode)")
+                contentLength > 0
+            } else {
                 false
             }
+        } catch (e: Exception) {
+            Log.e("CheckSite", "Error accessing $site: ${e.message}")
+            false
         }
     }
+
 
     private fun loadSites(): List<String> {
         val userDomains = getPreferences().getBoolean("byedpi_proxytest_userdomains", false)
