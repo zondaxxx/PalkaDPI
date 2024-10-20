@@ -2,21 +2,40 @@ package io.github.dovecoteescapee.byedpi.fragments
 
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.res.Configuration
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.preference.*
 import io.github.dovecoteescapee.byedpi.BuildConfig
 import io.github.dovecoteescapee.byedpi.R
+import io.github.dovecoteescapee.byedpi.activities.TestActivity
 import io.github.dovecoteescapee.byedpi.data.Mode
 import io.github.dovecoteescapee.byedpi.utility.AccessibilityUtils
 import io.github.dovecoteescapee.byedpi.services.AutoStartAccessibilityService
 import io.github.dovecoteescapee.byedpi.utility.*
+import java.util.Locale
 
 class MainSettingsFragment : PreferenceFragmentCompat() {
     companion object {
         private val TAG: String = MainSettingsFragment::class.java.simpleName
+
+        fun setLang(lang: String) {
+            val appLocale = localeByName(lang) ?: throw IllegalStateException("Invalid value for language: $lang")
+            AppCompatDelegate.setApplicationLocales(appLocale)
+        }
+
+        private fun localeByName(lang: String): LocaleListCompat? = when (lang) {
+            "system" -> LocaleListCompat.getEmptyLocaleList()
+            "ru" -> LocaleListCompat.forLanguageTags("ru")
+            "en" -> LocaleListCompat.forLanguageTags("en")
+            else -> {
+                Log.w(TAG, "Invalid value for language: $lang")
+                null
+            }
+        }
 
         fun setTheme(name: String) =
             themeByName(name)?.let {
@@ -46,15 +65,20 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
             it.isBlank() || checkNotLocalIp(it)
         }
 
+        findPreferenceNotNull<ListPreference>("language")
+            .setOnPreferenceChangeListener { _, newValue ->
+                setLang(newValue as String)
+                true
+            }
+
         findPreferenceNotNull<ListPreference>("app_theme")
             .setOnPreferenceChangeListener { _, newValue ->
                 setTheme(newValue as String)
                 true
             }
 
-        val switchCommandLineSettings = findPreferenceNotNull<SwitchPreference>(
-            "byedpi_enable_cmd_settings"
-        )
+        val accessibilityStatusPref = findPreferenceNotNull<Preference>("accessibility_service_status")
+        val switchCommandLineSettings = findPreferenceNotNull<SwitchPreference>("byedpi_enable_cmd_settings")
 
         val uiSettings = findPreferenceNotNull<Preference>("byedpi_ui_settings")
         val cmdSettings = findPreferenceNotNull<Preference>("byedpi_cmd_settings")
@@ -73,23 +97,20 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
             true
         }
 
-        findPreferenceNotNull<Preference>("version").summary = BuildConfig.VERSION_NAME
-
-        val accessibilityStatusPref = findPreference<Preference>("accessibility_service_status")
-        accessibilityStatusPref?.setOnPreferenceClickListener {
+        accessibilityStatusPref.setOnPreferenceClickListener {
             val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
             startActivity(intent)
             true
         }
 
-        val selectedApps = findPreference<Preference>("selected_apps")
-        selectedApps?.setOnPreferenceClickListener {
-            parentFragmentManager.beginTransaction()
-                .replace(R.id.settings, AppSelectionFragment())
-                .addToBackStack(null)
-                .commit()
-            true
-        }
+        findPreferenceNotNull<Preference>("proxy_test")
+            .setOnPreferenceClickListener {
+                val intent = Intent(context, TestActivity::class.java)
+                startActivity(intent)
+                true
+            }
+
+        findPreferenceNotNull<Preference>("version").summary = BuildConfig.VERSION_NAME
 
         updateAccessibilityStatus(accessibilityStatusPref)
         updatePreferences()

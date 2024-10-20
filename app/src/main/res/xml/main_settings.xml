@@ -8,6 +8,14 @@
         android:title="@string/general_category">
 
         <ListPreference
+            android:key="language"
+            android:title="@string/lang_settings"
+            android:entries="@array/languages"
+            android:entryValues="@array/languages_entries"
+            android:summary="%s"
+            android:defaultValue="system" />
+
+        <ListPreference
             android:key="app_theme"
             android:title="@string/theme_settings"
             android:entries="@array/themes"
@@ -26,7 +34,7 @@
         <com.takisoft.preferencex.EditTextPreference
             android:key="dns_ip"
             android:title="@string/dbs_ip_setting"
-            android:defaultValue="1.1.1.1"
+            android:defaultValue="8.8.8.8"
             app:useSimpleSummaryProvider="true" />
 
         <SwitchPreference
@@ -44,7 +52,8 @@
 
         <Preference
             android:key="selected_apps"
-            android:title="@string/apps_select" />
+            android:title="@string/apps_select"
+            app:fragment="io.github.dovecoteescapee.byedpi.fragments.AppSelectionFragment" />
 
     </androidx.preference.PreferenceCategory>
 
@@ -85,12 +94,7 @@
         <Preference
             android:key="proxy_test"
             android:title="@string/title_test"
-            android:summary="@string/summary_test">
-            <intent
-                android:action="android.intent.action.VIEW"
-                android:targetPackage="io.github.dovecoteescapee.byedpi"
-                android:targetClass="io.github.dovecoteescapee.byedpi.activities.TestActivity" />
-        </Preference>
+            android:summary="@string/summary_test"/>
 
     </androidx.preference.PreferenceCategory>
 

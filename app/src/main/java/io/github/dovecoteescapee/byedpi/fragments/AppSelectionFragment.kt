@@ -66,6 +66,7 @@ class AppSelectionFragment : Fragment() {
             }
             recyclerView.adapter = adapter
             progressBar.visibility = View.GONE
+            searchView.visibility = View.VISIBLE
         }
     }
 
