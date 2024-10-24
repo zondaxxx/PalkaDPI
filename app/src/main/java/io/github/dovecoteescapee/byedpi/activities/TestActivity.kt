@@ -1,9 +1,12 @@
 package io.github.dovecoteescapee.byedpi.activities
 
+import android.annotation.SuppressLint
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.os.Bundle
 import android.text.SpannableString
 import android.text.Spanned
@@ -13,6 +16,7 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.WindowManager
 import android.widget.Button
 import android.widget.ScrollView
 import android.widget.TextView
@@ -94,6 +98,14 @@ class TestActivity : AppCompatActivity() {
                 finish()
             }
         })
+
+        @SuppressLint("SwitchIntDef", "SourceLockedOrientationActivity")
+        when (resources.configuration.orientation) {
+            Configuration.ORIENTATION_LANDSCAPE -> requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+            Configuration.ORIENTATION_PORTRAIT -> requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        }
+
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
     }
@@ -180,6 +192,7 @@ class TestActivity : AppCompatActivity() {
         clearLog()
 
         val successfulCmds = mutableListOf<Pair<String, Int>>()
+        val delay = getPreferences().getString("byedpi_proxytest_delay", "1")?.toIntOrNull() ?: 1
         val gdomain = getPreferences().getBoolean("byedpi_proxytest_gdomain", true)
         val fullLog = getPreferences().getBoolean("byedpi_proxytest_fulllog", false)
         val logClickable = getPreferences().getBoolean("byedpi_proxytest_logclickable", false)
@@ -227,6 +240,7 @@ class TestActivity : AppCompatActivity() {
 
                 appendTextToResults("$successfulCount/${sites.size} ($successPercentage%)\n\n")
 
+                delay(delay * 1000L)
                 stopProxyService()
                 waitForProxyToStop()
             }

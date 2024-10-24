@@ -115,5 +115,5 @@
     <string name="test_settings_domains">Domain list</string>
     <string name="test_settings_usercommands">Use custom command lists</string>
     <string name="test_settings_commands">Command list</string>
-
+    <string name="test_delay">Delay between commands\nin seconds</string>
 </resources>

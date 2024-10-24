@@ -27,6 +27,7 @@
 -n www.google.com -q 1+s -O 1 -s 29+s -t 5
 -n www.google.com -q 2+s -O 1 -s 25+s -t 5
 -n www.google.com -q 2+s -O 1 -s 29+s -t 5
+-s1 -q1 -Y -At -T5 -b1000 -S -f-1 -r1+s -As
 --split 2 --disoob 3+sni --fake 517 --ttl 5
 --split 1 --disorder 3+sni --fake -1 --ttl 5
 --split 2 --disorder 3+sni --fake -1 --ttl 5
