@@ -13,7 +13,7 @@
         android:key="byedpi_proxytest_requestsсount"
         android:title="@string/test_requestsсount"
         android:inputType="number"
-        android:defaultValue="5"
+        android:defaultValue="1"
         app:useSimpleSummaryProvider="true" />
 
     <SwitchPreference
