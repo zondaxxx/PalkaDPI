@@ -105,7 +105,7 @@ class TestActivity : AppCompatActivity() {
             Configuration.ORIENTATION_PORTRAIT -> requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         }
 
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
     }
@@ -193,6 +193,7 @@ class TestActivity : AppCompatActivity() {
 
         val successfulCmds = mutableListOf<Pair<String, Int>>()
         val delay = getPreferences().getString("byedpi_proxytest_delay", "1")?.toIntOrNull() ?: 1
+        val requestsCount = getPreferences().getString("byedpi_proxytest_requestsсount", "1")?.toIntOrNull() ?.takeIf { it > 0 } ?: 1
         val gdomain = getPreferences().getBoolean("byedpi_proxytest_gdomain", true)
         val fullLog = getPreferences().getBoolean("byedpi_proxytest_fulllog", false)
         val logClickable = getPreferences().getBoolean("byedpi_proxytest_logclickable", false)
@@ -230,8 +231,8 @@ class TestActivity : AppCompatActivity() {
                     appendTextToResults("$cmd\n")
                 }
 
-                val checkResults = checkSitesAsync(sites, fullLog)
-                val successfulCount = checkResults.count { it.second }
+                val checkResults = checkSitesAsync(sites, requestsCount, fullLog)
+                val successfulCount = checkResults.count { it.second > 0 }
                 val successPercentage = (successfulCount * 100) / sites.size
 
                 if (successPercentage >= 50) {
@@ -337,57 +338,61 @@ class TestActivity : AppCompatActivity() {
         clipboard.setPrimaryClip(clip)
     }
 
-    private suspend fun checkSitesAsync(sites: List<String>, fullLog: Boolean): List<Pair<String, Boolean>> {
+    private suspend fun checkSitesAsync(sites: List<String>,requestsCount: Int, fullLog: Boolean): List<Pair<String, Int>> {
         return sites.map { site ->
             lifecycleScope.async {
-                if (!isProxyRunning()) Pair(site, false)
+                if (!isProxyRunning()) return@async Pair(site, 0)
 
-                val result = checkSiteAccessibility(site)
+                val responseCount = checkSiteAccessibility(site, requestsCount)
 
                 if (fullLog) {
-                    val accessibilityStatus = if (result) "ok" else "error"
-                    appendTextToResults("$site - $accessibilityStatus\n")
+                    appendTextToResults("$site - $responseCount\\$requestsCount\n")
                 }
 
-                Pair(site, result)
+                Pair(site, responseCount)
             }
         }.awaitAll()
     }
 
-    private suspend fun checkSiteAccessibility(site: String): Boolean = withContext(Dispatchers.IO) {
+
+    private suspend fun checkSiteAccessibility(site: String, requestsCount: Int): Int = withContext(Dispatchers.IO) {
         val formattedUrl = if (!site.startsWith("http://") && !site.startsWith("https://")) {
             "https://$site"
         } else {
             site
         }
 
-        try {
-            val url = URL(formattedUrl)
-            val proxy = Proxy(Proxy.Type.SOCKS, InetSocketAddress(proxyIp, proxyPort))
-            val connection = url.openConnection(proxy) as? HttpURLConnection
-            if (connection != null) {
-                connection.apply {
-                    requestMethod = "GET"
-                    connectTimeout = 2000
-                    readTimeout = 2000
-                    instanceFollowRedirects = false
-                    connect()
+        var responseCount = 0
+
+        repeat(requestsCount) {
+            try {
+                val url = URL(formattedUrl)
+                val proxy = Proxy(Proxy.Type.SOCKS, InetSocketAddress(proxyIp, proxyPort))
+                val connection = url.openConnection(proxy) as? HttpURLConnection
+
+                if (connection != null) {
+                    connection.apply {
+                        requestMethod = "GET"
+                        connectTimeout = 2000
+                        readTimeout = 2000
+                        instanceFollowRedirects = false
+                        connect()
+                    }
+
+                    val responseCode = connection.responseCode
+                    val contentLength = connection.contentLength
+
+                    connection.disconnect()
+
+                    responseCount++
+
+                    Log.i("CheckSite", "Attempt $responseCount\\$requestsCount for $site - Response code: $responseCode, Content length: $contentLength")
                 }
-
-                val responseCode = connection.responseCode
-                val contentLength = connection.contentLength
-
-                connection.disconnect()
-
-                Log.i("CheckSite", "Good response $site ($responseCode)")
-                contentLength > 0
-            } else {
-                false
+            } catch (e: Exception) {
+                Log.e("CheckSite", "Error accessing $responseCount\\$requestsCount for $site: ${e.message}")
             }
-        } catch (e: Exception) {
-            Log.e("CheckSite", "Error accessing $site: ${e.message}")
-            false
         }
+        responseCount
     }
 
 
