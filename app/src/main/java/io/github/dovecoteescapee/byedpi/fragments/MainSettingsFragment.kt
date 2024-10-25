@@ -2,7 +2,6 @@ package io.github.dovecoteescapee.byedpi.fragments
 
 import android.content.Intent
 import android.content.SharedPreferences
-import android.content.res.Configuration
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
@@ -16,7 +15,6 @@ import io.github.dovecoteescapee.byedpi.data.Mode
 import io.github.dovecoteescapee.byedpi.utility.AccessibilityUtils
 import io.github.dovecoteescapee.byedpi.services.AutoStartAccessibilityService
 import io.github.dovecoteescapee.byedpi.utility.*
-import java.util.Locale
 
 class MainSettingsFragment : PreferenceFragmentCompat() {
     companion object {
@@ -61,6 +59,9 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.main_settings, rootKey)
 
+        setEditTextPreferenceListener("byedpi_proxy_ip") { checkIp(it) }
+        setEditTestPreferenceListenerPort("byedpi_proxy_port")
+
         setEditTextPreferenceListener("dns_ip") {
             it.isBlank() || checkNotLocalIp(it)
         }
@@ -77,7 +78,7 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
                 true
             }
 
-        val accessibilityStatusPref = findPreferenceNotNull<Preference>("accessibility_service_status")
+        val accessibilityStatus = findPreferenceNotNull<Preference>("accessibility_service_status")
         val switchCommandLineSettings = findPreferenceNotNull<SwitchPreference>("byedpi_enable_cmd_settings")
 
         val uiSettings = findPreferenceNotNull<Preference>("byedpi_ui_settings")
@@ -94,10 +95,11 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
 
         switchCommandLineSettings.setOnPreferenceChangeListener { _, newValue ->
             setByeDpiSettingsMode(newValue as Boolean)
+            updatePreferences()
             true
         }
 
-        accessibilityStatusPref.setOnPreferenceClickListener {
+        accessibilityStatus.setOnPreferenceClickListener {
             val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
             startActivity(intent)
             true
@@ -112,13 +114,14 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
 
         findPreferenceNotNull<Preference>("version").summary = BuildConfig.VERSION_NAME
 
-        updateAccessibilityStatus(accessibilityStatusPref)
+        updateAccessibilityStatus()
         updatePreferences()
     }
 
     override fun onResume() {
         super.onResume()
         sharedPreferences?.registerOnSharedPreferenceChangeListener(preferenceListener)
+        updateAccessibilityStatus()
         updatePreferences()
     }
 
@@ -128,35 +131,48 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
     }
 
     private fun updatePreferences() {
-        val mode = findPreferenceNotNull<ListPreference>("byedpi_mode")
-            .value.let { Mode.fromString(it) }
+        val mode = findPreferenceNotNull<ListPreference>("byedpi_mode").value.let { Mode.fromString(it) }
         val dns = findPreferenceNotNull<EditTextPreference>("dns_ip")
         val ipv6 = findPreferenceNotNull<SwitchPreference>("ipv6_enable")
 
-        val applist_type = findPreferenceNotNull<ListPreference>("applist_type")
-        val selected_apps = findPreferenceNotNull<Preference>("selected_apps")
-        val accessibilityStatusPref = findPreferenceNotNull<Preference>("accessibility_service_status")
+        val ip = findPreferenceNotNull<EditTextPreference>("byedpi_proxy_ip")
+        val port = findPreferenceNotNull<EditTextPreference>("byedpi_proxy_port")
 
-        updateAccessibilityStatus(accessibilityStatusPref)
+        val applistType = findPreferenceNotNull<ListPreference>("applist_type")
+        val selectedApps = findPreferenceNotNull<Preference>("selected_apps")
+
+        val cmdEnable = sharedPreferences?.getBoolean("byedpi_enable_cmd_settings", false)
+
+        if (cmdEnable == true) {
+            val cmdArgs = sharedPreferences?.getStringNotNull("byedpi_cmd_args", "")?.split(" ")
+            val ipIndex = cmdArgs?.indexOfFirst { it == "-i" || it == "--ip" }
+            val portIndex = cmdArgs?.indexOfFirst { it == "-p" || it == "--port" }
+            
+            ip.isEnabled = ipIndex == -1
+            port.isEnabled = portIndex == -1
+        } else {
+            ip.isEnabled = true
+            port.isEnabled = true
+        }
 
         when (mode) {
             Mode.VPN -> {
                 dns.isVisible = true
                 ipv6.isVisible = true
 
-                when (applist_type.value) {
+                when (applistType.value) {
                     "disable" -> {
-                        applist_type.isVisible = true
-                        selected_apps.isVisible = false
+                        applistType.isVisible = true
+                        selectedApps.isVisible = false
                     }
                     "blacklist", "whitelist" -> {
-                        applist_type.isVisible = true
-                        selected_apps.isVisible = true
+                        applistType.isVisible = true
+                        selectedApps.isVisible = true
                     }
                     else -> {
-                        applist_type.isVisible = true
-                        selected_apps.isVisible = false
-                        Log.w(TAG, "Unexpected applist_type value: ${applist_type.value}")
+                        applistType.isVisible = true
+                        selectedApps.isVisible = false
+                        Log.w(TAG, "Unexpected applistType value: ${applistType.value}")
                     }
                 }
             }
@@ -164,23 +180,22 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
             Mode.Proxy -> {
                 dns.isVisible = false
                 ipv6.isVisible = false
-                applist_type.isVisible = false
-                selected_apps.isVisible = false
+                applistType.isVisible = false
+                selectedApps.isVisible = false
             }
         }
     }
 
-    private fun updateAccessibilityStatus(preference: Preference?) {
-        preference?.let {
-            val isEnabled = AccessibilityUtils.isAccessibilityServiceEnabled(
-                requireContext(),
-                AutoStartAccessibilityService::class.java
-            )
-            it.summary = if (isEnabled) {
-                getString(R.string.accessibility_service_enabled)
-            } else {
-                getString(R.string.accessibility_service_disabled)
-            }
+    private fun updateAccessibilityStatus() {
+        val accessibilityStatus = findPreferenceNotNull<Preference>("accessibility_service_status")
+        val isEnabled = AccessibilityUtils.isAccessibilityServiceEnabled(
+            requireContext(),
+            AutoStartAccessibilityService::class.java
+        )
+        accessibilityStatus.summary = if (isEnabled) {
+            getString(R.string.accessibility_service_enabled)
+        } else {
+            getString(R.string.accessibility_service_disabled)
         }
     }
 }

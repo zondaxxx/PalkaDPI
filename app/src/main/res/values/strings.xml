@@ -21,7 +21,7 @@
     <string name="theme_settings">Тема</string>
     <string name="mode_setting">Режим</string>
     <string name="dbs_ip_setting">DNS</string>
-    <string name="bye_dpi_proxy_ip_setting">Адрес прослушивания</string>
+    <string name="bye_dpi_proxy_ip_setting">Адрес</string>
     <string name="byedpi_proxy_port_setting">Порт</string>
     <string name="byedpi_max_connections_setting">Максимальное к-во подключений</string>
     <string name="byedpi_buffer_size_setting">Размер буфера</string>
