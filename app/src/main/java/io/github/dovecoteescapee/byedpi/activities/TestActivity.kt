@@ -346,7 +346,7 @@ class TestActivity : AppCompatActivity() {
                 val responseCount = checkSiteAccessibility(site, requestsCount)
 
                 if (fullLog) {
-                    appendTextToResults("$site - $responseCount/$requestsCount\n")
+                    appendTextToResults("$site - $responseCount\\$requestsCount\n")
                 }
 
                 Pair(site, responseCount)
@@ -364,7 +364,7 @@ class TestActivity : AppCompatActivity() {
 
         var responseCount = 0
 
-        repeat(requestsCount) { // Выполняем запросы несколько раз
+        repeat(requestsCount) {
             try {
                 val url = URL(formattedUrl)
                 val proxy = Proxy(Proxy.Type.SOCKS, InetSocketAddress(proxyIp, proxyPort))
@@ -384,15 +384,12 @@ class TestActivity : AppCompatActivity() {
 
                     connection.disconnect()
 
-                    // Считаем запрос успешным, если получили ответ (не учитываем код ответа)
                     responseCount++
 
-                    // Логгирование данных по каждому запросу
                     Log.i("CheckSite", "Attempt $responseCount\\$requestsCount for $site - Response code: $responseCode, Content length: $contentLength")
                 }
             } catch (e: Exception) {
-                // Ошибка подключения или запроса - продолжаем выполнение
-                Log.e("CheckSite", "Error accessing $site: ${e.message}")
+                Log.e("CheckSite", "Error accessing $responseCount\\$requestsCount for $site: ${e.message}")
             }
         }
         responseCount
