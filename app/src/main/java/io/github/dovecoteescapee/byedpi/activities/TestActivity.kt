@@ -193,7 +193,7 @@ class TestActivity : AppCompatActivity() {
 
         val successfulCmds = mutableListOf<Pair<String, Int>>()
         val delay = getPreferences().getString("byedpi_proxytest_delay", "1")?.toIntOrNull() ?: 1
-        val requestsCount = getPreferences().getString("byedpi_proxytest_requestsсount", "1")?.toIntOrNull() ?.takeIf { it > 0 } ?: 1
+        val requestsCount = getPreferences().getString("byedpi_proxytest_requestsсount", "1")?.toIntOrNull() ?: 1
         val gdomain = getPreferences().getBoolean("byedpi_proxytest_gdomain", true)
         val fullLog = getPreferences().getBoolean("byedpi_proxytest_fulllog", false)
         val logClickable = getPreferences().getBoolean("byedpi_proxytest_logclickable", false)
@@ -346,7 +346,7 @@ class TestActivity : AppCompatActivity() {
                 val responseCount = checkSiteAccessibility(site, requestsCount)
 
                 if (fullLog) {
-                    appendTextToResults("$site - $responseCount\\$requestsCount\n")
+                    appendTextToResults("$site - $responseCount/$requestsCount\n")
                 }
 
                 Pair(site, responseCount)
@@ -356,15 +356,17 @@ class TestActivity : AppCompatActivity() {
 
 
     private suspend fun checkSiteAccessibility(site: String, requestsCount: Int): Int = withContext(Dispatchers.IO) {
-        val formattedUrl = if (!site.startsWith("http://") && !site.startsWith("https://")) {
-            "https://$site"
-        } else {
-            site
-        }
-
         var responseCount = 0
+        val formattedUrl =
+            if (!site.startsWith("http://") && !site.startsWith("https://")) {
+                "https://$site"
+            } else {
+                site
+            }
 
         repeat(requestsCount) {
+            Log.i("CheckSite", "Attempt ${responseCount + 1}/$requestsCount for $site")
+
             try {
                 val url = URL(formattedUrl)
                 val proxy = Proxy(Proxy.Type.SOCKS, InetSocketAddress(proxyIp, proxyPort))
@@ -379,19 +381,16 @@ class TestActivity : AppCompatActivity() {
                         connect()
                     }
 
-                    val responseCode = connection.responseCode
-                    val contentLength = connection.contentLength
-
                     connection.disconnect()
 
                     responseCount++
-
-                    Log.i("CheckSite", "Attempt $responseCount\\$requestsCount for $site - Response code: $responseCode, Content length: $contentLength")
+                    Log.i("CheckSite", "Good accessing for $site")
                 }
             } catch (e: Exception) {
-                Log.e("CheckSite", "Error accessing $responseCount\\$requestsCount for $site: ${e.message}")
+                Log.e("CheckSite", "Error accessing for $site")
             }
         }
+
         responseCount
     }
 
