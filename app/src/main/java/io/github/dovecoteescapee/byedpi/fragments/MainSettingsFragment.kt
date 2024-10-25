@@ -119,9 +119,7 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
     override fun onResume() {
         super.onResume()
         sharedPreferences?.registerOnSharedPreferenceChangeListener(preferenceListener)
-
-        val accessibilityStatusPref = findPreference<Preference>("accessibility_service_status")
-        updateAccessibilityStatus(accessibilityStatusPref)
+        updatePreferences()
     }
 
     override fun onPause() {
@@ -137,6 +135,9 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
 
         val applist_type = findPreferenceNotNull<ListPreference>("applist_type")
         val selected_apps = findPreferenceNotNull<Preference>("selected_apps")
+        val accessibilityStatusPref = findPreferenceNotNull<Preference>("accessibility_service_status")
+
+        updateAccessibilityStatus(accessibilityStatusPref)
 
         when (mode) {
             Mode.VPN -> {
