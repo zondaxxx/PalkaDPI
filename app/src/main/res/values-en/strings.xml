@@ -21,6 +21,7 @@
     <string name="theme_settings">Theme</string>
     <string name="mode_setting">Mode</string>
     <string name="dbs_ip_setting">DNS</string>
+    <string name="byedpi_version">ByeDPI</string>
     <string name="bye_dpi_proxy_ip_setting">Address</string>
     <string name="byedpi_proxy_port_setting">Port</string>
     <string name="byedpi_max_connections_setting">Max connections</string>
