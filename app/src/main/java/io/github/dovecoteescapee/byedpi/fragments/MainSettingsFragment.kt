@@ -141,9 +141,7 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
         val applistType = findPreferenceNotNull<ListPreference>("applist_type")
         val selectedApps = findPreferenceNotNull<Preference>("selected_apps")
 
-        val cmdEnable = sharedPreferences?.getBoolean("byedpi_enable_cmd_settings", false)
-
-        if (cmdEnable == true) {
+        if (sharedPreferences?.getBoolean("byedpi_enable_cmd_settings", false) == true) {
             val cmdArgs = sharedPreferences?.getStringNotNull("byedpi_cmd_args", "")?.split(" ")
             val ipIndex = cmdArgs?.indexOfFirst { it == "-i" || it == "--ip" }
             val portIndex = cmdArgs?.indexOfFirst { it == "-p" || it == "--port" }
