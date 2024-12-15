@@ -104,6 +104,11 @@
         \nPlease note that this testing functionality is under development, and the command set is currently limited.
         \nTest results may be helpful for a preliminary assessment of the proxy, but successful completion does not guarantee flawless performance in real-world conditions.
     </string>
+    <string name="test_crash">
+        Did the application crash during testing?
+        \n\nGo to the test settings and increase the waiting time between commands in 3-second increments.
+        \n\nThis could also be caused by modified hosts and/or an active AdAway.
+    </string>
     <string name="test_process">Checking %1$d/%2$d</string>
     <string name="test_proxy_error">Proxy error. Test stopped</string>
     <string name="test_good_cmds">Commands with more than 50% success probability</string>
