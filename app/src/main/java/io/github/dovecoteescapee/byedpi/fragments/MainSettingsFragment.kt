@@ -3,7 +3,6 @@ package io.github.dovecoteescapee.byedpi.fragments
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
-import android.provider.Settings
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
@@ -12,8 +11,6 @@ import io.github.dovecoteescapee.byedpi.BuildConfig
 import io.github.dovecoteescapee.byedpi.R
 import io.github.dovecoteescapee.byedpi.activities.TestActivity
 import io.github.dovecoteescapee.byedpi.data.Mode
-import io.github.dovecoteescapee.byedpi.utility.AccessibilityUtils
-import io.github.dovecoteescapee.byedpi.services.AutoStartService
 import io.github.dovecoteescapee.byedpi.utility.*
 
 class MainSettingsFragment : PreferenceFragmentCompat() {
@@ -77,10 +74,8 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
                 setTheme(newValue as String)
                 true
             }
-
-        val accessibilityStatus = findPreferenceNotNull<Preference>("accessibility_service_status")
-        val switchCommandLineSettings = findPreferenceNotNull<SwitchPreference>("byedpi_enable_cmd_settings")
-
+        
+        val switchCmdSettings = findPreferenceNotNull<SwitchPreference>("byedpi_enable_cmd_settings")
         val uiSettings = findPreferenceNotNull<Preference>("byedpi_ui_settings")
         val cmdSettings = findPreferenceNotNull<Preference>("byedpi_cmd_settings")
         val proxyTest = findPreferenceNotNull<Preference>("proxy_test")
@@ -91,17 +86,11 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
             proxyTest.isEnabled = enable
         }
 
-        setByeDpiSettingsMode(switchCommandLineSettings.isChecked)
+        setByeDpiSettingsMode(switchCmdSettings.isChecked)
 
-        switchCommandLineSettings.setOnPreferenceChangeListener { _, newValue ->
+        switchCmdSettings.setOnPreferenceChangeListener { _, newValue ->
             setByeDpiSettingsMode(newValue as Boolean)
             updatePreferences()
-            true
-        }
-
-        accessibilityStatus.setOnPreferenceClickListener {
-            val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-            startActivity(intent)
             true
         }
 
@@ -114,14 +103,12 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
 
         findPreferenceNotNull<Preference>("version").summary = BuildConfig.VERSION_NAME
 
-        updateAccessibilityStatus()
         updatePreferences()
     }
 
     override fun onResume() {
         super.onResume()
         sharedPreferences?.registerOnSharedPreferenceChangeListener(preferenceListener)
-        updateAccessibilityStatus()
         updatePreferences()
     }
 
@@ -177,19 +164,6 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
                 applistType.isVisible = false
                 selectedApps.isVisible = false
             }
-        }
-    }
-
-    private fun updateAccessibilityStatus() {
-        val accessibilityStatus = findPreferenceNotNull<Preference>("accessibility_service_status")
-        val isEnabled = AccessibilityUtils.isAccessibilityServiceEnabled(
-            requireContext(),
-            AutoStartService::class.java
-        )
-        accessibilityStatus.summary = if (isEnabled) {
-            getString(R.string.accessibility_service_enabled)
-        } else {
-            getString(R.string.accessibility_service_disabled)
         }
     }
 }

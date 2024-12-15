@@ -60,9 +60,10 @@
     <androidx.preference.PreferenceCategory
         android:title="@string/automation">
 
-        <Preference
-            android:key="accessibility_service_status"
-            android:title="@string/accessibility_service_status" />
+        <SwitchPreference
+            android:key="autostart"
+            android:title="@string/autostart_settings"
+            android:defaultValue="false" />
 
         <SwitchPreference
             android:key="auto_connect"

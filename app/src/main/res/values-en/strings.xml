@@ -75,7 +75,7 @@
     <string name="byedpi_protocols_category">Protocols</string>
     <string name="byedpi_protocols_hint">Uncheck all to desync all traffic</string>
     <string name="automation">Automation</string>
-    <string name="accessibility_service_description">Autostart service on device startup</string>
+    <string name="autostart_settings">Autostart service on device startup</string>
     <string name="autohide_settings">Automatically hide application after autostart</string>
     <string name="autoconnect_settings">Automatically connect when the application starts</string>
     <string name="accessibility_service_status">Autostart status</string>
