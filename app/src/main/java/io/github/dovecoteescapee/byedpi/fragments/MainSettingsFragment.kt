@@ -134,9 +134,7 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
         val mode = findPreferenceNotNull<ListPreference>("byedpi_mode").value.let { Mode.fromString(it) }
         val dns = findPreferenceNotNull<EditTextPreference>("dns_ip")
         val ipv6 = findPreferenceNotNull<SwitchPreference>("ipv6_enable")
-
-        val ip = findPreferenceNotNull<EditTextPreference>("byedpi_proxy_ip")
-        val port = findPreferenceNotNull<EditTextPreference>("byedpi_proxy_port")
+        val proxy = findPreferenceNotNull<PreferenceCategory>("byedpi_proxy_category")
 
         val applistType = findPreferenceNotNull<ListPreference>("applist_type")
         val selectedApps = findPreferenceNotNull<Preference>("selected_apps")
@@ -145,12 +143,10 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
             val cmdArgs = sharedPreferences?.getStringNotNull("byedpi_cmd_args", "")?.split(" ")
             val ipIndex = cmdArgs?.indexOfFirst { it == "-i" || it == "--ip" }
             val portIndex = cmdArgs?.indexOfFirst { it == "-p" || it == "--port" }
-            
-            ip.isEnabled = ipIndex == -1
-            port.isEnabled = portIndex == -1
+
+            proxy.isVisible = ipIndex == -1 && portIndex == -1
         } else {
-            ip.isEnabled = true
-            port.isEnabled = true
+            proxy.isVisible = true
         }
 
         when (mode) {
