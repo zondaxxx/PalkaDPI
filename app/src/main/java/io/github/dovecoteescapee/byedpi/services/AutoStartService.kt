@@ -8,7 +8,7 @@ import io.github.dovecoteescapee.byedpi.data.Mode
 import io.github.dovecoteescapee.byedpi.utility.getPreferences
 import io.github.dovecoteescapee.byedpi.utility.mode
 
-class AutoStartAccessibilityService : AccessibilityService() {
+class AutoStartService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent) {}
 

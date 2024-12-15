@@ -13,7 +13,7 @@ import io.github.dovecoteescapee.byedpi.R
 import io.github.dovecoteescapee.byedpi.activities.TestActivity
 import io.github.dovecoteescapee.byedpi.data.Mode
 import io.github.dovecoteescapee.byedpi.utility.AccessibilityUtils
-import io.github.dovecoteescapee.byedpi.services.AutoStartAccessibilityService
+import io.github.dovecoteescapee.byedpi.services.AutoStartService
 import io.github.dovecoteescapee.byedpi.utility.*
 
 class MainSettingsFragment : PreferenceFragmentCompat() {
@@ -184,7 +184,7 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
         val accessibilityStatus = findPreferenceNotNull<Preference>("accessibility_service_status")
         val isEnabled = AccessibilityUtils.isAccessibilityServiceEnabled(
             requireContext(),
-            AutoStartAccessibilityService::class.java
+            AutoStartService::class.java
         )
         accessibilityStatus.summary = if (isEnabled) {
             getString(R.string.accessibility_service_enabled)

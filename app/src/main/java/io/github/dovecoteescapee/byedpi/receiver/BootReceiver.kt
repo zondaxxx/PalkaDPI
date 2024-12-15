@@ -3,7 +3,7 @@ package io.github.dovecoteescapee.byedpi.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import io.github.dovecoteescapee.byedpi.services.AutoStartAccessibilityService
+import io.github.dovecoteescapee.byedpi.services.AutoStartService
 import io.github.dovecoteescapee.byedpi.utility.AccessibilityUtils
 
 class BootReceiver : BroadcastReceiver() {
@@ -13,11 +13,11 @@ class BootReceiver : BroadcastReceiver() {
 
             val autorunEnabled = AccessibilityUtils.isAccessibilityServiceEnabled(
                 context,
-                AutoStartAccessibilityService::class.java
+                AutoStartService::class.java
             )
 
             if(autorunEnabled) {
-                val serviceIntent = Intent(context, AutoStartAccessibilityService::class.java)
+                val serviceIntent = Intent(context, AutoStartService::class.java)
                 context.startService(serviceIntent)
             }
         }

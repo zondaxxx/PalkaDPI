@@ -90,7 +90,7 @@
         </service>
 
         <service
-            android:name=".services.AutoStartAccessibilityService"
+            android:name=".services.AutoStartService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
             android:exported="true">
             <intent-filter>
