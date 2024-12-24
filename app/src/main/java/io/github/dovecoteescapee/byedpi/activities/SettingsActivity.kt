@@ -1,5 +1,6 @@
 package io.github.dovecoteescapee.byedpi.activities
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -11,6 +12,7 @@ import io.github.dovecoteescapee.byedpi.BuildConfig
 import io.github.dovecoteescapee.byedpi.R
 import io.github.dovecoteescapee.byedpi.fragments.MainSettingsFragment
 import io.github.dovecoteescapee.byedpi.utility.getPreferences
+import org.json.JSONArray
 import org.json.JSONObject
 
 class SettingsActivity : AppCompatActivity() {
@@ -46,11 +48,7 @@ class SettingsActivity : AppCompatActivity() {
             editor.putString("language", currentLanguage)
             editor.apply()
 
-            supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-            supportFragmentManager
-                .beginTransaction()
-                .replace(R.id.settings, MainSettingsFragment())
-                .commit()
+            recreate()
             true
         }
 
@@ -79,7 +77,16 @@ class SettingsActivity : AppCompatActivity() {
             json.put("app_version", BuildConfig.VERSION_NAME)
 
             prefs.all.forEach { (key, value) ->
-                json.put(key, value)
+                when (key) {
+                    "byedpi_cmd_history", "byedpi_cmd_pinned_history", "selected_apps" -> {
+                        if (value is Set<*>) {
+                            json.put(key, JSONArray(value.toList()))
+                        }
+                    }
+                    else -> {
+                        json.put(key, value)
+                    }
+                }
             }
 
             contentResolver.openOutputStream(it)?.use { outputStream ->
@@ -107,22 +114,31 @@ class SettingsActivity : AppCompatActivity() {
                 json.remove("app_version")
 
                 json.keys().forEach { key ->
-                    when (val value = json.get(key)) {
-                        is Int -> editor.putInt(key, value)
-                        is Boolean -> editor.putBoolean(key, value)
-                        is String -> editor.putString(key, value)
-                        is Float -> editor.putFloat(key, value)
-                        is Long -> editor.putLong(key, value)
+                    when (key) {
+                        "byedpi_cmd_history", "byedpi_cmd_pinned_history", "selected_apps" -> {
+                            val listJson = json.optJSONArray(key)
+                            if (listJson != null) {
+                                val set = mutableSetOf<String>()
+                                for (i in 0 until listJson.length()) {
+                                    set.add(listJson.getString(i))
+                                }
+                                editor.putStringSet(key, set)
+                            }
+                        }
+                        else -> {
+                            when (val value = json.get(key)) {
+                                is Int -> editor.putInt(key, value)
+                                is Boolean -> editor.putBoolean(key, value)
+                                is String -> editor.putString(key, value)
+                                is Float -> editor.putFloat(key, value)
+                                is Long -> editor.putLong(key, value)
+                            }
+                        }
                     }
                 }
 
                 editor.apply()
-
-                supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-                supportFragmentManager
-                    .beginTransaction()
-                    .replace(R.id.settings, MainSettingsFragment())
-                    .commit()
+                recreate()
             }
         }
     }
