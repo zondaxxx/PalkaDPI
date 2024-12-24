@@ -41,11 +41,9 @@ class SettingsActivity : AppCompatActivity() {
 
         R.id.action_reset_settings -> {
             val prefs = getPreferences()
-            val currentLanguage = prefs.getString("language", "system")
             val editor = prefs.edit()
 
             editor.clear()
-            editor.putString("language", currentLanguage)
             editor.apply()
 
             recreate()
@@ -112,6 +110,7 @@ class SettingsActivity : AppCompatActivity() {
 
                 json.remove("app_package")
                 json.remove("app_version")
+                editor.clear()
 
                 json.keys().forEach { key ->
                     when (key) {
