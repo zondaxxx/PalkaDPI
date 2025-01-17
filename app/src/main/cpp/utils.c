@@ -15,7 +15,7 @@ void reset_params(void) {
     params = default_params;
 }
 
-extern const struct option options[42];
+extern const struct option options[44];
 
 int parse_args(int argc, char **argv)
 {
