@@ -4,7 +4,7 @@
 -s1 -q1 -Y -At -f-1 -r1+s -As
 -q1+s -s25+s -o5+s -f-1 -S -As
 -q1+s -s29+s -o5+s -f-1 -S -As
--Kt,h -q1 -r25+s -An -Ku -a1 -An
+-Ku -a1 -An -Kt,h -q1 -r25+s -An
 -n vk.com -q 1+s -O 1 -s 25+s -t 5
 -n vk.com -q 1+s -O 1 -s 29+s -t 5
 -s0 -o1 -Ar -o1 -At -f-1 -r1+s -As
@@ -28,14 +28,14 @@
 -Ku -a1 -An -Kt,h -s1 -q2 -a2 -Art -f-1 -r2+s -a3 -An
 -Ku -a1 -An -Kt,h -s1 -q1 -Art -f-1 --md5sig -r1+s -An
 -Ku -a3 -An -Kt,h -s0 -o1 -Ar -o1 -At -f-1 -r1+s -As -An
--Ku -a5 -Kt,h -o0 -d1 -r1+s -t10 -b1500 -S -s0+s -d3+s -An
+-Ku -a5 -An -Kt,h -o0 -d1 -r1+s -t10 -b1500 -S -s0+s -d3+s -An
 -Ku -a1 -An -Kt,h -d1 -s4 -d8 -s1+s -d5+s -s10+s -d20+s -An
 -s1 -q1 -Y -Ar -s5 -o1+s -At -f-1 -r1+s -As -s1 -o1+s -s-1 -An
 --split 1 --disorder 3+s --mod-http=h,d --auto=torst --tlsrec 1+s
 -Ku -a3 -An -Kt,h -s0 -o1 -d1 -r1+s -Ar -o1 -At -f-1 -r1+s -As -An
 -Ku -a3 -An -Kt,h -q1+s -s29+s -s30+s -s14+s -o5+s -f-1 --md5sig -Asn
 -s1 -q1 -Y -Ar -s5 -o25000+s -At -f-1 -r1+s -As -s1 -o1+s -s-1 -An -b+500
--Kt,h -s1 -q1 -Ar -s5 -o1+s -At -f-1 -r1+s -As -s1 -o1+s -s-1 -An -Ku -a1 -An
+-Ku -a1 -An -Kt,h -s1 -q1 -Ar -s5 -o1+s -At -f-1 -r1+s -As -s1 -o1+s -s-1 -An
 -Ku -a3 -An -Kt,h -d1 -s0+s -s3+s -s6+s -s9+s -s12+s -s15+s -s20+s -s30+s -An
 --split 1 --disorder 3+s --mod-http=h,d --auto=torst --tlsrec 1+s --tlsrec 3+sni
 -Ku -a3 -An -Kt,h -s1 -q1 -Y -Ar -s5 -o1+s -At -f-1 -r1+s -As -s1 -o1+s -s-1 -An
