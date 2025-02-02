@@ -33,11 +33,14 @@ int parse_args(int argc, char **argv)
             opt[o] = ':';
         }
     }
-
+    //
     params.laddr.in.sin_port = htons(1080);
     if (!ipv6_support()) {
         params.baddr.sa.sa_family = AF_INET;
     }
+
+    char *pid_file = 0;
+    bool daemonize = 0;
 
     int rez;
     int invalid = 0;
@@ -46,9 +49,10 @@ int parse_args(int argc, char **argv)
     char *end = 0;
     bool all_limited = 1;
 
-    struct desync_params *dp = add((void *)&params.dp, &params.dp_count, sizeof(struct desync_params));
+    struct desync_params *dp = add((void *)&params.dp,
+                                   &params.dp_count, sizeof(struct desync_params));
     if (!dp) {
-        reset_params();
+        clear_params();
         return -1;
     }
 
@@ -75,6 +79,16 @@ int parse_args(int argc, char **argv)
             case 'E':
                 params.transparent = 1;
                 break;
+#endif
+
+#ifdef DAEMON
+                case 'D':
+            daemonize = 1;
+            break;
+
+        case 'w':
+            pid_file = optarg;
+            break;
 #endif
 
             case 'i':
@@ -138,7 +152,7 @@ int parse_args(int argc, char **argv)
                 dp = add((void *)&params.dp, &params.dp_count,
                          sizeof(struct desync_params));
                 if (!dp) {
-                    reset_params();
+                    clear_params();
                     return -1;
                 }
                 end = optarg;
@@ -183,7 +197,7 @@ int parse_args(int argc, char **argv)
 #else
                 val = strtol(optarg, &end, 0);
 #endif
-                if (val <= 0 || val > UINT_MAX || *end)
+                if (val <= 0 || (unsigned long)val > UINT_MAX || *end)
                     invalid = 1;
                 else
                     params.timeout = val;
@@ -227,7 +241,7 @@ int parse_args(int argc, char **argv)
                 dp->hosts = parse_hosts(dp->file_ptr, dp->file_size);
                 if (!dp->hosts) {
                     uniperror("parse_hosts");
-                    reset_params();
+                    clear_params();
                     return -1;
                 }
                 break;
@@ -260,7 +274,7 @@ int parse_args(int argc, char **argv)
                 struct part *part = add((void *)&dp->parts,
                                         &dp->parts_n, sizeof(struct part));
                 if (!part) {
-                    reset_params();
+                    clear_params();
                     return -1;
                 }
                 if (parse_offset(part, optarg)) {
@@ -319,7 +333,7 @@ int parse_args(int argc, char **argv)
             case 'n':
                 if (change_tls_sni(optarg, fake_tls.data, fake_tls.size)) {
                     perror("change_tls_sni");
-                    reset_params();
+                    clear_params();
                     return -1;
                 }
                 LOG(LOG_S, "sni: %s", optarg);
@@ -370,7 +384,7 @@ int parse_args(int argc, char **argv)
                 part = add((void *)&dp->tlsrec,
                            &dp->tlsrec_n, sizeof(struct part));
                 if (!part) {
-                    reset_params();
+                    clear_params();
                     return -1;
                 }
                 if (parse_offset(part, optarg)
@@ -439,8 +453,9 @@ int parse_args(int argc, char **argv)
                 break;
 
             case 'W':
-                params.wait_send = 0;
+                params.await_int = atoi(optarg);
                 break;
+
 #ifdef __linux__
             case 'P':
                 params.protect_path = optarg;
@@ -450,25 +465,25 @@ int parse_args(int argc, char **argv)
                 break;
 
             case '?':
-                reset_params();
+                clear_params();
                 return -1;
 
             default:
                 LOG(LOG_S, "Unknown option: -%c", rez);
-                reset_params();
+                clear_params();
                 return -1;
         }
     }
     if (invalid) {
         LOG(LOG_S, "invalid value: -%c %s", rez, optarg);
-        reset_params();
+        clear_params();
         return -1;
     }
     if (all_limited) {
         dp = add((void *)&params.dp,
                  &params.dp_count, sizeof(struct desync_params));
         if (!dp) {
-            reset_params();
+            clear_params();
             return -1;
         }
     }
@@ -478,14 +493,14 @@ int parse_args(int argc, char **argv)
     }
     if (!params.def_ttl) {
         if ((params.def_ttl = get_default_ttl()) < 1) {
-            reset_params();
+            clear_params();
             return -1;
         }
     }
     params.mempool = mem_pool(0, CMP_BYTES);
     if (!params.mempool) {
         uniperror("mem_pool");
-        reset_params();
+        clear_params();
         return -1;
     }
     srand((unsigned int)time(0));
