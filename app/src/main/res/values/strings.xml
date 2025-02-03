@@ -1,6 +1,7 @@
 <resources>
     <string name="byedpi_docs">https://github.com/hufrea/byedpi/blob/main/README.md</string>
     <string name="app_name">ByeByeDPI</string>
+    <string name="cmd_documentation">Документация ByeDPI</string>
     <string name="vpn_connect">Подключить</string>
     <string name="vpn_disconnect">Отключить</string>
     <string name="vpn_connected">Подключено (VPN)</string>
@@ -53,8 +54,8 @@
     <string name="byedpi_category">ByeDPI</string>
     <string name="about_category">О программе</string>
     <string name="command_line_editor">Редактор командной строки</string>
-    <string name="ui_editor">Расширенные параметры</string>
-    <string name="use_command_line_settings">Использовать настройки командной строки</string>
+    <string name="ui_editor">Стандартный редактор</string>
+    <string name="use_command_line_settings">Использовать командную строку</string>
     <string name="desync_http">Десинхронизация HTTP</string>
     <string name="desync_https">Десинхронизация HTTPS</string>
     <string name="desync_udp">Десинхронизация UDP</string>
@@ -114,7 +115,7 @@
     </string>
     <string name="test_process">Проверка %1$d/%2$d</string>
     <string name="test_proxy_error">Ошибка прокси. Тест остановлен</string>
-    <string name="test_good_cmds">Команды с вероятностью успеха более 50%</string>
+    <string name="test_good_cmds">Команды с успехом более 50%, применяйте от большего к меньшему</string>
     <string name="test_complete">Проверка завершена</string>
     <string name="test_complete_info">Нажмите на команду, чтобы скопировать ее или применить</string>
     <string name="test_settings_gdomain">Добавлять ближайший GoogleVideo к тестированию</string>
