@@ -2,6 +2,7 @@
     <string name="byedpi_docs">https://github.com/hufrea/byedpi/blob/main/README.md</string>
     <string name="app_name">ByeByeDPI</string>
     <string name="cmd_documentation">Documentation</string>
+    <string name="toggle_connect">On/Off</string>
     <string name="vpn_connect">Connect</string>
     <string name="vpn_disconnect">Disconnect</string>
     <string name="vpn_connected">Connected (VPN)</string>
