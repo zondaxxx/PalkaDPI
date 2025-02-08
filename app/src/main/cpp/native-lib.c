@@ -46,6 +46,20 @@ Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniCreateSocketWithComman
 }
 
 JNIEXPORT jint JNICALL
+Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniMainProxy(
+        __attribute__((unused)) JNIEnv *env,
+        __attribute__((unused)) jobject thiz,
+        jint fd) {
+    LOG(LOG_S, "start_proxy, fd: %d", fd);
+
+    if (start_event_loop(fd) < 0) {
+        uniperror("event_loop");
+        return get_e();
+    }
+    return 0;
+}
+
+JNIEXPORT jint JNICALL
 Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniStartProxy(
         __attribute__((unused)) JNIEnv *env,
         __attribute__((unused)) jobject thiz,
