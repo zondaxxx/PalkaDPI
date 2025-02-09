@@ -3,6 +3,7 @@
 
 #include <jni.h>
 #include <android/log.h>
+#include <malloc.h>
 
 #include "byedpi/error.h"
 #include "byedpi/proxy.h"
@@ -20,6 +21,7 @@ Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniCreateSocket(
         JNIEnv *env,
         __attribute__((unused)) jobject thiz,
         jobjectArray args) {
+
     int argc = (*env)->GetArrayLength(env, args);
     char *argv[argc];
     for (int i = 0; i < argc; i++) {
@@ -30,12 +32,18 @@ Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniCreateSocket(
     }
 
     int res = parse_args(argc, argv);
+
+    for (int i = 0; i < argc; i++) {
+        free(argv[i]);
+    }
+
     if (res < 0) {
         uniperror("parse_args");
         return -1;
     }
 
     int fd = listen_socket((union sockaddr_u *)&params.laddr);
+
     if (fd < 0) {
         uniperror("listen_socket");
         return -1;
@@ -50,6 +58,7 @@ Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniStartProxy(
         __attribute__((unused)) JNIEnv *env,
         __attribute__((unused)) jobject thiz,
         jint fd) {
+
     LOG(LOG_S, "start_proxy, fd: %d", fd);
 
     if (start_event_loop(fd) < 0) {
@@ -65,6 +74,7 @@ Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniStopProxy(
         __attribute__((unused)) JNIEnv *env,
         __attribute__((unused)) jobject thiz,
         jint fd) {
+
     LOG(LOG_S, "stop_proxy, fd: %d", fd);
 
     int res = shutdown(fd, SHUT_RDWR);
