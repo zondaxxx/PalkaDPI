@@ -278,15 +278,15 @@ class ByeDpiProxyUIPreferences(
                 fakeSni.takeIf { it.isNotEmpty() }?.let {
                     args.add("-n${it}")
                 }
+
+                fakeOffset.takeIf { it != 0 }?.let {
+                    args.add("-O${it}")
+                }
             }
 
             if (desyncMethod == DesyncMethod.OOB ||
                 desyncMethod == DesyncMethod.DISOOB) {
                 args.add("-e${oobChar}")
-            }
-
-            fakeOffset.takeIf { it != 0 }?.let {
-                args.add("-O${it}")
             }
 
             val modHttpFlags = mutableListOf<String>()
