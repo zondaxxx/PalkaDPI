@@ -45,8 +45,8 @@ class ByeDpiProxy {
 
     private fun createSocketFromPreferences(preferences: ByeDpiProxyPreferences) =
         when (preferences) {
-            is ByeDpiProxyCmdPreferences -> jniCreateSocketWithCommandLine(preferences.args)
-            is ByeDpiProxyUIPreferences -> jniCreateSocketWithCommandLine(buildCommandLineArgs(preferences))
+            is ByeDpiProxyCmdPreferences -> jniCreateSocket(preferences.args)
+            is ByeDpiProxyUIPreferences -> jniCreateSocket(buildCommandLineArgs(preferences))
         }
 
     private fun buildCommandLineArgs(preferences: ByeDpiProxyUIPreferences): Array<String> {
@@ -188,9 +188,7 @@ class ByeDpiProxy {
         return args.toTypedArray()
     }
 
-    private external fun jniCreateSocketWithCommandLine(args: Array<String>): Int
-
+    private external fun jniCreateSocket(args: Array<String>): Int
     private external fun jniStartProxy(fd: Int): Int
-
     private external fun jniStopProxy(fd: Int): Int
 }

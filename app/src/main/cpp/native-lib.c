@@ -16,7 +16,7 @@ JNIEXPORT jint JNI_OnLoad(
 }
 
 JNIEXPORT jint JNICALL
-Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniCreateSocketWithCommandLine(
+Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniCreateSocket(
         JNIEnv *env,
         __attribute__((unused)) jobject thiz,
         jobjectArray args) {
@@ -40,23 +40,9 @@ Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniCreateSocketWithComman
         uniperror("listen_socket");
         return -1;
     }
+
     LOG(LOG_S, "listen_socket, fd: %d", fd);
-
     return fd;
-}
-
-JNIEXPORT jint JNICALL
-Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniMainProxy(
-        __attribute__((unused)) JNIEnv *env,
-        __attribute__((unused)) jobject thiz,
-        jint fd) {
-    LOG(LOG_S, "start_proxy, fd: %d", fd);
-
-    if (start_event_loop(fd) < 0) {
-        uniperror("event_loop");
-        return get_e();
-    }
-    return 0;
 }
 
 JNIEXPORT jint JNICALL
@@ -70,6 +56,7 @@ Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniStartProxy(
         uniperror("event_loop");
         return get_e();
     }
+
     return 0;
 }
 
@@ -87,5 +74,6 @@ Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniStopProxy(
         uniperror("shutdown");
         return get_e();
     }
+
     return 0;
 }
