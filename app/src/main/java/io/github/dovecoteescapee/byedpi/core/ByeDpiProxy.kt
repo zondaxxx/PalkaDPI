@@ -50,7 +50,7 @@ class ByeDpiProxy {
         }
 
     private fun buildCommandLineArgs(preferences: ByeDpiProxyUIPreferences): Array<String> {
-        val args = mutableListOf<String>()
+        val args = mutableListOf("ciadpi")
 
         preferences.ip.takeIf { it.isNotEmpty() }?.let {
             args.add("-i${it}")
@@ -83,7 +83,6 @@ class ByeDpiProxy {
                     if (protocols.isNotEmpty()) {
                         hostBlock.add("-K${protocols.joinToString(",")}")
                     }
-                    hostBlock.add("-An")
                 }
                 ByeDpiProxyUIPreferences.HostsMode.Whitelist -> {
                     if (protocols.isNotEmpty()) {
@@ -184,7 +183,6 @@ class ByeDpiProxy {
         }
 
         Log.d("ByeDpiProxy", "UI to cmd: ${args.joinToString(" ")}")
-
         return args.toTypedArray()
     }
 
