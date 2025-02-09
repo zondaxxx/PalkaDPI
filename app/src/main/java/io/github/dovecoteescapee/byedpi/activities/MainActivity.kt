@@ -140,11 +140,17 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.statusButton.setOnClickListener {
+            binding.statusButton.isEnabled = false
+
             val (status, _) = appStatus
             when (status) {
                 AppStatus.Halted -> start()
                 AppStatus.Running -> stop()
             }
+
+            binding.statusButton.postDelayed({
+                binding.statusButton.isEnabled = true
+            }, 500)
         }
 
         val lang = getPreferences().getString("language", "system")
@@ -255,7 +261,6 @@ class MainActivity : AppCompatActivity() {
                         binding.statusButton.setText(R.string.proxy_start)
                     }
                 }
-                binding.statusButton.isEnabled = true
             }
 
             AppStatus.Running -> {
@@ -270,7 +275,6 @@ class MainActivity : AppCompatActivity() {
                         binding.statusButton.setText(R.string.proxy_stop)
                     }
                 }
-                binding.statusButton.isEnabled = true
             }
         }
     }

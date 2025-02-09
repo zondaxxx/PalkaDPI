@@ -238,7 +238,6 @@ class TestActivity : AppCompatActivity() {
                     appendTextToResults("$cmd\n")
                 }
 
-                delay(delaySec * 1000L)
                 val totalRequests = sites.size * requestsCount
                 val checkResults = checkSitesAsync(sites, requestsCount, fullLog)
                 val successfulCount = checkResults.sumOf { it.second }
@@ -250,6 +249,7 @@ class TestActivity : AppCompatActivity() {
 
                 if (isProxyRunning()) stopProxyService()
                 waitForProxyStatus(ServiceStatus.Disconnected)
+                delay(delaySec * 1000L)
             }
 
             successfulCmds.sortByDescending { it.second }

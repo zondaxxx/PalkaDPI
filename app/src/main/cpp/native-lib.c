@@ -1,13 +1,13 @@
 #include <string.h>
-#include <netdb.h>
 
 #include <jni.h>
 #include <android/log.h>
-#include <malloc.h>
 
 #include "byedpi/error.h"
 #include "byedpi/proxy.h"
 #include "utils.h"
+
+static int g_proxy_fd = -1;
 
 JNIEXPORT jint JNI_OnLoad(
         __attribute__((unused)) JavaVM *vm,
@@ -22,6 +22,11 @@ Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniCreateSocket(
         __attribute__((unused)) jobject thiz,
         jobjectArray args) {
 
+    if (g_proxy_fd != -1) {
+        LOG(LOG_S, "proxy already running, fd: %d", g_proxy_fd);
+        return -1;
+    }
+
     int argc = (*env)->GetArrayLength(env, args);
     char *argv[argc];
     for (int i = 0; i < argc; i++) {
@@ -32,10 +37,6 @@ Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniCreateSocket(
     }
 
     int res = parse_args(argc, argv);
-
-    for (int i = 0; i < argc; i++) {
-        free(argv[i]);
-    }
 
     if (res < 0) {
         uniperror("parse_args");
@@ -49,6 +50,7 @@ Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniCreateSocket(
         return -1;
     }
 
+    g_proxy_fd = fd;
     LOG(LOG_S, "listen_socket, fd: %d", fd);
     return fd;
 }
@@ -56,12 +58,11 @@ Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniCreateSocket(
 JNIEXPORT jint JNICALL
 Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniStartProxy(
         __attribute__((unused)) JNIEnv *env,
-        __attribute__((unused)) jobject thiz,
-        jint fd) {
+        __attribute__((unused)) jobject thiz) {
 
-    LOG(LOG_S, "start_proxy, fd: %d", fd);
+    LOG(LOG_S, "start_proxy, fd: %d", g_proxy_fd);
 
-    if (start_event_loop(fd) < 0) {
+    if (start_event_loop(g_proxy_fd) < 0) {
         uniperror("event_loop");
         return get_e();
     }
@@ -72,13 +73,18 @@ Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniStartProxy(
 JNIEXPORT jint JNICALL
 Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniStopProxy(
         __attribute__((unused)) JNIEnv *env,
-        __attribute__((unused)) jobject thiz,
-        jint fd) {
+        __attribute__((unused)) jobject thiz) {
 
-    LOG(LOG_S, "stop_proxy, fd: %d", fd);
+    LOG(LOG_S, "stop_proxy, fd: %d", g_proxy_fd);
 
-    int res = shutdown(fd, SHUT_RDWR);
+    if (g_proxy_fd < 0) {
+        LOG(LOG_S, "proxy is not running, fd: %d", g_proxy_fd);
+        return 0;
+    }
+
     reset_params();
+    int res = shutdown(g_proxy_fd, SHUT_RDWR);
+    g_proxy_fd = -1;
 
     if (res < 0) {
         uniperror("shutdown");
