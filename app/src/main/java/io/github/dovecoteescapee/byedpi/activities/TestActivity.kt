@@ -79,6 +79,7 @@ class TestActivity : AppCompatActivity() {
         if (isTesting) {
             progressTextView.text = getString(R.string.test_proxy_error)
             resultsTextView.text = getString(R.string.test_crash)
+            isTesting = false
         } else {
             lifecycleScope.launch {
                 val previousLogs = loadLog()
