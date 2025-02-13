@@ -1,4 +1,5 @@
 # ByeByeDPI Android 
+Русский | [English](README-en.md)
 
 <div style="text-align: center;">
   <img alt="Логотип ByeDPI" src="https://github.com/romanvht/ByeDPIAndroid/raw/master/.github/images/logo.svg" width="100%" height="200px">
@@ -17,7 +18,6 @@
 ---
 
 ### Возможности
-
 * Поддержка фильтра приложений для режима VPN (рездельное туннелирование через whitelist/blacklist)
 * Автозапуск VPN/Proxy при старте устройства
 * Автоподключение к VPN/Proxy при запуске приложения
