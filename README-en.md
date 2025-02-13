@@ -18,16 +18,11 @@ This application is a fork of [ByeDPIAndroid](https://github.com/dovecoteescapee
 ---
 
 ### Features
-* Support for app filtering in VPN mode (split tunneling via whitelist/blacklist)
-* Auto-start VPN/Proxy on device boot
-* Auto-connect to VPN/Proxy when launching the application
-* Save multiple command-line parameter lists with quick switching
-* Improved compatibility with Android TV/BOX, fixed some original bugs
-
-<div style="text-align: center;">
-    <img alt="Screenshot-1" src="https://github.com/romanvht/ByeDPIAndroid/raw/master/.github/images/settings_screen_2.png">
-    <img alt="Screenshot-2" src="https://github.com/romanvht/ByeDPIAndroid/raw/master/.github/images/apps_screen_2.png">
-</div>
+* Autostart service on device boot
+* Saving lists of command-line parameters
+* Improved compatibility with Android TV/BOX
+* Per-app split tunneling
+* Import/export settings
 
 ### Usage
 * To enable auto-start, activate the option in settings.
