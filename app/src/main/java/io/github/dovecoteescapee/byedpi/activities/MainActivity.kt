@@ -153,6 +153,19 @@ class MainActivity : AppCompatActivity() {
             }, 500)
         }
 
+        binding.openEditorLink.setOnClickListener {
+            val (status, _) = appStatus
+
+            if (status == AppStatus.Halted) {
+                val intent = Intent(this, SettingsActivity::class.java)
+                val useCmdSettings = getPreferences().getBoolean("byedpi_enable_cmd_settings", false)
+                intent.putExtra("open_fragment", if (useCmdSettings) "cmd" else "ui")
+                startActivity(intent)
+            } else {
+                Toast.makeText(this, R.string.settings_unavailable, Toast.LENGTH_SHORT).show()
+            }
+        }
+
         val lang = getPreferences().getString("language", "system")
         MainSettingsFragment.setLang(lang ?: "system")
 
@@ -197,8 +210,7 @@ class MainActivity : AppCompatActivity() {
                     val intent = Intent(this, SettingsActivity::class.java)
                     startActivity(intent)
                 } else {
-                    Toast.makeText(this, R.string.settings_unavailable, Toast.LENGTH_SHORT)
-                        .show()
+                    Toast.makeText(this, R.string.settings_unavailable, Toast.LENGTH_SHORT).show()
                 }
                 true
             }
