@@ -18,8 +18,8 @@
     <string name="title_settings">Ayarlar</string>
     <string name="save_logs">Olay günlüklerini kaydet</string>
     <string name="reset_settings">Reset</string>
-    <string name="export_settings">Ayarları Export Et</string>
-    <string name="import_settings">Ayarları Import Et</string>
+    <string name="export_settings">Ayarları Dışa Aktar</string>
+    <string name="import_settings">Ayarları İçe Aktar</string>
     <string name="logs_failed">Günlükleri toplarken bir hata oluştu</string>
     <string name="proxy_address">%1$s:%2$s</string>
     <string name="lang_settings">Dil</string>
