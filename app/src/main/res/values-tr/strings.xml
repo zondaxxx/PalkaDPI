@@ -39,8 +39,8 @@
     <string name="byedpi_split_position_setting">Bölme pozisyonu</string>
     <string name="byedpi_split_at_host_setting">Hostta bölme</string>
     <string name="byedpi_fake_ttl_setting">Sahte paketlerin TTL değeri</string>
-    <string name="byedpi_host_mixed_case_setting">Karışık büyük/küçük harfli host</string>
-    <string name="byedpi_domain_mixed_case_setting">Karışık büyük/küçük harfli domain</string>
+    <string name="byedpi_host_mixed_case_setting">Karışık harfli host</string>
+    <string name="byedpi_domain_mixed_case_setting">Karışık harfli domain</string>
     <string name="byedpi_host_remove_spaces_setting">Hosttan boşlukları kaldır</string>
     <string name="byedpi_tlsrec_enabled_setting">TLS kaydını böl</string>
     <string name="byedpi_tlsrec_position_setting">TLS kaydı bölme pozisyonu</string>
