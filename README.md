@@ -1,5 +1,5 @@
 # ByeByeDPI Android 
-Русский | [English](README-en.md)
+Русский | [English](README-en.md) | [Türkçe](README-tr.md)
 
 <div style="text-align: center;">
   <img alt="Логотип ByeDPI" src="https://github.com/romanvht/ByeDPIAndroid/raw/master/.github/images/logo.svg" width="100%" height="200px">

@@ -26,6 +26,7 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
             "system" -> LocaleListCompat.getEmptyLocaleList()
             "ru" -> LocaleListCompat.forLanguageTags("ru")
             "en" -> LocaleListCompat.forLanguageTags("en")
+            "tr" -> LocaleListCompat.forLanguageTags("tr")
             else -> {
                 Log.w(TAG, "Invalid value for language: $lang")
                 null
