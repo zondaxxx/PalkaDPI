@@ -2,7 +2,7 @@
 [Русский](README.md) | [English](README-en.md) | Türkçe
 
 <div style="text-align: center;">
-  <img alt="ByeDPI Logo" src="https://github.com/romanvht/ByeDPIAndroid/raw/master/.github/images/bbd.svg" width="100%" height="200px">
+  <img alt="ByeDPI Logo" src="https://github.com/romanvht/ByeDPIAndroid/raw/master/.github/images/app.svg" width="100%" height="200px">
 </div>
 
 ---
