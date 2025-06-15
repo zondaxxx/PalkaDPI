@@ -88,7 +88,11 @@
     <string name="applist_setting">Apps filter</string>
     <string name="apps_select">Select apps</string>
     <string name="search_apps">Search apps</string>
+    <string name="cmd_args_clear">Clear</string>
     <string name="cmd_history_title">Command history</string>
+    <string name="cmd_history_title_summary">Tap to manage history</string>
+    <string name="cmd_history_delete_all">Delete all history</string>
+    <string name="cmd_history_delete_unpinned">Delete unpinned</string>
     <string name="cmd_history_menu">Select action</string>
     <string name="cmd_history_apply">Apply</string>
     <string name="cmd_history_copy">Copy</string>

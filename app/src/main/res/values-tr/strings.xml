@@ -88,7 +88,11 @@
     <string name="applist_setting">Uygulama filtresi</string>
     <string name="apps_select">Uygulama seç</string>
     <string name="search_apps">Uygulama ara</string>
+    <string name="cmd_args_clear">Temizlemek</string>
     <string name="cmd_history_title">Komut geçmişi</string>
+    <string name="cmd_history_title_summary">Geçmişi yönetmek için tıklayın</string>
+    <string name="cmd_history_delete_all">Tüm geçmişi sil</string>
+    <string name="cmd_history_delete_unpinned">Sabitlenmemişleri sil</string>
     <string name="cmd_history_menu">Bir işlem seç</string>
     <string name="cmd_history_apply">Uygula</string>
     <string name="cmd_history_copy">Kopyala</string>
