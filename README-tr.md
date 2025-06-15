@@ -29,7 +29,7 @@ Bu uygulama, [ByeDPIAndroid](https://github.com/dovecoteescapee/ByeDPIAndroid) u
 * İlk başta VPN'e bağlanarak isteği kabul etmeniz önerilir.
 * Bundan sonra, cihaz başlatıldığında, uygulama ayarlara göre (VPN/Proxy) hizmeti otomatik olarak başlatacaktır.
 * Android TV/BOX kullanıyorsanız ve Ethernet bağlantınız VPN'e bağlanırken kopuyorsa, beyaz liste modunu etkinleştirip VPN üzerinden çalışması gereken uygulamaları belirleyin (örneğin, YouTube).
-* [SberBOX](sbox.md) için kılavuz
+* Topluluktan kapsamlı talimatlar [ByeByeDPI-Manual (En)](https://github.com/HideakiTaiki/ByeByeDPI-Manual/blob/main/README.en.md)
 
 ### Türkiye İle İlgili Destek İçin
 * Discord: [nyaex](https://github.com/nyaexx) veya [shouyuma](https://github.com/Hamzahsl)

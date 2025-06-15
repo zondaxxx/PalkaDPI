@@ -29,7 +29,7 @@ This application is a fork of [ByeDPIAndroid](https://github.com/dovecoteescapee
 * It is recommended to connect to the VPN once to accept the request.
 * After that, upon device startup, the application will automatically launch the service based on settings (VPN/Proxy).
 * If you are using an Android TV/BOX and your Ethernet connection drops when connecting, enable whitelist mode and specify the apps that should work through the VPN (e.g., YouTube).
-* Guide for [SberBOX](sbox.md)
+* Comprehensive instruction from the community [ByeByeDPI-Manual (En)](https://github.com/HideakiTaiki/ByeByeDPI-Manual/blob/main/README.en.md)
 
 ### How to use ByeByeDPI with AdGuard?
 * Start ByeByeDPI in proxy mode.
