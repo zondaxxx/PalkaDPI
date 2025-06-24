@@ -52,6 +52,8 @@ Port: 1080 (default)
    ```
 3. The APK will be in `app/build/outputs/apk/release/`
 
+P.S.: hev_socks5_tunnel will not build under Windows, you will need to use WSL
+
 ### Dependencies
 - [ByeDPI](https://github.com/hufrea/byedpi)
 - [hev-socks5-tunnel](https://github.com/heiher/hev-socks5-tunnel)
