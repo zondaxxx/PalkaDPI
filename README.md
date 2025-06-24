@@ -52,7 +52,7 @@ git clone --recurse-submodules
 ```
 3. APK будет в `app/build/outputs/apk/release/`
 
-P.S.: hev_socks5_tunnel не соберется под Windows, вам нужно будет использовать WSL
+> P.S.: hev_socks5_tunnel не соберется под Windows, вам нужно будет использовать WSL
 
 ### Зависимости
 - [ByeDPI](https://github.com/hufrea/byedpi)

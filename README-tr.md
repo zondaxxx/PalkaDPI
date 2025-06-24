@@ -56,7 +56,7 @@ git clone --recurse-submodules
 ```
 3. APK `app/build/outputs/apk/release/` dizininde olacaktır
 
-Not: hev_socks5_tunnel Windows altında derlenmeyecektir, WSL kullanmanız gerekecektir
+> Not: hev_socks5_tunnel Windows altında derlenmeyecektir, WSL kullanmanız gerekecektir
 
 ### Bağımlılıklar
 - [ByeDPI](https://github.com/hufrea/byedpi)
