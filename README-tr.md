@@ -43,3 +43,19 @@ Bu uygulama, [ByeDPIAndroid](https://github.com/dovecoteescapee/ByeDPIAndroid) u
 Proxy Türü: SOCKS5
 Host: 127.0.0.1
 Port: 1080 (varsayılan)
+```
+
+### Oluşturma
+1. Depoyu alt modüllerle klonlayın:
+```bash
+git clone --recurse-submodules
+```
+2. Depo kökünden derleme betiğini çalıştırın:
+```bash
+./gradlew assemblyRelease
+```
+3. APK `app/build/outputs/apk/release/` dizininde olacaktır
+
+### Bağımlılıklar
+- [ByeDPI](https://github.com/hufrea/byedpi)
+- [hev-socks5-tunnel](https://github.com/heiher/hev-socks5-tunnel)

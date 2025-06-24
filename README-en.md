@@ -41,6 +41,17 @@ Host: 127.0.0.1
 Port: 1080 (default)
 ```
 
+### Building
+1. Clone the repository with submodules:
+   ```bash
+   git clone --recurse-submodules
+   ```
+2. Run the build script from the root of the repository:
+   ```bash
+   ./gradlew assembleRelease
+   ```
+3. The APK will be in `app/build/outputs/apk/release/`
+
 ### Dependencies
 - [ByeDPI](https://github.com/hufrea/byedpi)
 - [hev-socks5-tunnel](https://github.com/heiher/hev-socks5-tunnel)
