@@ -112,20 +112,16 @@
         \n
         Lütfen unutmayın: Bu test özelliği hâlâ geliştirme aşamasındadır ve komut seti şu anda sınırlıdır.\n
         Test sonuçları, proxy hakkında ön değerlendirme yapmanıza yardımcı olabilir; ancak testin başarılı tamamlanması, gerçek kullanım senaryolarında sorunsuz çalışacağı garantisini vermez.
-
     </string>
     <string name="test_crash">
         Uygulama test sırasında çöktü mü?\n\n
-        Test ayarlarına gidin ve komutlar arasındaki bekleme süresini 3 saniye artışlarla artırın.\n\n
-        Bu aynı zamanda, değiştirilmiş host dosyaları ve/veya aktif bir AdAway nedeniyle de olabilir.
-
+        Test ayarlarına gidin ve komutlar arasındaki bekleme süresini 2 saniye artışlarla artırın. (2, 4, 6..)\n\n
     </string>
     <string name="test_process">Kontrol ediliyor %1$d/%2$d</string>
     <string name="test_proxy_error">Proxy hatası. Test durduruldu.</string>
     <string name="test_good_cmds">%50 başarıya ulaşan komutlar</string>
     <string name="test_complete">Test tamamlandı</string>
     <string name="test_complete_info">Kullanmak veya kopyalamk için bir komuta basılı tut</string>
-    <string name="test_settings_gdomain">Test için en yakın GoogleVideo yu ekleyin</string>
     <string name="test_settings_fulllog">Cevap bilgilerini hostlardan log dosyasına dahil et </string>
     <string name="test_settings_logclickable">Test aşamasında tüm komutları tıklanabilir yap</string>
     <string name="test_settings_userdomains">Özel domain listesi kullan</string>
