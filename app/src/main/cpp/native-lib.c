@@ -1,7 +1,6 @@
 #include <string.h>
 
 #include <jni.h>
-#include <malloc.h>
 #include <getopt.h>
 #include <signal.h>
 #include <setjmp.h>
@@ -56,17 +55,13 @@ Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniStartProxy(JNIEnv *env
     LOG(LOG_S, "starting proxy with %d args", argc);
 
     int result = main(argc, argv);
-
-    for (int i = 0; i < argc; i++) {
-        free(argv[i]);
-    }
-
-    g_proxy_running = 0;
     if (result < 0) {
         LOG(LOG_S, "proxy failed to start");
+        g_proxy_running = 0;
         return result;
     }
 
+    g_proxy_running = 0;
     return 0;
 }
 
