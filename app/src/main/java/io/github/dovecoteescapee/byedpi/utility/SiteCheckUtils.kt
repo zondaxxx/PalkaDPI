@@ -62,8 +62,6 @@ class SiteCheckUtils(
                 responseCount++
             } catch (e: Exception) {
                 Log.e("SiteChecker", "Error accessing $site: ${e.message}")
-            } finally {
-                connection.disconnect()
             }
         }
 

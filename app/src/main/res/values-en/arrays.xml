@@ -24,4 +24,12 @@
         <item name="blacklist">Blacklist</item>
         <item name="whitelist">Whitelist</item>
     </array>
+
+    <array name="domain_lists_entries">
+        <item>YouTube</item>
+        <item>GoogleVideo</item>
+        <item>Discord</item>
+        <item>Cloudflare</item>
+        <item>Your list</item>
+    </array>
 </resources>

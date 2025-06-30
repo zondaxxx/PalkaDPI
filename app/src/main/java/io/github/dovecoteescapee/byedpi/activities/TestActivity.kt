@@ -33,8 +33,6 @@ import io.github.dovecoteescapee.byedpi.utility.SiteCheckUtils
 import kotlinx.coroutines.*
 import java.io.File
 import androidx.core.content.edit
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 
 class TestActivity : AppCompatActivity() {
 
@@ -50,7 +48,6 @@ class TestActivity : AppCompatActivity() {
 
     private var originalCmdArgs: String = ""
     private var testJob: Job? = null
-    private val proxyLock = Mutex()
 
     private val proxyIp: String = "127.0.0.1"
     private val proxyPort: Int = 10080
@@ -136,30 +133,23 @@ class TestActivity : AppCompatActivity() {
         }
     }
 
-    private suspend fun startProxyService() {
-        proxyLock.withLock {
-            try {
-                ServiceManager.start(this, Mode.Proxy)
-            } catch (e: Exception) {
-                Log.e("TestActivity", "Error start proxy service: ${e.message}")
-            }
+    private fun startProxyService() {
+        try {
+            ServiceManager.start(this, Mode.Proxy)
+        } catch (e: Exception) {
+            Log.e("TestActivity", "Error start proxy service: ${e.message}")
         }
     }
 
-    private suspend fun stopProxyService() {
-        proxyLock.withLock {
-            try {
-                ServiceManager.stop(this)
-            } catch (e: Exception) {
-                Log.e("TestActivity", "Error stop proxy service: ${e.message}")
-            }
+    private fun stopProxyService() {
+        try {
+            ServiceManager.stop(this)
+        } catch (e: Exception) {
+            Log.e("TestActivity", "Error stop proxy service: ${e.message}")
         }
     }
 
-    private suspend fun waitForProxyStatus(
-        statusNeeded: ServiceStatus,
-        timeoutMillis: Long = 5000L
-    ): Boolean {
+    private suspend fun waitForProxyStatus(statusNeeded: ServiceStatus, timeoutMillis: Long = 5000L): Boolean {
         val startTime = System.currentTimeMillis()
         while (System.currentTimeMillis() - startTime < timeoutMillis) {
             if (isProxyRunning() == (statusNeeded == ServiceStatus.Connected)) {
@@ -175,28 +165,27 @@ class TestActivity : AppCompatActivity() {
     }
 
     private fun startTesting() {
-        isTesting = true
-
-        startStopButton.text = getString(R.string.test_stop)
-        resultsTextView.text = ""
-        progressTextView.text = ""
-
-        originalCmdArgs = prefs.getString("byedpi_cmd_args", "").orEmpty()
-
         sites = loadSites().toMutableList()
         cmds = loadCmds()
 
+        resultsTextView.text = ""
+
+        if (sites.isEmpty()) {
+            appendTextToResults("${getString(R.string.test_settings_domain_empty)}\n")
+            return
+        }
+
+        isTesting = true
+        startStopButton.text = getString(R.string.test_stop)
+        progressTextView.text = ""
+        originalCmdArgs = prefs.getString("byedpi_cmd_args", "").orEmpty()
         clearLog()
 
         testJob = lifecycleScope.launch {
             val delaySec = prefs.getString("byedpi_proxytest_delay", "1")?.toIntOrNull() ?: 1
             val fullLog = prefs.getBoolean("byedpi_proxytest_fulllog", false)
             val logClickable = prefs.getBoolean("byedpi_proxytest_logclickable", false)
-            val requestsCount =
-                prefs.getString("byedpi_proxytest_requestsсount", "1")
-                    ?.toIntOrNull()
-                    ?.takeIf { it > 0 }
-                    ?: 1
+            val requestsCount = prefs.getString("byedpi_proxytest_requestsсount", "1")?.toIntOrNull()?.takeIf { it > 0 } ?: 1
 
             val successfulCmds = mutableListOf<Triple<String, Int, Int>>()
 
@@ -210,13 +199,13 @@ class TestActivity : AppCompatActivity() {
                 if (isProxyRunning()) stopTesting()
                 else startProxyService()
 
-                waitForProxyStatus(ServiceStatus.Connected)
-
                 if (logClickable) {
                     appendLinkToResults("$cmd\n")
                 } else {
                     appendTextToResults("$cmd\n")
                 }
+
+                waitForProxyStatus(ServiceStatus.Connected)
 
                 val totalRequests = sites.size * requestsCount
                 val checkResults = siteChecker.checkSitesAsync(
@@ -260,10 +249,10 @@ class TestActivity : AppCompatActivity() {
     }
 
     private fun stopTesting() {
-        updateCmdInPreferences(originalCmdArgs)
-
         isTesting = false
+
         testJob?.cancel()
+        testJob = null
         startStopButton.text = getString(R.string.test_start)
 
         lifecycleScope.launch {
@@ -353,26 +342,38 @@ class TestActivity : AppCompatActivity() {
     }
 
     private fun loadSites(): List<String> {
-        val userDomains = prefs.getBoolean("byedpi_proxytest_userdomains", false)
-        return if (userDomains) {
-            val domains = prefs.getString("byedpi_proxytest_domains", "").orEmpty()
-            domains.lines()
-                .map { it.trim() }
-                .filter { it.isNotEmpty() }
-        } else {
-            assets.open("proxytest_sites.txt").bufferedReader().useLines { it.toList() }
+        val defaultDomainLists = setOf("youtube", "googlevideo")
+        val selectedDomainLists = prefs.getStringSet("byedpi_proxytest_domain_lists", defaultDomainLists)?: return emptyList()
+
+        val allDomains = mutableListOf<String>()
+
+        for (domainList in selectedDomainLists) {
+            val domains = when (domainList) {
+                "custom" -> {
+                    val customDomains = prefs.getString("byedpi_proxytest_domains", "").orEmpty()
+                    customDomains.lines().map { it.trim() }.filter { it.isNotEmpty() }
+                }
+                else -> {
+                    try {
+                        assets.open("proxytest_$domainList.sites").bufferedReader().useLines { it.toList() }
+                    } catch (e: Exception) {
+                        emptyList()
+                    }
+                }
+            }
+            allDomains.addAll(domains)
         }
+
+        return allDomains.distinct()
     }
 
     private fun loadCmds(): List<String> {
         val userCommands = prefs.getBoolean("byedpi_proxytest_usercommands", false)
         return if (userCommands) {
             val commands = prefs.getString("byedpi_proxytest_commands", "").orEmpty()
-            commands.lines()
-                .map { it.trim() }
-                .filter { it.isNotEmpty() }
+            commands.lines().map { it.trim() }.filter { it.isNotEmpty() }
         } else {
-            assets.open("proxytest_cmds.txt").bufferedReader().useLines { it.toList() }
+            assets.open("proxytest_strategies.list").bufferedReader().useLines { it.toList() }
         }
     }
 
