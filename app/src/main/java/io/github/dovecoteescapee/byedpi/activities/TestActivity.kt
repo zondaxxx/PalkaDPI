@@ -152,9 +152,9 @@ class TestActivity : AppCompatActivity() {
         }
     }
 
-    private suspend fun waitForProxyStatus(statusNeeded: ServiceStatus, timeoutMillis: Long = 5000L): Boolean {
+    private suspend fun waitForProxyStatus(statusNeeded: ServiceStatus): Boolean {
         val startTime = System.currentTimeMillis()
-        while (System.currentTimeMillis() - startTime < timeoutMillis) {
+        while (System.currentTimeMillis() - startTime < 3000) {
             if (isProxyRunning() == (statusNeeded == ServiceStatus.Connected)) {
                 return false
             }
@@ -277,9 +277,9 @@ class TestActivity : AppCompatActivity() {
                 stopProxyService()
             }
 
-            startStopButton.text = "..."
-            testJob?.cancelAndJoin()
+            testJob?.cancel()
             testJob = null
+
             startStopButton.text = getString(R.string.test_start)
         }
     }
