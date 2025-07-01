@@ -110,7 +110,7 @@ class ByeDpiProxyService : LifecycleService() {
         stopSelf()
     }
 
-    private suspend fun startProxy() {
+    private fun startProxy() {
         Log.i(TAG, "Starting proxy")
 
         if (proxyJob != null) {
