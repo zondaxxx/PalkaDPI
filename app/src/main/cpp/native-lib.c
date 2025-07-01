@@ -31,6 +31,7 @@ Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniStartProxy(JNIEnv *env
     sa.sa_handler = sigsegv_handler;
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = 0;
+
     sigaction(SIGSEGV, &sa, NULL);
     sigaction(SIGABRT, &sa, NULL);
     sigaction(SIGBUS, &sa, NULL);
@@ -38,7 +39,6 @@ Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniStartProxy(JNIEnv *env
     if (setjmp(crash_jmp_buf) != 0) {
         LOG(LOG_S, "crash proxy, continuing...");
         g_proxy_running = 0;
-        clear_params();
         return 0;
     }
 

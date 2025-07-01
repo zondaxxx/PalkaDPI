@@ -30,9 +30,9 @@ import io.github.dovecoteescapee.byedpi.services.ServiceManager
 import io.github.dovecoteescapee.byedpi.utility.HistoryUtils
 import io.github.dovecoteescapee.byedpi.utility.getPreferences
 import io.github.dovecoteescapee.byedpi.utility.SiteCheckUtils
+import androidx.core.content.edit
 import kotlinx.coroutines.*
 import java.io.File
-import androidx.core.content.edit
 
 class TestActivity : AppCompatActivity() {
 
@@ -105,7 +105,6 @@ class TestActivity : AppCompatActivity() {
             }
         })
 
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
     }
 
@@ -133,19 +132,23 @@ class TestActivity : AppCompatActivity() {
         }
     }
 
-    private fun startProxyService() {
-        try {
-            ServiceManager.start(this, Mode.Proxy)
-        } catch (e: Exception) {
-            Log.e("TestActivity", "Error start proxy service: ${e.message}")
+    private suspend fun startProxyService() {
+        withContext(Dispatchers.IO) {
+            try {
+                ServiceManager.start(this@TestActivity, Mode.Proxy)
+            } catch (e: Exception) {
+                Log.e("TestActivity", "Error start proxy service: ${e.message}")
+            }
         }
     }
 
-    private fun stopProxyService() {
-        try {
-            ServiceManager.stop(this)
-        } catch (e: Exception) {
-            Log.e("TestActivity", "Error stop proxy service: ${e.message}")
+    private suspend fun stopProxyService() {
+        withContext(Dispatchers.IO) {
+            try {
+                ServiceManager.stop(this@TestActivity)
+            } catch (e: Exception) {
+                Log.e("TestActivity", "Error stop proxy service: ${e.message}")
+            }
         }
     }
 
@@ -168,20 +171,24 @@ class TestActivity : AppCompatActivity() {
         sites = loadSites().toMutableList()
         cmds = loadCmds()
 
-        resultsTextView.text = ""
-
         if (sites.isEmpty()) {
+            resultsTextView.text = ""
             appendTextToResults("${getString(R.string.test_settings_domain_empty)}\n")
             return
         }
 
-        isTesting = true
-        startStopButton.text = getString(R.string.test_stop)
-        progressTextView.text = ""
-        originalCmdArgs = prefs.getString("byedpi_cmd_args", "").orEmpty()
-        clearLog()
+        testJob = lifecycleScope.launch(Dispatchers.IO) {
+            isTesting = true
+            originalCmdArgs = prefs.getString("byedpi_cmd_args", "").orEmpty()
+            clearLog()
 
-        testJob = lifecycleScope.launch {
+            withContext(Dispatchers.Main) {
+                window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                startStopButton.text = getString(R.string.test_stop)
+                progressTextView.text = ""
+                resultsTextView.text = ""
+            }
+
             val delaySec = prefs.getString("byedpi_proxytest_delay", "1")?.toIntOrNull() ?: 1
             val fullLog = prefs.getBoolean("byedpi_proxytest_fulllog", false)
             val logClickable = prefs.getBoolean("byedpi_proxytest_logclickable", false)
@@ -199,10 +206,12 @@ class TestActivity : AppCompatActivity() {
                 if (isProxyRunning()) stopTesting()
                 else startProxyService()
 
-                if (logClickable) {
-                    appendLinkToResults("$cmd\n")
-                } else {
-                    appendTextToResults("$cmd\n")
+                withContext(Dispatchers.Main) {
+                    if (logClickable) {
+                        appendLinkToResults("$cmd\n")
+                    } else {
+                        appendTextToResults("$cmd\n")
+                    }
                 }
 
                 waitForProxyStatus(ServiceStatus.Connected)
@@ -223,7 +232,10 @@ class TestActivity : AppCompatActivity() {
                 val successPercentage = (successfulCount * 100) / totalRequests
 
                 if (successPercentage >= 50) successfulCmds.add(Triple(cmd, successfulCount, totalRequests))
-                appendTextToResults("$successfulCount/$totalRequests ($successPercentage%)\n\n")
+
+                withContext(Dispatchers.Main) {
+                    appendTextToResults("$successfulCount/$totalRequests ($successPercentage%)\n\n")
+                }
 
                 if (isProxyRunning()) stopProxyService()
                 else stopTesting()
@@ -234,16 +246,23 @@ class TestActivity : AppCompatActivity() {
 
             successfulCmds.sortByDescending { it.second }
 
-            progressTextView.text = getString(R.string.test_complete)
-            appendTextToResults("${getString(R.string.test_good_cmds)}\n\n")
+            withContext(Dispatchers.Main) {
+                appendTextToResults("${getString(R.string.test_good_cmds)}\n\n")
 
-            successfulCmds.forEachIndexed { index, (cmd, successCount, total) ->
-                appendTextToResults("${index + 1}. ")
-                appendLinkToResults("$cmd\n")
-                appendTextToResults("$successCount/$total\n\n")
+                successfulCmds.forEachIndexed { index, (cmd, successCount, total) ->
+                    appendTextToResults("${index + 1}. ")
+                    appendLinkToResults("$cmd\n")
+                    appendTextToResults("$successCount/$total\n\n")
+                }
+
+                appendTextToResults(getString(R.string.test_complete_info))
             }
 
-            appendTextToResults(getString(R.string.test_complete_info))
+            withContext(Dispatchers.Main) {
+                window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                progressTextView.text = getString(R.string.test_complete)
+            }
+
             stopTesting()
         }
     }
@@ -251,14 +270,17 @@ class TestActivity : AppCompatActivity() {
     private fun stopTesting() {
         isTesting = false
 
-        testJob?.cancel()
-        testJob = null
-        startStopButton.text = getString(R.string.test_start)
-
         lifecycleScope.launch {
+            updateCmdInPreferences(originalCmdArgs)
+
             if (isProxyRunning()) {
                 stopProxyService()
             }
+
+            startStopButton.text = "..."
+            testJob?.cancelAndJoin()
+            testJob = null
+            startStopButton.text = getString(R.string.test_start)
         }
     }
 
