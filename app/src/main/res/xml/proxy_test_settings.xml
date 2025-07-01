@@ -6,7 +6,7 @@
         android:key="byedpi_proxytest_delay"
         android:title="@string/test_delay"
         android:inputType="number"
-        android:defaultValue="0"
+        android:defaultValue="1"
         app:useSimpleSummaryProvider="true" />
 
     <com.takisoft.preferencex.EditTextPreference
