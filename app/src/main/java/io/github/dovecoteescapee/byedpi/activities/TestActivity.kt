@@ -198,7 +198,10 @@ class TestActivity : AppCompatActivity() {
 
             for ((index, cmd) in cmds.withIndex()) {
                 val cmdIndex = index + 1
-                progressTextView.text = getString(R.string.test_process, cmdIndex, cmds.size)
+
+                withContext(Dispatchers.Main) {
+                    progressTextView.text = getString(R.string.test_process, cmdIndex, cmds.size)
+                }
 
                 val testCmd = "--ip $proxyIp --port $proxyPort $cmd"
                 updateCmdInPreferences(testCmd)
