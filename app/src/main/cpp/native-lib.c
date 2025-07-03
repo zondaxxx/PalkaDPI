@@ -76,17 +76,14 @@ Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniStartProxy(JNIEnv *env
 
     g_proxy_running = 1;
     optind = optreset = 1;
-    LOG(LOG_S, "starting proxy with %d args", argc);
 
+    LOG(LOG_S, "starting proxy with %d args", argc);
     int result = main(argc, argv);
-    if (result < 0) {
-        LOG(LOG_S, "proxy failed to start");
-        g_proxy_running = 0;
-        return result;
-    }
+    LOG(LOG_S, "proxy return code %d", result);
 
     g_proxy_running = 0;
-    return 0;
+    reset_params();
+    return result;
 }
 
 JNIEXPORT jint JNICALL
