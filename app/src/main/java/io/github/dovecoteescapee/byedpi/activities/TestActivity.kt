@@ -89,11 +89,15 @@ class TestActivity : AppCompatActivity() {
         }
 
         startStopButton.setOnClickListener {
+            startStopButton.isClickable = false
+
             if (isTesting) {
                 stopTesting()
             } else {
                 startTesting()
             }
+
+            startStopButton.postDelayed({ startStopButton.isClickable = true }, 500)
         }
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {

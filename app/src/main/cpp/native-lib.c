@@ -12,11 +12,33 @@ extern int server_fd;
 static int g_proxy_running = 0;
 static jmp_buf crash_jmp_buf;
 
+struct params default_params = {
+        .await_int = 10,
+        .cache_ttl = 100800,
+        .ipv6 = 1,
+        .resolve = 1,
+        .udp = 1,
+        .max_open = 512,
+        .bfsize = 16384,
+        .baddr = {
+            .in6 = { .sin6_family = AF_INET6 }
+        },
+        .laddr = {
+            .in = { .sin_family = AF_INET }
+        },
+        .debug = 0
+};
+
+void reset_params(void) {
+    clear_params();
+    params = default_params;
+}
+
 void sigsegv_handler(int sig) {
     LOG(LOG_S, "SIGSEGV caught in native code, signal: %d", sig);
     longjmp(crash_jmp_buf, 1);
     g_proxy_running = 0;
-    clear_params();
+    reset_params();
 }
 
 JNIEXPORT jint JNICALL
@@ -39,6 +61,7 @@ Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniStartProxy(JNIEnv *env
     if (setjmp(crash_jmp_buf) != 0) {
         LOG(LOG_S, "crash proxy, continuing...");
         g_proxy_running = 0;
+        reset_params();
         return 0;
     }
 
@@ -76,7 +99,7 @@ Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniStopProxy(__attribute_
     }
 
     shutdown(server_fd, SHUT_RDWR);
-    clear_params();
+    reset_params();
 
     g_proxy_running = 0;
     return 1;
