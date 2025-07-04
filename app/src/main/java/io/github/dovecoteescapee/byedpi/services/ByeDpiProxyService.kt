@@ -30,10 +30,6 @@ class ByeDpiProxyService : LifecycleService() {
         private const val NOTIFICATION_CHANNEL_ID: String = "ByeDPI Proxy"
 
         private var status: ServiceStatus = ServiceStatus.Disconnected
-
-        fun getStatus(): ServiceStatus {
-            return status
-        }
     }
 
     override fun onCreate() {

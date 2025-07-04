@@ -24,8 +24,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import io.github.dovecoteescapee.byedpi.R
 import io.github.dovecoteescapee.byedpi.data.Mode
-import io.github.dovecoteescapee.byedpi.data.ServiceStatus
-import io.github.dovecoteescapee.byedpi.services.ByeDpiProxyService
+import io.github.dovecoteescapee.byedpi.data.AppStatus
+import io.github.dovecoteescapee.byedpi.services.appStatus
 import io.github.dovecoteescapee.byedpi.services.ServiceManager
 import io.github.dovecoteescapee.byedpi.utility.HistoryUtils
 import io.github.dovecoteescapee.byedpi.utility.getPreferences
@@ -46,7 +46,7 @@ class TestActivity : AppCompatActivity() {
     private lateinit var sites: MutableList<String>
     private lateinit var cmds: List<String>
 
-    private var originalCmdArgs: String = ""
+    private var savedCmd: String = ""
     private var testJob: Job? = null
 
     private val proxyIp: String = "127.0.0.1"
@@ -156,19 +156,24 @@ class TestActivity : AppCompatActivity() {
         }
     }
 
-    private suspend fun waitForProxyStatus(statusNeeded: ServiceStatus): Boolean {
+    private suspend fun waitForProxyStatus(statusNeeded: AppStatus): Boolean {
         val startTime = System.currentTimeMillis()
         while (System.currentTimeMillis() - startTime < 3000) {
-            if (isProxyRunning() == (statusNeeded == ServiceStatus.Connected)) {
-                return false
+            if (appStatus.first == statusNeeded) {
+                delay(100)
+                return true
             }
             delay(100)
         }
-        return true
+        return false
     }
 
     private suspend fun isProxyRunning(): Boolean = withContext(Dispatchers.IO) {
-        ByeDpiProxyService.getStatus() == ServiceStatus.Connected
+        appStatus.first == AppStatus.Running
+    }
+
+    private fun updateCmdArgs(cmd: String) {
+        prefs.edit { putString("byedpi_cmd_args", cmd) }
     }
 
     private fun startTesting() {
@@ -183,7 +188,7 @@ class TestActivity : AppCompatActivity() {
 
         testJob = lifecycleScope.launch(Dispatchers.IO) {
             isTesting = true
-            originalCmdArgs = prefs.getString("byedpi_cmd_args", "").orEmpty()
+            savedCmd = prefs.getString("byedpi_cmd_args", "").orEmpty()
             clearLog()
 
             withContext(Dispatchers.Main) {
@@ -207,8 +212,7 @@ class TestActivity : AppCompatActivity() {
                     progressTextView.text = getString(R.string.test_process, cmdIndex, cmds.size)
                 }
 
-                val testCmd = "--ip $proxyIp --port $proxyPort $cmd"
-                updateCmdInPreferences(testCmd)
+                updateCmdArgs("--ip $proxyIp --port $proxyPort $cmd")
 
                 if (isProxyRunning()) stopTesting()
                 else startProxyService()
@@ -221,7 +225,9 @@ class TestActivity : AppCompatActivity() {
                     }
                 }
 
-                waitForProxyStatus(ServiceStatus.Connected)
+                if (!waitForProxyStatus(AppStatus.Running)) {
+                    stopTesting()
+                }
 
                 val totalRequests = sites.size * requestsCount
                 val checkResults = siteChecker.checkSitesAsync(
@@ -247,7 +253,10 @@ class TestActivity : AppCompatActivity() {
                 if (isProxyRunning()) stopProxyService()
                 else stopTesting()
 
-                waitForProxyStatus(ServiceStatus.Disconnected)
+                if (!waitForProxyStatus(AppStatus.Halted)) {
+                    stopTesting()
+                }
+
                 delay(delaySec * 1000L)
             }
 
@@ -276,13 +285,11 @@ class TestActivity : AppCompatActivity() {
 
     private fun stopTesting() {
         isTesting = false
+        
+        updateCmdArgs(savedCmd)
 
         lifecycleScope.launch {
-            updateCmdInPreferences(originalCmdArgs)
-
-            if (isProxyRunning()) {
-                stopProxyService()
-            }
+            if (isProxyRunning()) stopProxyService()
 
             testJob?.cancel()
             testJob = null
@@ -341,7 +348,7 @@ class TestActivity : AppCompatActivity() {
     }
 
     private fun addToHistory(command: String) {
-        updateCmdInPreferences(command)
+        updateCmdArgs(command)
         cmdHistoryUtils.addCommand(command)
     }
 
@@ -404,9 +411,5 @@ class TestActivity : AppCompatActivity() {
         } else {
             assets.open("proxytest_strategies.list").bufferedReader().useLines { it.toList() }
         }
-    }
-
-    private fun updateCmdInPreferences(cmd: String) {
-        prefs.edit { putString("byedpi_cmd_args", cmd) }
     }
 }
