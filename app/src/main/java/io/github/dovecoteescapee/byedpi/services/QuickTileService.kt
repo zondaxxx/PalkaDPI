@@ -1,7 +1,5 @@
 package io.github.dovecoteescapee.byedpi.services
 
-import android.content.ComponentName
-import android.content.Context
 import android.net.VpnService
 import android.os.Build
 import android.service.quicksettings.Tile
@@ -17,25 +15,39 @@ class QuickTileService : TileService() {
 
     companion object {
         private const val TAG = "QuickTileService"
+    }
 
-        fun updateTile(context: Context) {
-            requestListeningState(context, ComponentName(context, QuickTileService::class.java))
-        }
+    private var appTile: Tile? = null
+
+    override fun onTileAdded() {
+        super.onTileAdded()
+        Log.i(TAG, "Tile added")
+    }
+
+    override fun onTileRemoved() {
+        super.onTileRemoved()
+        Log.i(TAG, "Tile removed")
     }
 
     override fun onStartListening() {
         super.onStartListening()
+        appTile = qsTile
         updateStatus()
     }
 
-    override fun onClick() {
-        if (qsTile.state == Tile.STATE_UNAVAILABLE) return
+    override fun onStopListening() {
+        super.onStopListening()
+        appTile = null
+    }
 
-        unlockAndRun { handleClick() }
+    override fun onClick() {
+        super.onClick()
+        handleClick()
     }
 
     private fun handleClick() {
         val (status) = appStatus
+
         when (status) {
             AppStatus.Halted -> {
                 val mode = getPreferences().mode()
@@ -54,7 +66,6 @@ class QuickTileService : TileService() {
         }
 
         Log.i(TAG, "Toggle tile")
-        updateTile(this)
     }
 
     private fun updateStatus() {
@@ -68,7 +79,7 @@ class QuickTileService : TileService() {
     }
 
     private fun setState(newState: Int) {
-        qsTile?.apply {
+        appTile?.apply {
             state = newState
             updateTile()
         }
