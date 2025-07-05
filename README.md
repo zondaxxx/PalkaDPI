@@ -1,11 +1,19 @@
-# ByeByeDPI Android 
-Русский | [English](README-en.md) | [Türkçe](README-tr.md)
-
-<div style="text-align: center;">
-  <img alt="Логотип ByeDPI" src="https://github.com/romanvht/ByeDPIAndroid/raw/master/.github/images/app.svg" width="100%" height="200px">
+<div align="center">
+  <p>
+    <img src="https://github.com/romanvht/ByeDPIAndroid/raw/master/.github/images/app.svg" alt="Логотип ByeDPI" width="200" />
+  </p>
+  <h1>ByeByeDPI Android</h1>
+  <p>
+    Русский |
+    <a href="README-en.md">English</a> |
+    <a href="README-tr.md">Türkçe</a>
+  </p>
+  <p>
+    <a href="https://github.com/romanvht/ByeByeDPI/releases/latest"><img src="https://img.shields.io/github/v/release/romanvht/ByeByeDPI" alt="Latest Release" /></a>
+    <a href="https://github.com/romanvht/ByeByeDPI/releases"><img src="https://img.shields.io/github/downloads/romanvht/ByeByeDPI/total" alt="Downloads" /></a>
+    <a href="https://github.com/romanvht/ByeByeDPI/blob/master/LICENSE"><img src="https://img.shields.io/github/license/romanvht/ByeByeDPI" alt="License" /></a>
+  </p>
 </div>
-
----
 
 Приложение для Android, которое локально запускает ByeDPI и перенаправляет весь трафик через него.
 
