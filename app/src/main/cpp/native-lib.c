@@ -48,7 +48,6 @@ Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniStartProxy(JNIEnv *env
         return -1;
     }
 
-    // Попытка избавится от краша приложения при остановке прокси
     struct sigaction sa;
     sa.sa_handler = sigsegv_handler;
     sigemptyset(&sa.sa_mask);
@@ -74,15 +73,16 @@ Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniStartProxy(JNIEnv *env
         (*env)->ReleaseStringUTFChars(env, arg, arg_str);
     }
 
+    LOG(LOG_S, "starting proxy with %d args", argc);
     g_proxy_running = 1;
     optind = optreset = 1;
 
-    LOG(LOG_S, "starting proxy with %d args", argc);
     int result = main(argc, argv);
-    LOG(LOG_S, "proxy return code %d", result);
 
+    LOG(LOG_S, "proxy return code %d", result);
     g_proxy_running = 0;
     reset_params();
+
     return result;
 }
 
@@ -92,12 +92,27 @@ Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniStopProxy(__attribute_
 
     if (!g_proxy_running) {
         LOG(LOG_S, "proxy is not running");
-        return 0;
+        return -1;
     }
 
     shutdown(server_fd, SHUT_RDWR);
+    g_proxy_running = 0;
     reset_params();
 
-    g_proxy_running = 0;
-    return 1;
+    return 0;
 }
+
+JNIEXPORT jint JNICALL
+Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniForceClose(__attribute__((unused)) JNIEnv *env, __attribute__((unused)) jobject thiz) {
+    LOG(LOG_S, "closing server socket (fd: %d)", server_fd);
+
+    if (close(server_fd) == -1) {
+        LOG(LOG_S, "failed to close server socket (fd: %d)", server_fd);
+        return -1;
+    }
+
+    LOG(LOG_S, "proxy socket force close");
+    return 0;
+}
+
+
