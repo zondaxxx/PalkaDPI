@@ -1,9 +1,11 @@
 package io.github.dovecoteescapee.byedpi.activities
 
+import android.app.UiModeManager
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Bundle
 import android.text.SpannableString
 import android.text.Spanned
@@ -151,6 +153,11 @@ class TestActivity : AppCompatActivity() {
         appStatus.first == AppStatus.Running
     }
 
+    private fun isAndroidTV(context: Context): Boolean {
+        val uiModeManager = context.getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
+        return uiModeManager.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION
+    }
+
     private fun updateCmdArgs(cmd: String) {
         prefs.edit { putString("byedpi_cmd_args", cmd) }
     }
@@ -268,12 +275,18 @@ class TestActivity : AppCompatActivity() {
         updateCmdArgs(savedCmd)
 
         lifecycleScope.launch {
-            if (isProxyRunning()) ServiceManager.stop(this@TestActivity)
+            if (isProxyRunning()) {
+                ServiceManager.stop(this@TestActivity)
+            }
 
             testJob?.cancel()
             testJob = null
 
             startStopButton.text = getString(R.string.test_start)
+
+            if (isAndroidTV(this@TestActivity)) {
+                recreate()
+            }
         }
     }
 
