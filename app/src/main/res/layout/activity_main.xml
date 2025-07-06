@@ -9,18 +9,17 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/status_button"
+        android:backgroundTint="?attr/colorPrimary"
+        android:textColor="?attr/colorOnPrimary"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:backgroundTint="?attr/colorPrimary"
         android:paddingLeft="10pt"
         android:paddingTop="5pt"
         android:paddingRight="10pt"
         android:paddingBottom="5pt"
         android:textAllCaps="false"
-        android:textColor="?attr/colorOnPrimary"
         android:textSize="24sp"
-        app:cornerRadius="15dp"
         tools:text="@string/vpn_connect" />
 
     <com.google.android.material.textview.MaterialTextView

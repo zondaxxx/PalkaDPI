@@ -14,10 +14,8 @@
         android:layout_gravity="center_horizontal"
         android:insetTop="0dp"
         android:insetBottom="0dp"
-        android:paddingLeft="11pt"
-        android:paddingRight="11pt"
-        android:textSize="18sp"
-        app:cornerRadius="10dp"
+        android:paddingLeft="10pt"
+        android:paddingRight="10pt"
         android:text="@string/test_start" />
 
     <TextView
