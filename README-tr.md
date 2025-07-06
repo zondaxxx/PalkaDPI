@@ -36,11 +36,12 @@ Bu uygulama, [ByeDPIAndroid](https://github.com/dovecoteescapee/ByeDPIAndroid) u
 * Otomatik başlatmayı etkinleştirmek için ayarlarda seçeneği aktifleştirin.
 * İlk başta VPN'e bağlanarak isteği kabul etmeniz önerilir.
 * Bundan sonra, cihaz başlatıldığında, uygulama ayarlara göre (VPN/Proxy) hizmeti otomatik olarak başlatacaktır.
-* Android TV/BOX kullanıyorsanız ve Ethernet bağlantınız VPN'e bağlanırken kopuyorsa, beyaz liste modunu etkinleştirip VPN üzerinden çalışması gereken uygulamaları belirleyin (örneğin, YouTube).
-* Topluluktan kapsamlı talimatlar [ByeByeDPI-Manual (En)](https://github.com/HideakiTaiki/ByeByeDPI-Manual/blob/main/README.en.md)
+* Android TV/BOX kullanıyorsanız ve Ethernet bağlantınız VPN'e bağlanırken kopuyorsa, beyaz liste modunu etkinleştirip VPN üzerinden çalışması gereken uygulamaları belirleyin (örneğin, Discord).
+* Topluluktan kapsamlı talimatlar [ByeByeDPI-Manual (İngilizce)](https://github.com/HideakiTaiki/ByeByeDPI-Manual/blob/main/README.en.md)
 
-### Türkiye İle İlgili Destek İçin
-* Discord: [nyaex](https://github.com/nyaexx) veya [shouyuma](https://github.com/Hamzahsl)
+### Türkiye İle İlgili
+* Uygulama Türkiyede uygulanan DPI'ı aşmak için şuanlık yeterlidir. İlk başta çalıştırdığınızda uygulama DPI'ı aşamayabilir. UI editöründen rastgele taktikler deneyebilirsiniz veya şuan Deneysel özellik olan proxy modundan bazı argümanlar alıp onları Komut satırı editöründe deneyebilirsiniz.
+* Türkiye ile alakalı destek için Discord: [nyaex](https://github.com/nyaexx)
 
 
 ### ByeByeDPI'yi AdGuard ile nasıl kullanırım?
