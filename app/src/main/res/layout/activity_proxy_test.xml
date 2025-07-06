@@ -16,6 +16,7 @@
         android:insetBottom="0dp"
         android:paddingLeft="10pt"
         android:paddingRight="10pt"
+        android:textAllCaps="true"
         android:text="@string/test_start" />
 
     <TextView
