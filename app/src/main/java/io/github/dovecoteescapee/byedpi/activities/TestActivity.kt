@@ -35,7 +35,7 @@ import androidx.core.content.edit
 import kotlinx.coroutines.*
 import java.io.File
 
-class TestActivity : AppCompatActivity() {
+class TestActivity : BaseActivity() {
 
     private lateinit var scrollTextView: ScrollView
     private lateinit var progressTextView: TextView

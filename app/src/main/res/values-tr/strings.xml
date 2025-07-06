@@ -17,7 +17,7 @@
     <string name="settings_unavailable">Ayarları açmak için bağlantıyı kesin</string>
     <string name="title_settings">Ayarlar</string>
     <string name="save_logs">Olay günlüklerini kaydet</string>
-    <string name="reset_settings">Reset</string>
+    <string name="reset_settings">Sıfırla</string>
     <string name="export_settings">Ayarları Dışa Aktar</string>
     <string name="import_settings">Ayarları İçe Aktar</string>
     <string name="logs_failed">Günlükleri toplarken bir hata oluştu</string>
@@ -122,13 +122,13 @@
     <string name="test_good_cmds">%50 başarıya ulaşan komutlar</string>
     <string name="test_complete">Test tamamlandı</string>
     <string name="test_complete_info">Kullanmak veya kopyalamk için bir komuta basılı tut</string>
-    <string name="test_settings_fulllog">Cevap bilgilerini hostlardan log dosyasına dahil et </string>
+    <string name="test_settings_fulllog">Cevap bilgilerini hostlardan log dosyasına dahil et</string>
     <string name="test_settings_logclickable">Test aşamasında tüm komutları tıklanabilir yap</string>
     <string name="test_settings_domain_lists">Test için alan adı listeleri</string>
     <string name="test_settings_domain_empty">Test edilecek alan adı yok</string>
     <string name="test_settings_domains">Alan adlarınızın listesi</string>
     <string name="test_settings_usercommands">Özel komut listesi kullan</string>
     <string name="test_settings_commands">Komut listesi</string>
-    <string name="test_delay">Komutlar arasındaki gecikme\nsaniye cinsinden</string>
+    <string name="test_delay">Komutlar arasındaki gecikme\n(saniye cinsinden)</string>
     <string name="test_requestsсount">Domain isteklerinin sayısı</string>
 </resources>
