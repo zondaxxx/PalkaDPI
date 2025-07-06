@@ -1,15 +1,16 @@
 package io.github.dovecoteescapee.byedpi.activities
 
+import android.app.UiModeManager
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Bundle
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.method.LinkMovementMethod
 import android.text.style.ClickableSpan
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -136,26 +137,6 @@ class TestActivity : BaseActivity() {
         }
     }
 
-    private suspend fun startProxyService() {
-        withContext(Dispatchers.IO) {
-            try {
-                ServiceManager.start(this@TestActivity, Mode.Proxy)
-            } catch (e: Exception) {
-                Log.e("TestActivity", "Error start proxy service: ${e.message}")
-            }
-        }
-    }
-
-    private suspend fun stopProxyService() {
-        withContext(Dispatchers.IO) {
-            try {
-                ServiceManager.stop(this@TestActivity)
-            } catch (e: Exception) {
-                Log.e("TestActivity", "Error stop proxy service: ${e.message}")
-            }
-        }
-    }
-
     private suspend fun waitForProxyStatus(statusNeeded: AppStatus): Boolean {
         val startTime = System.currentTimeMillis()
         while (System.currentTimeMillis() - startTime < 3000) {
@@ -170,6 +151,11 @@ class TestActivity : BaseActivity() {
 
     private suspend fun isProxyRunning(): Boolean = withContext(Dispatchers.IO) {
         appStatus.first == AppStatus.Running
+    }
+
+    private fun isAndroidTV(context: Context): Boolean {
+        val uiModeManager = context.getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
+        return uiModeManager.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION
     }
 
     private fun updateCmdArgs(cmd: String) {
@@ -215,7 +201,7 @@ class TestActivity : BaseActivity() {
                 updateCmdArgs("--ip $proxyIp --port $proxyPort $cmd")
 
                 if (isProxyRunning()) stopTesting()
-                else startProxyService()
+                else ServiceManager.start(this@TestActivity, Mode.Proxy)
 
                 withContext(Dispatchers.Main) {
                     if (logClickable) {
@@ -250,7 +236,7 @@ class TestActivity : BaseActivity() {
                     appendTextToResults("$successfulCount/$totalRequests ($successPercentage%)\n\n")
                 }
 
-                if (isProxyRunning()) stopProxyService()
+                if (isProxyRunning()) ServiceManager.stop(this@TestActivity)
                 else stopTesting()
 
                 if (!waitForProxyStatus(AppStatus.Halted)) {
@@ -289,12 +275,18 @@ class TestActivity : BaseActivity() {
         updateCmdArgs(savedCmd)
 
         lifecycleScope.launch {
-            if (isProxyRunning()) stopProxyService()
+            if (isProxyRunning()) {
+                ServiceManager.stop(this@TestActivity)
+            }
 
             testJob?.cancel()
             testJob = null
 
             startStopButton.text = getString(R.string.test_start)
+
+            if (isAndroidTV(this@TestActivity)) {
+                recreate()
+            }
         }
     }
 
