@@ -1,11 +1,8 @@
 package io.github.dovecoteescapee.byedpi.activities
 
-import android.app.UiModeManager
 import android.content.ClipData
 import android.content.ClipboardManager
-import android.content.Context
 import android.content.Intent
-import android.content.res.Configuration
 import android.os.Bundle
 import android.text.SpannableString
 import android.text.Spanned
