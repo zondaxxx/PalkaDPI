@@ -34,9 +34,10 @@ class SiteCheckUtils(
         onSiteChecked: ((String, Int, Int) -> Unit)? = null
     ): List<Pair<String, Int>> {
         return withContext(Dispatchers.IO) {
+            val client = createClient()
             sites.map { site ->
                 async {
-                    val successCount = checkSiteAccess(site, requestsCount)
+                    val successCount = checkSiteAccess(client, site, requestsCount)
                     if (fullLog) {
                         onSiteChecked?.invoke(site, successCount, requestsCount)
                     }
@@ -47,6 +48,7 @@ class SiteCheckUtils(
     }
 
     private suspend fun checkSiteAccess(
+        client: OkHttpClient,
         site: String,
         requestsCount: Int
     ): Int = withContext(Dispatchers.IO) {
@@ -60,8 +62,6 @@ class SiteCheckUtils(
 
             try {
                 val request = Request.Builder().url(formattedUrl).build()
-                val client = createClient()
-
                 client.newCall(request).execute().use { response ->
                     val responseCode = response.code
                     Log.i("SiteChecker", "Response for $site: $responseCode")
