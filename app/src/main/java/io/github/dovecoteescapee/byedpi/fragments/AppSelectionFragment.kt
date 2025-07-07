@@ -118,6 +118,6 @@ class AppSelectionFragment : Fragment() {
             selectedApps.remove(packageName)
         }
 
-        prefs.edit(commit = true) { putStringSet("selected_apps", selectedApps) }
+        prefs.edit { putStringSet("selected_apps", selectedApps) }
     }
 }
