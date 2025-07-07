@@ -152,11 +152,6 @@ class TestActivity : BaseActivity() {
         appStatus.first == AppStatus.Running
     }
 
-    private fun isAndroidTV(context: Context): Boolean {
-        val uiModeManager = context.getSystemService(UI_MODE_SERVICE) as UiModeManager
-        return uiModeManager.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION
-    }
-
     private fun updateCmdArgs(cmd: String) {
         prefs.edit(commit = true) { putString("byedpi_cmd_args", cmd) }
     }
@@ -274,18 +269,12 @@ class TestActivity : BaseActivity() {
         updateCmdArgs(savedCmd)
 
         lifecycleScope.launch {
-            if (isProxyRunning()) {
-                ServiceManager.stop(this@TestActivity)
-            }
+            if (isProxyRunning()) ServiceManager.stop(this@TestActivity)
 
             testJob?.cancel()
             testJob = null
 
             startStopButton.text = getString(R.string.test_start)
-
-            if (isAndroidTV(this@TestActivity)) {
-                recreate()
-            }
         }
     }
 
