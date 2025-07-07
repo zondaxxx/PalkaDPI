@@ -42,13 +42,16 @@
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/open_editor_link"
         android:layout_width="wrap_content"
-        android:layout_height="48dp"
+        android:layout_height="32dp"
         android:layout_below="@id/proxy_address"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="8dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:gravity="center"
         android:clickable="true"
         android:focusable="true"
         android:text="@string/open_editor"
+        android:background="?attr/selectableItemBackground"
         android:textColor="?attr/colorPrimary" />
 
 </RelativeLayout>

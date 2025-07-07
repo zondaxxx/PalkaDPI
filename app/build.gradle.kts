@@ -10,10 +10,9 @@ android {
     defaultConfig {
         applicationId = "io.github.romanvht.byedpi"
         minSdk = 21
-        //noinspection OldTargetApi
         targetSdk = 34
         versionCode = 1508
-        versionName = "1.5.8"
+        versionName = "1.5.8 (beta)"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

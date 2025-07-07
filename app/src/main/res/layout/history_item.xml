@@ -3,14 +3,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingTop="0dp"
-    android:paddingBottom="16dp">
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginBottom="16dp"
-        android:background="?android:attr/listDivider" />
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp">
 
     <TextView
         android:id="@android:id/title"
@@ -18,9 +12,7 @@
         android:layout_height="wrap_content"
         android:paddingStart="72dp"
         android:paddingEnd="24dp"
-        android:textColor="?android:attr/colorAccent"
-        android:textStyle="bold"
-        android:paddingBottom="4dp" />
+        android:textColor="?android:attr/textColorPrimary" />
 
     <TextView
         android:id="@android:id/summary"
@@ -28,7 +20,6 @@
         android:layout_height="wrap_content"
         android:paddingStart="72dp"
         android:paddingEnd="24dp"
-        android:textColor="?android:attr/textColorSecondary"
-        android:textSize="12sp" />
-
+        android:textSize="12sp"
+        android:textColor="?android:attr/textColorSecondary" />
 </LinearLayout>

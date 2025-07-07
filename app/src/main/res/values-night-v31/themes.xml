@@ -12,6 +12,8 @@
 
         <item name="colorControlActivated">?attr/colorPrimary</item>
         <item name="colorControlHighlight">?attr/colorSurfaceContainer</item>
+
+        <item name="alertDialogTheme">@style/CustomAlertDialog</item>
     </style>
 
     <style name="ActionBarTheme" parent="Widget.AppCompat.ActionBar.Solid">
@@ -20,6 +22,13 @@
     </style>
 
     <style name="ActionBarTextTheme" parent="ThemeOverlay.Material3.ActionBar">
+        <item name="android:textColorPrimary">?attr/colorOnSurface</item>
+        <item name="android:textColorSecondary">?attr/colorOnSurfaceVariant</item>
+    </style>
+
+    <style name="CustomAlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="android:windowBackground">@drawable/material_alert</item>
+        <item name="android:backgroundTint">?attr/colorSurfaceContainerHigh</item>
         <item name="android:textColorPrimary">?attr/colorOnSurface</item>
         <item name="android:textColorSecondary">?attr/colorOnSurfaceVariant</item>
     </style>
