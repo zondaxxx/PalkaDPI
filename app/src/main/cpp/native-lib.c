@@ -36,7 +36,13 @@ void reset_params(void) {
 
 void sigsegv_handler(int sig) {
     LOG(LOG_S, "SIGSEGV caught in native code, signal: %d", sig);
-    longjmp(crash_jmp_buf, 1);
+
+    if (sig == 11) {
+        longjmp(crash_jmp_buf, 1);
+    } else {
+        shutdown(server_fd, SHUT_RDWR);
+    }
+
     g_proxy_running = 0;
     reset_params();
 }
