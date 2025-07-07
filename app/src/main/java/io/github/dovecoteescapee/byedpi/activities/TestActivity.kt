@@ -153,7 +153,7 @@ class TestActivity : BaseActivity() {
     }
 
     private fun isAndroidTV(context: Context): Boolean {
-        val uiModeManager = context.getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
+        val uiModeManager = context.getSystemService(UI_MODE_SERVICE) as UiModeManager
         return uiModeManager.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION
     }
 
@@ -333,7 +333,7 @@ class TestActivity : BaseActivity() {
     }
 
     private fun copyToClipboard(text: String) {
-        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
         val clip = ClipData.newPlainText("command", text)
         clipboard.setPrimaryClip(clip)
     }
@@ -383,7 +383,7 @@ class TestActivity : BaseActivity() {
                 else -> {
                     try {
                         assets.open("proxytest_$domainList.sites").bufferedReader().useLines { it.toList() }
-                    } catch (e: Exception) {
+                    } catch (_: Exception) {
                         emptyList()
                     }
                 }
