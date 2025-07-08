@@ -11,7 +11,7 @@
         <item name="android:windowLightNavigationBar">true</item>
 
         <item name="colorControlActivated">?attr/colorPrimary</item>
-        <item name="colorControlHighlight">?attr/colorSurfaceContainer</item>
+        <item name="colorControlHighlight">?attr/colorSecondaryContainer</item>
 
         <item name="alertDialogTheme">@style/CustomAlertDialog</item>
 
