@@ -17,6 +17,7 @@ import io.github.dovecoteescapee.byedpi.data.*
 import io.github.dovecoteescapee.byedpi.utility.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -142,9 +143,12 @@ class ByeDpiVpnService : LifecycleVpnService() {
 
             withContext(Dispatchers.Main) {
                 if (code != 0) {
+                    delay(500)
                     Log.e(TAG, "Proxy stopped with code $code")
-                    stopTun2Socks()
+
                     updateStatus(ServiceStatus.Failed)
+                    stopTun2Socks()
+                    stopSelf()
                 } else {
                     if (!stopping) {
                         stop()
