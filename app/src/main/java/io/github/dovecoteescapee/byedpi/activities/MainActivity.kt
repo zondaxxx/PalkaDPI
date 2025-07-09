@@ -149,7 +149,7 @@ class MainActivity : BaseActivity() {
 
             binding.statusButton.postDelayed({
                 binding.statusButton.isClickable = true
-            }, 500)
+            }, 1000)
         }
 
         binding.openEditorLink.setOnClickListener {

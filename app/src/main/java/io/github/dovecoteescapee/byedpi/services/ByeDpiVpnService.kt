@@ -115,8 +115,8 @@ class ByeDpiVpnService : LifecycleVpnService() {
         mutex.withLock {
             stopping = true
             try {
-                stopTun2Socks()
                 stopProxy()
+                stopTun2Socks()
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to stop VPN", e)
             } finally {
