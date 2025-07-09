@@ -142,13 +142,13 @@ class ByeDpiVpnService : LifecycleVpnService() {
 
             if (code != 0) {
                 Log.e(TAG, "Proxy stopped with code $code")
-                stopTun2Socks()
                 updateStatus(ServiceStatus.Failed)
             } else {
-                stop()
+
                 updateStatus(ServiceStatus.Disconnected)
             }
 
+            stopTun2Socks()
             stopSelf()
         }
 
