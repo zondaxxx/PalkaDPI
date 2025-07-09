@@ -30,7 +30,6 @@ class ByeDpiVpnService : LifecycleVpnService() {
     private var proxyJob: Job? = null
     private var tunFd: ParcelFileDescriptor? = null
     private val mutex = Mutex()
-    private var stopping: Boolean = false
 
     companion object {
         private val TAG: String = ByeDpiVpnService::class.java.simpleName
@@ -113,14 +112,13 @@ class ByeDpiVpnService : LifecycleVpnService() {
         Log.i(TAG, "Stopping")
 
         mutex.withLock {
-            stopping = true
             try {
-                stopProxy()
-                stopTun2Socks()
+                withContext(Dispatchers.IO) {
+                    stopTun2Socks()
+                    stopProxy()
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to stop VPN", e)
-            } finally {
-                stopping = false
             }
         }
 
@@ -140,22 +138,18 @@ class ByeDpiVpnService : LifecycleVpnService() {
 
         proxyJob = lifecycleScope.launch(Dispatchers.IO) {
             val code = byeDpiProxy.startProxy(preferences)
+            delay(500)
 
-            withContext(Dispatchers.Main) {
-                if (code != 0) {
-                    delay(500)
-                    Log.e(TAG, "Proxy stopped with code $code")
-
-                    updateStatus(ServiceStatus.Failed)
-                    stopTun2Socks()
-                    stopSelf()
-                } else {
-                    if (!stopping) {
-                        stop()
-                        updateStatus(ServiceStatus.Disconnected)
-                    }
-                }
+            if (code != 0) {
+                Log.e(TAG, "Proxy stopped with code $code")
+                stopTun2Socks()
+                updateStatus(ServiceStatus.Failed)
+            } else {
+                stop()
+                updateStatus(ServiceStatus.Disconnected)
             }
+
+            stopSelf()
         }
 
         Log.i(TAG, "Proxy started")
