@@ -103,8 +103,14 @@ class ByeDpiVpnService : LifecycleVpnService() {
             startForeground()
             mutex.withLock {
                 startProxy()
-                if (isProxyRunning()) {
-                    startTun2Socks()
+                lifecycleScope.launch(Dispatchers.IO) {
+                    delay(500)
+                    if (isProxyRunning()) {
+                        startTun2Socks()
+                    } else {
+                        Log.e(TAG, "Proxy not running, stop service")
+                        stopSelf()
+                    }
                 }
             }
             updateStatus(ServiceStatus.Connected)
