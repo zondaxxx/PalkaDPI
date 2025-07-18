@@ -8,7 +8,6 @@ plugins {
 android {
     namespace = "io.github.dovecoteescapee.byedpi"
     compileSdk = 36
-    ndkVersion = "28.2.13676358"
 
     defaultConfig {
         applicationId = "io.github.romanvht.byedpi"
@@ -35,10 +34,8 @@ android {
     buildTypes {
         release {
             buildConfigField("String", "VERSION_NAME",  "\"${defaultConfig.versionName}\"")
-
-            isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = signingConfigs.getByName("debug")
+            isMinifyEnabled = true
         }
         debug {
             buildConfigField("String", "VERSION_NAME",  "\"${defaultConfig.versionName}-debug\"")
