@@ -63,7 +63,7 @@ Port: 1080 (default)
 > P.S.: hev_socks5_tunnel will not build under Windows, you will need to use WSL
 
 ### Signature Hash
-**SHA-256:**  
+SHA-256:
 `77:45:10:75:AC:EA:40:64:06:47:5D:74:D4:59:88:3A:49:A6:40:51:FA:F3:2E:42:F7:18:F3:F9:77:7A:8D:FB`
 
 ### Dependencies
