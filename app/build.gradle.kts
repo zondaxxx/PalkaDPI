@@ -5,6 +5,8 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+val abis = setOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+
 android {
     namespace = "io.github.dovecoteescapee.byedpi"
     compileSdk = 36
@@ -20,10 +22,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         ndk {
-            abiFilters.add("armeabi-v7a")
-            abiFilters.add("arm64-v8a")
-            abiFilters.add("x86")
-            abiFilters.add("x86_64")
+            abiFilters.addAll(abis)
         }
     }
 
@@ -76,7 +75,7 @@ android {
         abi {
             isEnable = true
             reset()
-            include("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+            include(*abis.toTypedArray())
             isUniversalApk = true
         }
     }
