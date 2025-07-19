@@ -23,8 +23,8 @@ class SiteCheckUtils(
         .readTimeout(4, TimeUnit.SECONDS)
         .writeTimeout(4, TimeUnit.SECONDS)
         .callTimeout(4, TimeUnit.SECONDS)
-        .followSslRedirects(false)
-        .followRedirects(false)
+        .followSslRedirects(true)
+        .followRedirects(true)
         .build()
 
     suspend fun checkSitesAsync(
@@ -63,9 +63,17 @@ class SiteCheckUtils(
             try {
                 val request = Request.Builder().url(formattedUrl).build()
                 client.newCall(request).execute().use { response ->
+                    val declaredLength = response.body.contentLength()
+                    val actualLength = response.body.bytes().size.toLong()
                     val responseCode = response.code
-                    Log.i("SiteChecker", "Response for $site: $responseCode")
-                    responseCount++
+
+                    if (declaredLength <= 0 || actualLength >= declaredLength) {
+                        Log.i("SiteChecker", "Response for $site: $responseCode, Declared: $declaredLength, Actual: $actualLength")
+                        responseCount++
+                    } else {
+                        Log.w("SiteChecker", "Block detected for $site, Declared: $declaredLength, Actual: $actualLength")
+                    }
+
                     response.body.close()
                 }
             } catch (e: Exception) {
