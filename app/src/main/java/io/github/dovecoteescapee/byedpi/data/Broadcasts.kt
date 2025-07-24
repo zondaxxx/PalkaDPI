@@ -1,8 +1,10 @@
 package io.github.dovecoteescapee.byedpi.data
 
-const val STARTED_BROADCAST = "io.github.romanvht.byedpi.STARTED"
-const val STOPPED_BROADCAST = "io.github.romanvht.byedpi.STOPPED"
-const val FAILED_BROADCAST = "io.github.romanvht.byedpi.FAILED"
+import io.github.dovecoteescapee.byedpi.BuildConfig
+
+const val STARTED_BROADCAST = "${BuildConfig.APPLICATION_ID}.STARTED"
+const val STOPPED_BROADCAST = "${BuildConfig.APPLICATION_ID}.STOPPED"
+const val FAILED_BROADCAST = "${BuildConfig.APPLICATION_ID}.FAILED"
 
 const val SENDER = "sender"
 
