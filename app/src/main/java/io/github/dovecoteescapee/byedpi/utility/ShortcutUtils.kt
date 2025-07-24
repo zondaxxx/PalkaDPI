@@ -18,6 +18,7 @@ object ShortcutUtils {
 
             val toggleIntent = Intent(context, ToggleActivity::class.java).apply {
                 action = Intent.ACTION_VIEW
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             }
 
             val toggleShortcut = ShortcutInfo.Builder(context, "toggle_connect")
@@ -36,6 +37,7 @@ object ShortcutUtils {
                 pinned.forEachIndexed { index, strategy ->
                     val strategyIntent = Intent(context, ToggleActivity::class.java).apply {
                         action = Intent.ACTION_VIEW
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                         putExtra("strategy", strategy.text)
                     }
 

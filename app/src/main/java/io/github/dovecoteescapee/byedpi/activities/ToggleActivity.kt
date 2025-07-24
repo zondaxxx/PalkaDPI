@@ -1,12 +1,12 @@
 package io.github.dovecoteescapee.byedpi.activities
 
+import android.app.Activity
 import android.content.SharedPreferences
 import android.net.VpnService
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
 import io.github.dovecoteescapee.byedpi.data.AppStatus
 import io.github.dovecoteescapee.byedpi.data.Mode
@@ -15,7 +15,7 @@ import io.github.dovecoteescapee.byedpi.services.appStatus
 import io.github.dovecoteescapee.byedpi.utility.getPreferences
 import io.github.dovecoteescapee.byedpi.utility.mode
 
-class ToggleActivity : AppCompatActivity() {
+class ToggleActivity : Activity() {
 
     companion object {
         private const val TAG = "ToggleServiceActivity"
@@ -30,11 +30,42 @@ class ToggleActivity : AppCompatActivity() {
         val strategy = intent.getStringExtra("strategy")
         val current = prefs.getString("byedpi_cmd_args", null)
 
-        if (strategy != null && strategy != current) {
-            prefs.edit(commit = true) { putString("byedpi_cmd_args", strategy) }
-            toggleService(strategy)
-        } else {
-            toggleService(null)
+        val onlyUpdate = intent.getBooleanExtra("only_update", false)
+        val onlyStart = intent.getBooleanExtra("only_start", false)
+        val onlyStop = intent.getBooleanExtra("only_stop", false)
+
+        when {
+            onlyUpdate -> {
+                if (strategy != null && strategy != current) {
+                    prefs.edit(commit = true) { putString("byedpi_cmd_args", strategy) }
+                    Log.i(TAG, "Strategy updated to: $strategy")
+                }
+            }
+            onlyStart -> {
+                val (status) = appStatus
+                if (status == AppStatus.Halted) {
+                    startService()
+                } else {
+                    Log.i(TAG, "Service already running")
+                }
+            }
+            onlyStop -> {
+                val (status) = appStatus
+                if (status == AppStatus.Running) {
+                    stopService()
+                } else {
+                    Log.i(TAG, "Service already stopped")
+                }
+            }
+            else -> {
+                if (strategy != null && strategy != current) {
+                    prefs.edit(commit = true) { putString("byedpi_cmd_args", strategy) }
+                    Log.i(TAG, "Strategy updated to: $strategy")
+                    toggleService(strategy)
+                } else {
+                    toggleService(null)
+                }
+            }
         }
 
         finish()
@@ -48,12 +79,12 @@ class ToggleActivity : AppCompatActivity() {
         }
 
         ServiceManager.start(this, mode)
-        Log.i(TAG, "Toggle start")
+        Log.i(TAG, "Toggle service start")
     }
 
     private fun stopService() {
         ServiceManager.stop(this)
-        Log.i(TAG, "Toggle stop")
+        Log.i(TAG, "Toggle service stop")
     }
 
     private fun toggleService(strategy: String?) {
