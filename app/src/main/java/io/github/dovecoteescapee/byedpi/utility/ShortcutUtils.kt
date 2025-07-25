@@ -21,7 +21,7 @@ object ShortcutUtils {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             }
 
-            val toggleShortcut = ShortcutInfo.Builder(context, "toggle_connect")
+            val toggleShortcut = ShortcutInfo.Builder(context, "toggle_service")
                 .setShortLabel(context.getString(R.string.toggle_connect))
                 .setLongLabel(context.getString(R.string.toggle_connect))
                 .setIcon(Icon.createWithResource(context, R.drawable.ic_toggle))
