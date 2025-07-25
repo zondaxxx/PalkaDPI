@@ -97,6 +97,7 @@
     <string name="cmd_history_apply">Apply</string>
     <string name="cmd_history_copy">Copy</string>
     <string name="cmd_history_rename">Rename</string>
+    <string name="cmd_history_edit">Edit</string>
     <string name="cmd_history_pin">Pin</string>
     <string name="cmd_history_unpin">Unpin</string>
     <string name="cmd_history_pinned">Pinned</string>

@@ -53,6 +53,12 @@ class HistoryUtils(context: Context) {
         saveHistory(history)
     }
 
+    fun editCommand(command: String, newText: String) {
+        val history = getHistory().toMutableList()
+        history.find { it.text == command }?.text = newText
+        saveHistory(history)
+    }
+
     fun getHistory(): List<Command> {
         val historyJson = sharedPreferences.getString(historyKey, null)
         return if (historyJson != null) {
