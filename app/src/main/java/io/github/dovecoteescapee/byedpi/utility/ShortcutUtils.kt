@@ -41,7 +41,7 @@ object ShortcutUtils {
                         putExtra("strategy", strategy.text)
                     }
 
-                    val fullLabel = strategy.name ?: strategy.text
+                    val fullLabel = strategy.name?.takeIf { it.isNotBlank() } ?: strategy.text
                     val shortLabel = if (fullLabel.length > 15) fullLabel.take(15) + "..." else fullLabel
                     val longLabel = if (fullLabel.length > 30) fullLabel.take(30) + "..." else fullLabel
 
