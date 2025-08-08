@@ -79,6 +79,7 @@ Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniStartProxy(JNIEnv *env
         (*env)->ReleaseStringUTFChars(env, arg, arg_str);
     }
 
+    reset_params();
     LOG(LOG_S, "starting proxy with %d args", argc);
     g_proxy_running = 1;
     optind = optreset = 1;
@@ -87,7 +88,6 @@ Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniStartProxy(JNIEnv *env
 
     LOG(LOG_S, "proxy return code %d", result);
     g_proxy_running = 0;
-    reset_params();
 
     return result;
 }
@@ -103,7 +103,6 @@ Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniStopProxy(__attribute_
 
     shutdown(server_fd, SHUT_RDWR);
     g_proxy_running = 0;
-    reset_params();
 
     return 0;
 }
@@ -118,6 +117,8 @@ Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniForceClose(__attribute
     }
 
     LOG(LOG_S, "proxy socket force close");
+    g_proxy_running = 0;
+
     return 0;
 }
 
