@@ -66,7 +66,6 @@ Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniStartProxy(JNIEnv *env
     if (setjmp(crash_jmp_buf) != 0) {
         LOG(LOG_S, "crash proxy, continuing...");
         g_proxy_running = 0;
-        reset_params();
         return 0;
     }
 
@@ -79,8 +78,8 @@ Java_io_github_dovecoteescapee_byedpi_core_ByeDpiProxy_jniStartProxy(JNIEnv *env
         (*env)->ReleaseStringUTFChars(env, arg, arg_str);
     }
 
-    reset_params();
     LOG(LOG_S, "starting proxy with %d args", argc);
+    reset_params();
     g_proxy_running = 1;
     optind = optreset = 1;
 
