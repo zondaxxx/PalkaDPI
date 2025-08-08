@@ -158,7 +158,7 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
         val cmdSettings = findPreferenceNotNull<Preference>("byedpi_cmd_settings")
         val proxyTest = findPreferenceNotNull<Preference>("proxy_test")
 
-        if (!cmdEnable) {
+        if (cmdEnable) {
             val (cmdIp, cmdPort) = sharedPreferences?.checkIpAndPortInCmd() ?: Pair(null, null)
             proxy.isVisible = cmdIp == null && cmdPort == null
         } else {
