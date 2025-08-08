@@ -44,7 +44,6 @@ void sigsegv_handler(int sig) {
     }
 
     g_proxy_running = 0;
-    reset_params();
 }
 
 JNIEXPORT jint JNICALL
