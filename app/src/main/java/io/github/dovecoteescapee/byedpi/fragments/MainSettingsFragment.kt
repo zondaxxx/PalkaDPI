@@ -41,10 +41,10 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
             }
         }
 
-        fun setTheme(name: String) =
-            themeByName(name)?.let {
-                AppCompatDelegate.setDefaultNightMode(it)
-            } ?: throw IllegalStateException("Invalid value for app_theme: $name")
+        fun setTheme(name: String) {
+            val appTheme = themeByName(name) ?: throw IllegalStateException("Invalid value for app_theme: $name")
+            AppCompatDelegate.setDefaultNightMode(appTheme)
+        }
 
         private fun themeByName(name: String): Int? = when (name) {
             "system" -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
@@ -67,10 +67,7 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
 
         setEditTextPreferenceListener("byedpi_proxy_ip") { checkIp(it) }
         setEditTestPreferenceListenerPort("byedpi_proxy_port")
-
-        setEditTextPreferenceListener("dns_ip") {
-            it.isBlank() || checkNotLocalIp(it)
-        }
+        setEditTextPreferenceListener("dns_ip") { it.isBlank() || checkNotLocalIp(it) }
 
         findPreferenceNotNull<ListPreference>("language")
             .setOnPreferenceChangeListener { _, newValue ->
@@ -83,25 +80,6 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
                 setTheme(newValue as String)
                 true
             }
-
-        val switchCmdSettings = findPreferenceNotNull<SwitchPreference>("byedpi_enable_cmd_settings")
-        val uiSettings = findPreferenceNotNull<Preference>("byedpi_ui_settings")
-        val cmdSettings = findPreferenceNotNull<Preference>("byedpi_cmd_settings")
-        val proxyTest = findPreferenceNotNull<Preference>("proxy_test")
-
-        val setByeDpiSettingsMode = { enable: Boolean ->
-            uiSettings.isEnabled = !enable
-            cmdSettings.isEnabled = enable
-            proxyTest.isEnabled = enable
-        }
-
-        setByeDpiSettingsMode(switchCmdSettings.isChecked)
-
-        switchCmdSettings.setOnPreferenceChangeListener { _, newValue ->
-            setByeDpiSettingsMode(newValue as Boolean)
-            updatePreferences()
-            true
-        }
 
         findPreferenceNotNull<Preference>("proxy_test")
             .setOnPreferenceClickListener {
@@ -117,7 +95,6 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
             }
 
         findPreferenceNotNull<Preference>("version").summary = BuildConfig.VERSION_NAME
-
         updatePreferences()
     }
 
@@ -167,6 +144,7 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
     }
 
     private fun updatePreferences() {
+        val cmdEnable = findPreferenceNotNull<SwitchPreference>("byedpi_enable_cmd_settings").isChecked
         val mode = findPreferenceNotNull<ListPreference>("byedpi_mode").value.let { Mode.fromString(it) }
         val dns = findPreferenceNotNull<EditTextPreference>("dns_ip")
         val ipv6 = findPreferenceNotNull<SwitchPreference>("ipv6_enable")
@@ -176,18 +154,20 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
         val selectedApps = findPreferenceNotNull<Preference>("selected_apps")
         val storageAccess = findPreferenceNotNull<Preference>("storage_access")
 
-        if (hasStoragePermission()) {
-            storageAccess.summary = getString(R.string.storage_access_allowed_summary)
-        } else {
-            storageAccess.summary = getString(R.string.storage_access_summary)
-        }
+        val uiSettings = findPreferenceNotNull<Preference>("byedpi_ui_settings")
+        val cmdSettings = findPreferenceNotNull<Preference>("byedpi_cmd_settings")
+        val proxyTest = findPreferenceNotNull<Preference>("proxy_test")
 
-        if (sharedPreferences?.getBoolean("byedpi_enable_cmd_settings", false) == true) {
+        if (!cmdEnable) {
             val (cmdIp, cmdPort) = sharedPreferences?.checkIpAndPortInCmd() ?: Pair(null, null)
             proxy.isVisible = cmdIp == null && cmdPort == null
         } else {
             proxy.isVisible = true
         }
+
+        uiSettings.isEnabled = !cmdEnable
+        cmdSettings.isEnabled = cmdEnable
+        proxyTest.isEnabled = cmdEnable
 
         when (mode) {
             Mode.VPN -> {
@@ -217,6 +197,12 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
                 applistType.isVisible = false
                 selectedApps.isVisible = false
             }
+        }
+
+        if (hasStoragePermission()) {
+            storageAccess.summary = getString(R.string.storage_access_allowed_summary)
+        } else {
+            storageAccess.summary = getString(R.string.storage_access_summary)
         }
     }
 }
