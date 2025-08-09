@@ -133,6 +133,7 @@
     <string name="test_settings_domains">Your list of domains</string>
     <string name="test_settings_usercommands">Use custom command lists</string>
     <string name="test_settings_commands">Command list</string>
-    <string name="test_delay">Delay between commands\nin seconds</string>
-    <string name="test_requestsсount">Number of domain requests</string>
+    <string name="test_delay">Delay between commands</string>
+    <string name="test_requests">Number of domain requests</string>
+    <string name="test_timeout">Domain response timeout</string>
 </resources>

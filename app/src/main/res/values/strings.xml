@@ -133,6 +133,7 @@
     <string name="test_settings_domains">Свой список доменов</string>
     <string name="test_settings_usercommands">Использовать свой список стратегий</string>
     <string name="test_settings_commands">Список стратегий</string>
-    <string name="test_delay">Ожидание между проверками\nв секундах</string>
-    <string name="test_requestsсount">Количество запросов к домену</string>
+    <string name="test_delay">Ожидание между проверками</string>
+    <string name="test_requests">Количество запросов к домену</string>
+    <string name="test_timeout">Таймаут ответа домена</string>
 </resources>
