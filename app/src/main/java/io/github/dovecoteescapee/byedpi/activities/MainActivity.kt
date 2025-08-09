@@ -19,7 +19,6 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import io.github.dovecoteescapee.byedpi.R
 import io.github.dovecoteescapee.byedpi.data.*
-import io.github.dovecoteescapee.byedpi.fragments.MainSettingsFragment
 import io.github.dovecoteescapee.byedpi.databinding.ActivityMainBinding
 import io.github.dovecoteescapee.byedpi.services.ServiceManager
 import io.github.dovecoteescapee.byedpi.services.appStatus
@@ -165,14 +164,6 @@ class MainActivity : BaseActivity() {
             }
         }
 
-        val lang = getPreferences().getString("language", "system")
-        MainSettingsFragment.setLang(lang ?: "system")
-
-        val theme = getPreferences().getString("app_theme", null)
-        MainSettingsFragment.setTheme(theme ?: "system")
-
-        ShortcutUtils.update(this)
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
         }
@@ -180,6 +171,8 @@ class MainActivity : BaseActivity() {
         if (getPreferences().getBoolean("auto_connect", false) && appStatus.first != AppStatus.Running) {
             this.start()
         }
+
+        ShortcutUtils.update(this)
     }
 
     override fun onResume() {

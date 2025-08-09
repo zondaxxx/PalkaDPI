@@ -28,7 +28,10 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
 
         fun setLang(lang: String) {
             val appLocale = localeByName(lang) ?: throw IllegalStateException("Invalid value for language: $lang")
-            AppCompatDelegate.setApplicationLocales(appLocale)
+
+            if (AppCompatDelegate.getApplicationLocales().toLanguageTags() != appLocale.toLanguageTags()) {
+                AppCompatDelegate.setApplicationLocales(appLocale)
+            }
         }
 
         private fun localeByName(lang: String): LocaleListCompat? = when (lang) {
@@ -44,7 +47,10 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
 
         fun setTheme(name: String) {
             val appTheme = themeByName(name) ?: throw IllegalStateException("Invalid value for app_theme: $name")
-            AppCompatDelegate.setDefaultNightMode(appTheme)
+
+            if (AppCompatDelegate.getDefaultNightMode() != appTheme) {
+                AppCompatDelegate.setDefaultNightMode(appTheme)
+            }
         }
 
         private fun themeByName(name: String): Int? = when (name) {
