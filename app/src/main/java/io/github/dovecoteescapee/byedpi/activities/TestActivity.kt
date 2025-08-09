@@ -179,7 +179,7 @@ class TestActivity : BaseActivity() {
 
             val fullLog = prefs.getBoolean("byedpi_proxytest_fulllog", false)
             val logClickable = prefs.getBoolean("byedpi_proxytest_logclickable", false)
-            val delaySec = prefs.getIntStringNotNull("byedpi_proxytest_delay", 1)
+            val delaySec = prefs.getIntStringNotNull("byedpi_proxytest_delay", 0)
             val requestsCount = prefs.getIntStringNotNull("byedpi_proxytest_requests", 1)
             val requestTimeout = prefs.getLongStringNotNull("byedpi_proxytest_timeout", 1)
 

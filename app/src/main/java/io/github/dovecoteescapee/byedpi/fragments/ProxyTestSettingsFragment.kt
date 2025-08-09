@@ -18,7 +18,7 @@ class ProxyTestSettingsFragment : PreferenceFragmentCompat() {
 
         setEditTestPreferenceListenerInt(
             "byedpi_proxytest_delay",
-            1,
+            0,
             10
         )
 
@@ -31,7 +31,7 @@ class ProxyTestSettingsFragment : PreferenceFragmentCompat() {
         setEditTestPreferenceListenerInt(
             "byedpi_proxytest_timeout",
             1,
-            10
+            15
         )
 
         updatePreferences()
