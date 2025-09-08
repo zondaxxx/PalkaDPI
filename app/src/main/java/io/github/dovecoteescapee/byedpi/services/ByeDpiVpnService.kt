@@ -22,7 +22,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
 import java.io.File
 
 class ByeDpiVpnService : LifecycleVpnService() {
@@ -154,7 +153,7 @@ class ByeDpiVpnService : LifecycleVpnService() {
         Log.i(TAG, "Proxy started")
     }
 
-    private suspend fun stopProxy() {
+    private fun stopProxy() {
         Log.i(TAG, "Stopping proxy")
 
         if (status == ServiceStatus.Disconnected) {
@@ -165,16 +164,6 @@ class ByeDpiVpnService : LifecycleVpnService() {
         try {
             byeDpiProxy.stopProxy()
             proxyJob?.cancel()
-
-            val completed = withTimeoutOrNull(1000) {
-                proxyJob?.join()
-            }
-
-            if (completed == null) {
-                Log.w(TAG, "proxy not finish in time, cancelling...")
-                byeDpiProxy.jniForceClose()
-            }
-
             proxyJob = null
         } catch (e: Exception) {
             Log.e(TAG, "Failed to close proxyJob", e)

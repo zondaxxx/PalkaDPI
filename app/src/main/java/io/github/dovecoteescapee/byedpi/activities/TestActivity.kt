@@ -30,6 +30,7 @@ import io.github.dovecoteescapee.byedpi.utility.SiteCheckUtils
 import io.github.dovecoteescapee.byedpi.utility.getIntStringNotNull
 import io.github.dovecoteescapee.byedpi.utility.getLongStringNotNull
 import androidx.core.content.edit
+import io.github.dovecoteescapee.byedpi.utility.getStringNotNull
 import kotlinx.coroutines.*
 import java.io.File
 
@@ -42,7 +43,7 @@ class TestActivity : BaseActivity() {
 
     private lateinit var siteChecker: SiteCheckUtils
     private lateinit var cmdHistoryUtils: HistoryUtils
-    private lateinit var sites: MutableList<String>
+    private lateinit var sites: List<String>
     private lateinit var cmds: List<String>
 
     private var savedCmd: String = ""
@@ -156,7 +157,7 @@ class TestActivity : BaseActivity() {
     }
 
     private fun startTesting() {
-        sites = loadSites().toMutableList()
+        sites = loadSites()
         cmds = loadCmds()
 
         if (sites.isEmpty()) {
@@ -377,11 +378,7 @@ class TestActivity : BaseActivity() {
                     customDomains.lines().map { it.trim() }.filter { it.isNotEmpty() }
                 }
                 else -> {
-                    try {
-                        assets.open("proxytest_$domainList.sites").bufferedReader().useLines { it.toList() }
-                    } catch (_: Exception) {
-                        emptyList()
-                    }
+                    assets.open("proxytest_$domainList.sites").bufferedReader().useLines { it.toList() }
                 }
             }
             allDomains.addAll(domains)
@@ -392,11 +389,14 @@ class TestActivity : BaseActivity() {
 
     private fun loadCmds(): List<String> {
         val userCommands = prefs.getBoolean("byedpi_proxytest_usercommands", false)
+        val sniValue = prefs.getStringNotNull("byedpi_proxytest_sni", "google.com")
+
         return if (userCommands) {
-            val commands = prefs.getString("byedpi_proxytest_commands", "").orEmpty()
-            commands.lines().map { it.trim() }.filter { it.isNotEmpty() }
+            val content = prefs.getStringNotNull("byedpi_proxytest_commands", "")
+            content.replace("{sni}", sniValue).lines().map { it.trim() }.filter { it.isNotEmpty() }
         } else {
-            assets.open("proxytest_strategies.list").bufferedReader().useLines { it.toList() }
+            val content = assets.open("proxytest_strategies.list").bufferedReader().readText()
+            content.replace("{sni}", sniValue).lines().map { it.trim() }.filter { it.isNotEmpty() }
         }
     }
 }

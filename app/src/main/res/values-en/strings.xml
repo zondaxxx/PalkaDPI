@@ -126,12 +126,13 @@
     <string name="test_good_cmds">Commands with more than 50% success probability</string>
     <string name="test_complete">Test completed</string>
     <string name="test_complete_info">Tap on a command to copy or apply it</string>
-    <string name="test_settings_fulllog">Include response information from hosts in the log</string>
-    <string name="test_settings_logclickable">Display all commands in the test as clickable</string>
+    <string name="test_settings_sni">SNI</string>
+    <string name="test_settings_fulllog">Host response output</string>
+    <string name="test_settings_logclickable">All commands are clickable</string>
     <string name="test_settings_domain_lists">Domain lists for testing</string>
     <string name="test_settings_domain_empty">No domains to test</string>
     <string name="test_settings_domains">Your list of domains</string>
-    <string name="test_settings_usercommands">Use custom command lists</string>
+    <string name="test_settings_usercommands">Сustom command lists</string>
     <string name="test_settings_commands">Command list</string>
     <string name="test_delay">Delay between commands</string>
     <string name="test_requests">Number of domain requests</string>
