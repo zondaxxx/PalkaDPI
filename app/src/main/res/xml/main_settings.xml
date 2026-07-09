@@ -187,7 +187,7 @@
             android:title="@string/documentation_link">
             <intent
                 android:action="android.intent.action.VIEW"
-                android:data="https://github.com/BDManual/ByeByeDPI-Manual" />
+                android:data="https://byebyedpi.xyz" />
         </Preference>
 
         <Preference
