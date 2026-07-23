@@ -26,6 +26,12 @@
     <string name="reset_settings">Қалпына келтіру</string>
     <string name="export_settings">Баптауларды экспорттау</string>
     <string name="import_settings">Баптауларды импорттау</string>
+    <string name="backup_settings">Негізгі баптаулар</string>
+    <string name="backup_command_history">Стратегиялар тізімі</string>
+    <string name="backup_selected_apps">Таңдалған қолданбалар</string>
+    <string name="backup_domain_lists">Домен тізімдері</string>
+    <string name="export_failed">Баптауларды экспорттау мүмкін болмады</string>
+    <string name="import_failed">Баптауларды импорттау мүмкін болмады</string>
     <string name="logs_failed">Логтарды жинау мүмкін болмады</string>
     <string name="proxy_address">%1$s:%2$s</string>
     <string name="lang_settings">Тіл</string>

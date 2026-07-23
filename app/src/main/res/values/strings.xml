@@ -26,6 +26,12 @@
     <string name="reset_settings">Сбросить настройки</string>
     <string name="export_settings">Экспорт настроек</string>
     <string name="import_settings">Импорт настроек</string>
+    <string name="backup_settings">Основные настройки</string>
+    <string name="backup_command_history">Список стратегий</string>
+    <string name="backup_selected_apps">Выбранные приложения</string>
+    <string name="backup_domain_lists">Списки доменов</string>
+    <string name="export_failed">Не удалось экспортировать настройки</string>
+    <string name="import_failed">Не удалось импортировать настройки</string>
     <string name="logs_failed">Не удалось собрать логи</string>
     <string name="proxy_address">%1$s:%2$s</string>
     <string name="lang_settings">Язык</string>

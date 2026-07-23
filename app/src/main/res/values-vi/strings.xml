@@ -27,6 +27,12 @@
     <string name="reset_settings">Đặt lại cài đặt</string>
     <string name="export_settings">Xuất cài đặt</string>
     <string name="import_settings">Nhập cài đặt</string>
+    <string name="backup_settings">Cài đặt chung</string>
+    <string name="backup_command_history">Danh sách chiến lược</string>
+    <string name="backup_selected_apps">Ứng dụng đã chọn</string>
+    <string name="backup_domain_lists">Danh sách tên miền</string>
+    <string name="export_failed">Không thể xuất cài đặt</string>
+    <string name="import_failed">Không thể nhập cài đặt</string>
     <string name="logs_failed">Không thể thu thập nhật ký</string>
     <string name="proxy_address">%1$s:%2$s</string>
     <string name="lang_settings">Ngôn ngữ</string>

@@ -4,15 +4,18 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.StringRes
+import androidx.appcompat.app.AlertDialog
 import io.github.romanvht.byedpi.R
+import io.github.romanvht.byedpi.data.AppSettings
 import io.github.romanvht.byedpi.fragments.ByeDpiCMDSettingsFragment
 import io.github.romanvht.byedpi.fragments.ByeDpiUISettingsFragment
 import io.github.romanvht.byedpi.fragments.MainSettingsFragment
 import io.github.romanvht.byedpi.utility.SettingsUtils
-import io.github.romanvht.byedpi.utility.getPreferences
-import androidx.core.content.edit
+import io.github.romanvht.byedpi.utility.SettingsUtils.Section
 
 class SettingsActivity : BaseActivity() {
+    private var exportSections = Section.entries.toSet()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,8 +66,14 @@ class SettingsActivity : BaseActivity() {
         }
 
         R.id.action_export_settings -> {
-            val fileName = "bbd_${System.currentTimeMillis().toReadableDateTime()}.json"
-            exportSettingsLauncher.launch(fileName)
+            showSectionSelectionDialog(
+                title = R.string.export_settings,
+                availableSections = Section.entries.toSet()
+            ) { sections ->
+                exportSections = sections
+                val fileName = "bbd_${System.currentTimeMillis().toReadableDateTime()}.json"
+                exportSettingsLauncher.launch(fileName)
+            }
             true
         }
 
@@ -80,7 +89,7 @@ class SettingsActivity : BaseActivity() {
         ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
         uri?.let {
-            SettingsUtils.exportSettings(this, it)
+            SettingsUtils.exportSettings(this, it, exportSections)
         }
     }
 
@@ -88,11 +97,76 @@ class SettingsActivity : BaseActivity() {
         ActivityResultContracts.OpenDocument()
     ) { uri ->
         uri?.let {
-            SettingsUtils.importSettings(this, it) {
+            val settings = SettingsUtils.readSettings(this, it) ?: return@let
+            val availableSections = SettingsUtils.getAvailableSections(settings)
+
+            if (availableSections.isEmpty()) {
+                return@let
+            }
+
+            showImportDialog(settings, availableSections)
+        }
+    }
+
+    private fun showImportDialog(settings: AppSettings, availableSections: Set<Section>) {
+        showSectionSelectionDialog(
+            title = R.string.import_settings,
+            availableSections = availableSections
+        ) { sections ->
+            SettingsUtils.importSettings(this, settings, sections) {
                 recreate()
             }
         }
     }
+
+    private fun showSectionSelectionDialog(
+        @StringRes title: Int,
+        availableSections: Set<Section>,
+        onConfirmed: (Set<Section>) -> Unit
+    ) {
+        val sections = Section.entries.filter { it in availableSections }
+        val checkedItems = BooleanArray(sections.size) { true }
+        val labels = sections.map { getString(it.label) }.toTypedArray()
+
+        lateinit var dialog: AlertDialog
+        dialog = AlertDialog.Builder(this)
+            .setTitle(title)
+            .setMultiChoiceItems(labels, checkedItems) { _, which, isChecked ->
+                checkedItems[which] = isChecked
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = checkedItems.any { it }
+            }
+            .setPositiveButton(android.R.string.ok, null)
+            .setNegativeButton(android.R.string.cancel, null)
+            .create()
+
+        dialog.setOnShowListener {
+            val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+
+            positiveButton.setOnClickListener {
+                val selected = sections
+                    .filterIndexed { index, _ -> checkedItems[index] }
+                    .toSet()
+
+                if (selected.isNotEmpty()) {
+                    dialog.dismiss()
+                    onConfirmed(selected)
+                }
+            }
+
+            positiveButton.isEnabled = checkedItems.any { it }
+        }
+
+        dialog.show()
+    }
+
+    @get:StringRes
+    private val Section.label: Int
+        get() = when (this) {
+            Section.SETTINGS -> R.string.backup_settings
+            Section.HISTORY -> R.string.backup_command_history
+            Section.APPS -> R.string.backup_selected_apps
+            Section.DOMAIN_LISTS -> R.string.backup_domain_lists
+        }
 
     private fun Long.toReadableDateTime(): String {
         val format = java.text.SimpleDateFormat("yyyyMMdd_HHmm", java.util.Locale.getDefault())

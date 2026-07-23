@@ -26,6 +26,12 @@
     <string name="reset_settings">Ayarları sıfırla</string>
     <string name="export_settings">Ayarları Dışa Aktar</string>
     <string name="import_settings">Ayarları İçe Aktar</string>
+    <string name="backup_settings">Genel ayarlar</string>
+    <string name="backup_command_history">Strateji listesi</string>
+    <string name="backup_selected_apps">Seçili uygulamalar</string>
+    <string name="backup_domain_lists">Alan adı listeleri</string>
+    <string name="export_failed">Ayarlar dışa aktarılamadı</string>
+    <string name="import_failed">Ayarlar içe aktarılamadı</string>
     <string name="logs_failed">Günlükleri toplarken bir hata oluştu</string>
     <string name="proxy_address">%1$s:%2$s</string>
     <string name="lang_settings">Dil</string>
