@@ -6,6 +6,7 @@ import android.util.Log
 import io.github.romanvht.byedpi.data.UISettings
 import io.github.romanvht.byedpi.utility.DomainListUtils
 import io.github.romanvht.byedpi.utility.checkIpAndPortInCmd
+import io.github.romanvht.byedpi.utility.getCmdArgs
 import io.github.romanvht.byedpi.utility.getCmdEnable
 import io.github.romanvht.byedpi.utility.getStringNotNull
 import io.github.romanvht.byedpi.utility.shellSplit
@@ -27,7 +28,7 @@ class ByeDpiProxyCmdPreferences(val args: Array<String>) : ByeDpiProxyPreference
 
     companion object {
         private fun parseCmdToArguments(preferences: SharedPreferences, context: Context): Array<String> {
-            val cmd = preferences.getStringNotNull("byedpi_cmd_args", "-o1 -a1 -r-5+se")
+            val cmd = preferences.getCmdArgs()
             val preparedCmd = getLists(cmd, context)
 
             val firstArgIndex = preparedCmd.indexOf("-")

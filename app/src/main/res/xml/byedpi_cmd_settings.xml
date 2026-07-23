@@ -7,7 +7,6 @@
         android:key="byedpi_cmd_args"
         android:title="@string/command_line_arguments"
         android:dialogTitle="@string/command_line_arguments"
-        android:defaultValue="-o1 -a1 -r-5+se"
         android:inputType="textMultiLine"
         app:iconSpaceReserved="false"
         app:useSimpleSummaryProvider="true" />

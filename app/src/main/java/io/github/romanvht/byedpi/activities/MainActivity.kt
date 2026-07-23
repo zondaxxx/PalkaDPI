@@ -355,7 +355,7 @@ class MainActivity : BaseActivity() {
         binding.cmdButtonsRow.visibility = View.VISIBLE
 
         val pinned = historyUtils.getPinnedHistory()
-        val currentCmdArgs = getPreferences().getString("byedpi_cmd_args", "") ?: ""
+        val currentCmdArgs = getPreferences().getCmdArgs()
 
         val matched = pinned.find { it.text == currentCmdArgs }
         val name = matched?.name?.takeIf { it.isNotBlank() }

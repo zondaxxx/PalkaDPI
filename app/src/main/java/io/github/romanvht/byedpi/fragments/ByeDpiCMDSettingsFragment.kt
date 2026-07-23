@@ -19,6 +19,7 @@ import io.github.romanvht.byedpi.services.ServiceManager
 import io.github.romanvht.byedpi.services.appStatus
 import io.github.romanvht.byedpi.utility.ClipboardUtils
 import io.github.romanvht.byedpi.utility.HistoryUtils
+import io.github.romanvht.byedpi.utility.getCmdArgs
 import io.github.romanvht.byedpi.utility.getPreferences
 import io.github.romanvht.byedpi.utility.mode
 
@@ -35,6 +36,7 @@ class ByeDpiCMDSettingsFragment : PreferenceFragmentCompat() {
         cmdHistoryUtils = HistoryUtils(requireContext())
 
         editTextPreference = findPreferenceNotNull("byedpi_cmd_args")
+        editTextPreference.text = requireContext().getPreferences().getCmdArgs()
         historyHeader = findPreferenceNotNull("cmd_history_header")
 
         editTextPreference.setOnPreferenceChangeListener { _, newValue ->

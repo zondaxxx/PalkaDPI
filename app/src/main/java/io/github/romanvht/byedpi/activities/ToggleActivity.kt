@@ -12,6 +12,7 @@ import io.github.romanvht.byedpi.data.AppStatus
 import io.github.romanvht.byedpi.data.Mode
 import io.github.romanvht.byedpi.services.ServiceManager
 import io.github.romanvht.byedpi.services.appStatus
+import io.github.romanvht.byedpi.utility.getCmdArgs
 import io.github.romanvht.byedpi.utility.getPreferences
 import io.github.romanvht.byedpi.utility.mode
 
@@ -106,7 +107,7 @@ class ToggleActivity : Activity() {
     }
 
     private fun updateStrategy(strategy: String?): Boolean {
-        val current = prefs.getString("byedpi_cmd_args", null)
+        val current = prefs.getCmdArgs()
         if (strategy != null && strategy != current) {
             prefs.edit(commit = true) { putString("byedpi_cmd_args", strategy) }
             Log.i(TAG, "Strategy updated to: $strategy")

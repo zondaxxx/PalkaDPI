@@ -32,6 +32,7 @@ import io.github.romanvht.byedpi.utility.getStringNotNull
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import io.github.romanvht.byedpi.utility.DomainListUtils
+import io.github.romanvht.byedpi.utility.getCmdArgs
 import io.github.romanvht.byedpi.utility.mode
 import kotlinx.coroutines.*
 import java.io.File
@@ -197,7 +198,7 @@ class TestActivity : BaseActivity() {
 
         testJob = lifecycleScope.launch(Dispatchers.IO) {
             isTesting = true
-            savedCmd = prefs.getString("byedpi_cmd_args", "").orEmpty()
+            savedCmd = prefs.getCmdArgs()
 
             strategies.clear()
             strategies.addAll(cmds.map { StrategyResult(command = it) })
