@@ -22,26 +22,28 @@ class SettingsActivity : BaseActivity() {
         setContentView(R.layout.activity_settings)
         setupToolbar()
 
-        val openFragment = intent.getStringExtra("open_fragment")
+        if (savedInstanceState == null) {
+            val openFragment = intent.getStringExtra("open_fragment")
 
-        when (openFragment) {
-            "cmd" -> {
-                supportFragmentManager
-                    .beginTransaction()
-                    .replace(R.id.settings, ByeDpiCMDSettingsFragment())
-                    .commit()
-            }
-            "ui" -> {
-                supportFragmentManager
-                    .beginTransaction()
-                    .replace(R.id.settings, ByeDpiUISettingsFragment())
-                    .commit()
-            }
-            else -> {
-                supportFragmentManager
-                    .beginTransaction()
-                    .replace(R.id.settings, MainSettingsFragment())
-                    .commit()
+            when (openFragment) {
+                "cmd" -> {
+                    supportFragmentManager
+                        .beginTransaction()
+                        .replace(R.id.settings, ByeDpiCMDSettingsFragment())
+                        .commit()
+                }
+                "ui" -> {
+                    supportFragmentManager
+                        .beginTransaction()
+                        .replace(R.id.settings, ByeDpiUISettingsFragment())
+                        .commit()
+                }
+                else -> {
+                    supportFragmentManager
+                        .beginTransaction()
+                        .replace(R.id.settings, MainSettingsFragment())
+                        .commit()
+                }
             }
         }
 

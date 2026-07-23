@@ -12,20 +12,22 @@ class TestSettingsActivity : BaseActivity() {
         setContentView(R.layout.activity_test_settings)
         setupToolbar()
 
-        val openFragment = intent.getStringExtra("open_fragment")
+        if (savedInstanceState == null) {
+            val openFragment = intent.getStringExtra("open_fragment")
 
-        when (openFragment) {
-            "domain_lists" -> {
-                supportFragmentManager
-                    .beginTransaction()
-                    .replace(R.id.test_settings, DomainListsFragment())
-                    .commit()
-            }
-            else -> {
-                supportFragmentManager
-                    .beginTransaction()
-                    .replace(R.id.test_settings, ProxyTestSettingsFragment())
-                    .commit()
+            when (openFragment) {
+                "domain_lists" -> {
+                    supportFragmentManager
+                        .beginTransaction()
+                        .replace(R.id.test_settings, DomainListsFragment())
+                        .commit()
+                }
+                else -> {
+                    supportFragmentManager
+                        .beginTransaction()
+                        .replace(R.id.test_settings, ProxyTestSettingsFragment())
+                        .commit()
+                }
             }
         }
 
