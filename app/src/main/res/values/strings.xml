@@ -189,13 +189,15 @@
     <string name="main_btn_test">Подбор</string>
     <string name="main_btn_list">Списки</string>
     <string name="donate">Поддержать</string>
-    <string name="donate_message">Если приложение оказалось для вас полезным, можете угостить меня чашечкой кофе ☕️\nСпасибо за вашу поддержку и участие ❤️</string>
-    <string name="donate_cloudtips">CloudTips (карты РФ)</string>
-    <string name="donate_telegram_bot">Keksik (карты, кошельки, крипта)</string>
+    <string name="donate_message">Если приложение оказалось для вас полезным, можете угостить меня чашечкой кофе ☕️</string>
+    <string name="donate_cloudtips">💳 CloudTips (карты РФ)</string>
+    <string name="donate_telegram_bot">🍰 Keksik (карты, кошельки, крипта)</string>
+    <string name="donate_thanks">Спасибо за вашу поддержку и участие ❤️</string>
     <string name="dns_system">Системный</string>
     <string name="dns_google">Google</string>
     <string name="dns_cloudflare">Cloudflare</string>
     <string name="dns_quad9">Quad9</string>
     <string name="dns_custom">Свой</string>
     <string name="main_strategy_picker">Сменить стратегию</string>
+    <string name="main_strategy_no_pinned">Закрепите нужные стратегии в редакторе</string>
 </resources>

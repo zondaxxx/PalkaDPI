@@ -206,6 +206,7 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
             getString(R.string.donate_message),
             getString(R.string.donate_cloudtips),
             getString(R.string.donate_telegram_bot),
+            getString(R.string.donate_thanks),
         )
 
         AlertDialog.Builder(context)

@@ -357,26 +357,29 @@ class MainActivity : BaseActivity() {
         val pinned = historyUtils.getPinnedHistory()
         val currentCmdArgs = getPreferences().getString("byedpi_cmd_args", "") ?: ""
 
-        if (pinned.isEmpty() || currentCmdArgs.isBlank()) {
-            binding.strategyButton.visibility = View.GONE
-            return
-        }
-
         val matched = pinned.find { it.text == currentCmdArgs }
+        val name = matched?.name?.takeIf { it.isNotBlank() }
 
-        val label = when {
-            matched == null -> currentCmdArgs
-            matched.name.isNullOrBlank() -> matched.text
-            else -> "${matched.name}: ${matched.text}"
+        if (name != null) {
+            binding.strategyButtonName.text = name
+            binding.strategyButtonName.visibility = View.VISIBLE
+            binding.strategyButtonText.maxLines = 1
+        } else {
+            binding.strategyButtonName.visibility = View.GONE
+            binding.strategyButtonText.maxLines = 2
         }
 
-        binding.strategyButtonText.text = label
+        binding.strategyButtonText.text = currentCmdArgs.ifBlank { getString(R.string.main_strategy_picker) }
         binding.strategyButton.visibility = View.VISIBLE
     }
 
     private fun showStrategyPicker() {
         val pinned = historyUtils.getPinnedHistory()
-        if (pinned.isEmpty()) return
+
+        if (pinned.isEmpty()) {
+            Toast.makeText(this, R.string.main_strategy_no_pinned, Toast.LENGTH_SHORT).show()
+            return
+        }
 
         val adapter = object : ArrayAdapter<Command>(
             this,
@@ -394,6 +397,7 @@ class MainActivity : BaseActivity() {
 
                 val nameView = view.findViewById<TextView>(R.id.strategyName)
                 val textView = view.findViewById<TextView>(R.id.strategyText)
+                val dividerView = view.findViewById<View>(R.id.strategyDivider)
 
                 val name = command.name?.takeIf { it.isNotBlank() }
 
@@ -407,6 +411,7 @@ class MainActivity : BaseActivity() {
                 }
 
                 textView.text = command.text
+                dividerView.visibility = if (position == count - 1) View.GONE else View.VISIBLE
 
                 return view
             }
@@ -414,6 +419,7 @@ class MainActivity : BaseActivity() {
 
         val listView = ListView(this).apply {
             divider = null
+            setPadding(0, (10 * resources.displayMetrics.density).toInt(), 0, 0)
             this.adapter = adapter
         }
 

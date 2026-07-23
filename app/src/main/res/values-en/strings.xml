@@ -189,13 +189,15 @@
     <string name="main_btn_test">Test</string>
     <string name="main_btn_list">Lists</string>
     <string name="donate">Donate</string>
-    <string name="donate_message">If the app has been useful to you, you can buy me a cup of coffee ☕️\nThank you for your support and participation ❤️</string>
-    <string name="donate_cloudtips">CloudTips (RU cards only)</string>
-    <string name="donate_telegram_bot">Telegram Bot (cards, wallets, crypto)</string>
+    <string name="donate_message">If the app has been useful to you, you can buy me a cup of coffee ☕️</string>
+    <string name="donate_cloudtips">💳 CloudTips (RU cards only)</string>
+    <string name="donate_telegram_bot">🍰 Telegram Bot (cards, wallets, crypto)</string>
+    <string name="donate_thanks">Thank you for your support and participation ❤️</string>
     <string name="dns_system">System</string>
     <string name="dns_google">Google</string>
     <string name="dns_cloudflare">Cloudflare</string>
     <string name="dns_quad9">Quad9</string>
     <string name="dns_custom">Custom</string>
     <string name="main_strategy_picker">Change strategy</string>
+    <string name="main_strategy_no_pinned">Pin the strategies you need in the editor</string>
 </resources>
