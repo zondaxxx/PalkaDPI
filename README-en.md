@@ -16,58 +16,62 @@
   </p>
 </div>
 
-## This app now has an official website -> https://byebyedpi.xyz
+An Android application that runs ByeDPI locally and redirects all traffic through it.
 
-An Android application that locally runs ByeDPI and routes all traffic through it.
+For stable operation, you may need to adjust the settings. More information about the available options can be found in the [ByeDPI documentation](https://github.com/hufrea/byedpi/blob/main/README.md).
 
-For stable operation, you may need to adjust the settings. You can read more about different settings in the [ByeDPI documentation](https://github.com/hufrea/byedpi/blob/v0.13/README.md).
+This application is not a VPN. It uses Android’s VPN mode to redirect traffic, but it does not send any data to a remote server. It does not encrypt your traffic or hide your IP address.
 
-This application is **not** a VPN. It uses Android's VPN mode to route traffic but does not transmit anything to a remote server. It does not encrypt traffic or hide your IP address.
-
-This application is a fork of [ByeDPIAndroid](https://github.com/dovecoteescapee/ByeDPIAndroid).
+The application has only one official website:
+https://byebyedpi.xyz
 
 ---
 
 ### Features
-* Autostart service on device boot
-* Saving lists of command-line parameters
-* Improved compatibility with Android TV/BOX
+
+* Automatically starts the service when the device boots
+* Saves command-line parameter lists
+* Improved compatibility with Android TV/BOX devices
 * Per-app split tunneling
-* Import/export settings
+* Settings import and export
 
 ### Usage
-* To enable auto-start, activate the option in settings.
-* It is recommended to connect to the VPN once to accept the request.
-* After that, upon device startup, the application will automatically launch the service based on settings (VPN/Proxy).
-* Comprehensive instruction from the community [ByeByeDPI-Manual](https://byebyedpi.xyz)
 
-### How to use ByeByeDPI with AdGuard?
-* Start ByeByeDPI in proxy mode.
-* Add ByeByeDPI to AdGuard exclusions on the "App Management" tab.
-* In AdGuard settings, specify the proxy:
-```plaintext
-Proxy Type: SOCKS5
-Host: 127.0.0.1
-Port: 1080 (default)
-```
+* Enable the corresponding option in the settings to use automatic startup.
+* It is recommended to connect to the VPN once in order to accept the permission request.
+* After that, the application will automatically start the service when the device boots, depending on the selected mode: VPN or Proxy.
+* Comprehensive community guide: [ByeByeDPI-Manual](https://byebyedpi.xyz)
 
 ### Building
-1. Clone the repository with submodules:
-   ```bash
-   git clone --recurse-submodules
-   ```
-2. Run the build script from the root of the repository:
-   ```bash
-   ./gradlew assembleRelease
-   ```
-3. The APK will be in `app/build/outputs/apk/release/`
 
-> P.S.: hev_socks5_tunnel will not build under Windows, you will need to use WSL
+1. Clone the repository with its submodules:
 
-### Signature Hash
+```bash
+git clone --recurse-submodules
+```
+
+2. Run the build script from the repository root:
+
+```bash
+./gradlew assembleRelease
+```
+
+3. The APK will be located in:
+   `app/build/outputs/apk/release/`
+
+> Note: hev_socks5_tunnel cannot be built on Windows. You will need to use WSL.
+
+### Signing Certificate Hash
+
 SHA-256:
 `77:45:10:75:AC:EA:40:64:06:47:5D:74:D4:59:88:3A:49:A6:40:51:FA:F3:2E:42:F7:18:F3:F9:77:7A:8D:FB`
 
 ### Dependencies
-- [ByeDPI](https://github.com/hufrea/byedpi)
-- [hev-socks5-tunnel](https://github.com/heiher/hev-socks5-tunnel)
+
+* [ByeDPI](https://github.com/hufrea/byedpi)
+* [hev-socks5-tunnel](https://github.com/heiher/hev-socks5-tunnel)
+
+### Acknowledgements
+
+* [hufrea](https://github.com/hufrea) — for [ByeDPI](https://github.com/hufrea/byedpi)
+* [dovecoteescapee](https://github.com/dovecoteescapee) — for the original implementation of [ByeDPIAndroid](https://github.com/dovecoteescapee/ByeDPIAndroid)
