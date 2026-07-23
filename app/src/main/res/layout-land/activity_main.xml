@@ -4,11 +4,19 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".activities.MainActivity">
+
+    <include layout="@layout/app_toolbar" />
+
+    <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_weight="1"
     android:baselineAligned="false"
     android:orientation="horizontal"
     android:clipChildren="false"
-    android:clipToPadding="false"
-    tools:context=".activities.MainActivity">
+    android:clipToPadding="false">
 
     <LinearLayout
         android:id="@+id/left_container"
@@ -289,6 +297,8 @@
             </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
+
+    </LinearLayout>
 
     </LinearLayout>
 

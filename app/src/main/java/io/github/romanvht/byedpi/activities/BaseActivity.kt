@@ -3,7 +3,9 @@ package io.github.romanvht.byedpi.activities
 import android.os.Build
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.color.DynamicColors
+import io.github.romanvht.byedpi.R
 import io.github.romanvht.byedpi.utility.SettingsUtils
 import io.github.romanvht.byedpi.utility.getPreferences
 import io.github.romanvht.byedpi.utility.getStringNotNull
@@ -24,6 +26,11 @@ abstract class BaseActivity : AppCompatActivity() {
         }
 
         super.onCreate(savedInstanceState)
+    }
+
+    protected fun setupToolbar() {
+        val toolbar: MaterialToolbar = findViewById(R.id.toolbar)
+        setSupportActionBar(toolbar)
     }
 
 }

@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.ByeDPI" parent="Theme.Material3.DynamicColors.DayNight">
+    <style name="Theme.ByeDPI" parent="Theme.Material3.DynamicColors.DayNight.NoActionBar">
         <item name="android:navigationBarColor">?attr/colorSurface</item>
         <item name="android:statusBarColor">?attr/colorSurfaceContainer</item>
-
-        <item name="actionBarStyle">@style/ActionBarTheme</item>
-        <item name="actionBarTheme">@style/ActionBarTextTheme</item>
 
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
@@ -23,6 +20,10 @@
         <item name="materialCardViewStyle">@style/SmallShadowCard</item>
     </style>
 
+    <style name="AppToolbar" parent="Widget.Material3.Toolbar.Surface">
+        <item name="android:background">?attr/colorSurfaceContainer</item>
+    </style>
+
     <style name="CircleButton" parent="Widget.Material3.Button.Icon">
         <item name="cornerRadius">60dp</item>
         <item name="android:textSize">0sp</item>
@@ -30,16 +31,6 @@
 
     <style name="App.Preference.SwitchPreference" parent="Preference.SwitchPreference.Material">
         <item name="android:widgetLayout">@layout/material_switch</item>
-    </style>
-
-    <style name="ActionBarTheme" parent="Widget.AppCompat.ActionBar.Solid">
-        <item name="background">?attr/colorSurfaceContainer</item>
-        <item name="elevation">0dp</item>
-    </style>
-
-    <style name="ActionBarTextTheme" parent="ThemeOverlay.Material3.ActionBar">
-        <item name="android:textColorPrimary">?attr/colorOnSurface</item>
-        <item name="android:textColorSecondary">?attr/colorOnSurfaceVariant</item>
     </style>
 
     <style name="CustomAlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">

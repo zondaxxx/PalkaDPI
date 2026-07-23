@@ -1,5 +1,5 @@
 <resources>
-    <style name="Theme.ByeDPI" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+    <style name="Theme.ByeDPI" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">#5976DF</item>
         <item name="colorPrimaryVariant">#3C52A3</item>
         <item name="colorOnPrimary">#FFFFFF</item>
@@ -15,6 +15,8 @@
 
         <item name="materialCardViewStyle">@style/SmallShadowCard</item>
     </style>
+
+    <style name="AppToolbar" parent="Widget.MaterialComponents.Toolbar.Primary" />
 
     <style name="SmallShadowCard" parent="Widget.MaterialComponents.CardView">
         <item name="cardElevation">1dp</item>
