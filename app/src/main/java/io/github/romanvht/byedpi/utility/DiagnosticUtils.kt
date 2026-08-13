@@ -42,10 +42,11 @@ object DiagnosticUtils {
             appendLine(value(context, R.string.diagnostic_strategy, strategy))
             appendLine(value(context, R.string.mode_setting, modeName(context, mode)))
             if (mode == Mode.VPN) {
+                val dns = preferences.getStringNotNull("dns_ip", "1.1.1.1").ifBlank { context.getString(R.string.dns_system) }
                 appendLine(value(
                     context,
                     R.string.dbs_ip_setting,
-                    preferences.getStringNotNull("dns_ip", "1.1.1.1")
+                    dns
                 ))
                 appendLine(value(
                     context,

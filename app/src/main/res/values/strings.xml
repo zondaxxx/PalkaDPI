@@ -153,7 +153,7 @@
     <string name="test_settings_commands">Список стратегий</string>
     <string name="test_delay">Ожидание между проверками</string>
     <string name="test_requests">Количество запросов к домену</string>
-    <string name="test_requests_limit">Максимум парралельных запросов</string>
+    <string name="test_requests_limit">Максимум параллельных запросов</string>
     <string name="test_timeout">Таймаут ответа домена</string>
     <string name="test_show_details">Показать детали</string>
     <string name="test_hide_details">Скрыть детали</string>
@@ -211,8 +211,8 @@
     <string name="diagnostic_strategy">Стратегия</string>
     <string name="diagnostic_battery_exclusion">Исключение из оптимизации батареи</string>
     <string name="diagnostic_test_settings">Настройки подбора</string>
-    <string name="diagnostic_enabled">включена</string>
-    <string name="diagnostic_disabled">выключена</string>
+    <string name="diagnostic_enabled">вкл</string>
+    <string name="diagnostic_disabled">выкл</string>
     <string name="diagnostic_yes">да</string>
     <string name="diagnostic_no">нет</string>
     <string name="diagnostic_available">есть</string>
