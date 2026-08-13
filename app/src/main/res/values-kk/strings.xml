@@ -220,4 +220,14 @@
     <string name="diagnostic_none">жоқ</string>
     <string name="diagnostic_proxy">Прокси</string>
     <string name="diagnostic_seconds">с</string>
+    <string name="file_name">Файл атауы</string>
+    <string name="save">Сақтау</string>
+    <string name="storage_locations">Жинақтауыштар</string>
+    <string name="internal_storage">Ішкі жад</string>
+    <string name="invalid_file_name">Файл атауы жарамсыз</string>
+    <string name="replace_file_confirmation">Файл бұрыннан бар. Ауыстыру керек пе?</string>
+    <string name="replace">Ауыстыру</string>
+    <string name="file_picker_unavailable">Құрылғыда жүйелік файл таңдау құралы жоқ. Жалғастыру үшін қолданбаға файлдарға рұқсат беріңіз.</string>
+    <string name="grant_access">Рұқсат беру</string>
+    <string name="storage_access_not_granted">Файлдарға рұқсат берілмеді</string>
 </resources>

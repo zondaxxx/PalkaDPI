@@ -13,6 +13,7 @@ import com.google.gson.Gson
 import io.github.romanvht.byedpi.BuildConfig
 import io.github.romanvht.byedpi.R
 import io.github.romanvht.byedpi.data.AppSettings
+import java.io.File
 
 object SettingsUtils {
     private const val TAG = "SettingsUtils"
@@ -74,39 +75,19 @@ object SettingsUtils {
 
     fun exportSettings(context: Context, uri: Uri, sections: Set<Section>) {
         try {
-            val prefs = context.getPreferences()
-
-            val export = AppSettings(
-                app = BuildConfig.APPLICATION_ID,
-                version = BuildConfig.VERSION_NAME,
-                history = if (Section.HISTORY in sections) {
-                    HistoryUtils(context).getHistory()
-                } else {
-                    null
-                },
-                apps = if (Section.APPS in sections) prefs.getSelectedApps() else null,
-                domainLists = if (Section.DOMAIN_LISTS in sections) {
-                    DomainListUtils.getAllLists(context)
-                } else {
-                    null
-                },
-                settings = if (Section.SETTINGS in sections) {
-                    prefs.all.filterKeys { it !in separatePreferenceKeys }
-                } else {
-                    null
-                }
-            )
-
-            val json = Gson().toJson(export)
-
             context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-                outputStream.write(json.toByteArray())
+                outputStream.write(settingsJson(context, sections).toByteArray())
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to export settings", e)
-            Handler(Looper.getMainLooper()).post {
-                Toast.makeText(context, R.string.export_failed, Toast.LENGTH_SHORT).show()
-            }
+            exportFailed(context, e)
+        }
+    }
+
+    fun exportSettings(context: Context, file: File, sections: Set<Section>) {
+        try {
+            file.writeText(settingsJson(context, sections))
+        } catch (e: Exception) {
+            exportFailed(context, e)
         }
     }
 
@@ -116,18 +97,65 @@ object SettingsUtils {
                 inputStream.bufferedReader().readText()
             } ?: return null
 
-            val settings = Gson().fromJson(json, AppSettings::class.java)
-            if (settings?.app == BuildConfig.APPLICATION_ID) {
-                settings
-            } else {
-                Toast.makeText(context, R.string.import_failed, Toast.LENGTH_LONG).show()
-                null
-            }
+            parseSettings(context, json)
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to read settings", e)
-            Toast.makeText(context, R.string.import_failed, Toast.LENGTH_SHORT).show()
+            importFailed(context, e)
             null
         }
+    }
+
+    fun readSettings(context: Context, file: File): AppSettings? {
+        return try {
+            parseSettings(context, file.readText())
+        } catch (e: Exception) {
+            importFailed(context, e)
+            null
+        }
+    }
+
+    private fun settingsJson(context: Context, sections: Set<Section>): String {
+        val prefs = context.getPreferences()
+        val export = AppSettings(
+            app = BuildConfig.APPLICATION_ID,
+            version = BuildConfig.VERSION_NAME,
+            history = if (Section.HISTORY in sections) {
+                HistoryUtils(context).getHistory()
+            } else {
+                null
+            },
+            apps = if (Section.APPS in sections) prefs.getSelectedApps() else null,
+            domainLists = if (Section.DOMAIN_LISTS in sections) {
+                DomainListUtils.getAllLists(context)
+            } else {
+                null
+            },
+            settings = if (Section.SETTINGS in sections) {
+                prefs.all.filterKeys { it !in separatePreferenceKeys }
+            } else {
+                null
+            }
+        )
+        return Gson().toJson(export)
+    }
+
+    private fun parseSettings(context: Context, json: String): AppSettings? {
+        val settings = Gson().fromJson(json, AppSettings::class.java)
+        if (settings?.app == BuildConfig.APPLICATION_ID) return settings
+
+        Toast.makeText(context, R.string.import_failed, Toast.LENGTH_LONG).show()
+        return null
+    }
+
+    private fun exportFailed(context: Context, exception: Exception) {
+        Log.e(TAG, "Failed to export settings", exception)
+        Handler(Looper.getMainLooper()).post {
+            Toast.makeText(context, R.string.export_failed, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun importFailed(context: Context, exception: Exception) {
+        Log.e(TAG, "Failed to read settings", exception)
+        Toast.makeText(context, R.string.import_failed, Toast.LENGTH_SHORT).show()
     }
 
     fun getAvailableSections(settings: AppSettings): Set<Section> = buildSet {

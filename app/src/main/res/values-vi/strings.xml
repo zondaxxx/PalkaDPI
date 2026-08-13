@@ -221,4 +221,14 @@
     <string name="diagnostic_none">không có</string>
     <string name="diagnostic_proxy">Proxy</string>
     <string name="diagnostic_seconds">giây</string>
+    <string name="file_name">Tên tệp</string>
+    <string name="save">Lưu</string>
+    <string name="storage_locations">Vị trí lưu trữ</string>
+    <string name="internal_storage">Bộ nhớ trong</string>
+    <string name="invalid_file_name">Tên tệp không hợp lệ</string>
+    <string name="replace_file_confirmation">Tệp đã tồn tại. Thay thế tệp?</string>
+    <string name="replace">Thay thế</string>
+    <string name="file_picker_unavailable">Thiết bị không có trình chọn tệp hệ thống. Hãy cấp quyền truy cập tệp cho ứng dụng để tiếp tục.</string>
+    <string name="grant_access">Cấp quyền</string>
+    <string name="storage_access_not_granted">Chưa cấp quyền truy cập tệp</string>
 </resources>

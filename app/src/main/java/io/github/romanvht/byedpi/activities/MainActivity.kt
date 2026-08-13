@@ -1,12 +1,10 @@
 package io.github.romanvht.byedpi.activities
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.PackageManager
 import android.net.VpnService
 import android.os.Build
 import android.os.Bundle
@@ -20,9 +18,11 @@ import android.widget.ListView
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import androidx.lifecycle.lifecycleScope
 import io.github.romanvht.byedpi.R
 import io.github.romanvht.byedpi.data.*
@@ -32,9 +32,8 @@ import io.github.romanvht.byedpi.services.appStatus
 import io.github.romanvht.byedpi.utility.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.io.IOException
+import java.io.File
 import kotlin.system.exitProcess
-import androidx.core.content.edit
 
 class MainActivity : BaseActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -44,16 +43,17 @@ class MainActivity : BaseActivity() {
         private val TAG: String = MainActivity::class.java.simpleName
         private const val BATTERY_OPTIMIZATION_REQUESTED = "battery_optimization_requested"
 
-        private fun collectLogs(): String? =
-            try {
-                Runtime.getRuntime()
-                    .exec("logcat *:D -d")
-                    .inputStream.bufferedReader()
-                    .use { it.readText() }
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to collect logs", e)
+        private fun collectLogs(): String? {
+            return try {
+                val process = Runtime.getRuntime().exec("logcat *:D -d")
+                process.inputStream.bufferedReader().use { reader ->
+                    reader.readText()
+                }
+            } catch (exception: Exception) {
+                Log.e(TAG, "Failed to collect logs", exception)
                 null
             }
+        }
     }
 
     private val vpnRegister =
@@ -66,34 +66,46 @@ class MainActivity : BaseActivity() {
             }
         }
 
-    private val logsRegister =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { log ->
-            lifecycleScope.launch(Dispatchers.IO) {
-                val logs = collectLogs()
+    private val logsRegister = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+        ::handleLogsFileResult
+    )
 
-                if (logs == null) {
-                    Toast.makeText(
-                        this@MainActivity,
-                        R.string.logs_failed,
-                        Toast.LENGTH_SHORT
-                    ).show()
+    private fun handleLogsFileResult(result: ActivityResult) {
+        if (result.resultCode != RESULT_OK) return
+        val data = result.data ?: return
+        val uri = data.data
+        val path = data.getStringExtra(FileActivity.EXTRA_PATH)
+        val file = if (path == null) null else File(path)
+        if (uri == null && file == null) return
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            val logs = collectLogs()
+            if (logs == null) {
+                runOnUiThread {
+                    Toast.makeText(this@MainActivity, R.string.logs_failed, Toast.LENGTH_SHORT).show()
+                }
+                return@launch
+            }
+
+            try {
+                val outputStream = when {
+                    uri != null -> contentResolver.openOutputStream(uri)
+                    file != null -> file.outputStream()
+                    else -> null
+                }
+                if (outputStream == null) {
+                    Log.e(TAG, "Failed to open output stream")
                 } else {
-                    val uri = log.data?.data ?: run {
-                        Log.e(TAG, "No data in result")
-                        return@launch
-                    }
-                    contentResolver.openOutputStream(uri)?.use {
-                        try {
-                            it.write(logs.toByteArray())
-                        } catch (e: IOException) {
-                            Log.e(TAG, "Failed to save logs", e)
-                        }
-                    } ?: run {
-                        Log.e(TAG, "Failed to open output stream")
+                    outputStream.use { stream ->
+                        stream.write(logs.toByteArray())
                     }
                 }
+            } catch (exception: Exception) {
+                Log.e(TAG, "Failed to save logs", exception)
             }
         }
+    }
 
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -212,9 +224,8 @@ class MainActivity : BaseActivity() {
             showStrategyPicker()
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
+        if (!PermissionUtils.hasNotificationPermission(this)) {
+            PermissionUtils.requestNotificationPermission(this, 1)
         } else {
             requestBatteryOptimization()
         }
@@ -264,13 +275,9 @@ class MainActivity : BaseActivity() {
             }
 
             R.id.action_save_logs -> {
-                val intent =
-                    Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-                        addCategory(Intent.CATEGORY_OPENABLE)
-                        type = "text/plain"
-                        putExtra(Intent.EXTRA_TITLE, "byedpi.log")
-                    }
-
+                val intent = Intent(this, FileActivity::class.java)
+                intent.putExtra(FileActivity.EXTRA_MODE, FileActivity.MODE_CREATE)
+                intent.putExtra(FileActivity.EXTRA_TYPE, FileActivity.TYPE_LOGS)
                 logsRegister.launch(intent)
                 true
             }
@@ -292,7 +299,6 @@ class MainActivity : BaseActivity() {
 
         val textView = TextView(this).apply {
             text = report
-            setTextIsSelectable(true)
             setPadding(padding, padding / 2, padding, padding / 2)
         }
 
@@ -300,14 +306,25 @@ class MainActivity : BaseActivity() {
             addView(textView)
         }
 
-        AlertDialog.Builder(this)
+        val dialog = AlertDialog.Builder(this)
             .setTitle(R.string.diagnostics)
             .setView(scrollView)
             .setPositiveButton(R.string.diagnostic_copy) { _, _ ->
                 ClipboardUtils.copy(this, report, getString(R.string.diagnostics))
             }
             .setNegativeButton(android.R.string.cancel, null)
-            .show()
+            .create()
+
+        dialog.setOnShowListener {
+            val copyButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            val cancelButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+            copyButton.nextFocusLeftId = cancelButton.id
+            copyButton.nextFocusRightId = cancelButton.id
+            cancelButton.nextFocusLeftId = copyButton.id
+            cancelButton.nextFocusRightId = copyButton.id
+            copyButton.requestFocus()
+        }
+        dialog.show()
     }
 
     private fun start() {
@@ -488,8 +505,8 @@ class MainActivity : BaseActivity() {
         val preferences = getPreferences()
         val alreadyRequested = preferences.getBoolean(BATTERY_OPTIMIZATION_REQUESTED, false)
 
-        if (!alreadyRequested && !BatteryUtils.isOptimizationDisabled(this)) {
-            BatteryUtils.requestBatteryOptimization(this)
+        if (!alreadyRequested && !PermissionUtils.isBatteryOptimizationDisabled(this)) {
+            PermissionUtils.requestBatteryOptimization(this)
             preferences.edit { putBoolean(BATTERY_OPTIMIZATION_REQUESTED, true) }
         }
     }

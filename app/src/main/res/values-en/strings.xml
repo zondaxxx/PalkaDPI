@@ -220,4 +220,14 @@
     <string name="diagnostic_none">none</string>
     <string name="diagnostic_proxy">Proxy</string>
     <string name="diagnostic_seconds">s</string>
+    <string name="file_name">File name</string>
+    <string name="save">Save</string>
+    <string name="storage_locations">Storage locations</string>
+    <string name="internal_storage">Internal storage</string>
+    <string name="invalid_file_name">Invalid file name</string>
+    <string name="replace_file_confirmation">The file already exists. Replace it?</string>
+    <string name="replace">Replace</string>
+    <string name="file_picker_unavailable">The device has no system file picker. Grant the app file access to continue.</string>
+    <string name="grant_access">Grant access</string>
+    <string name="storage_access_not_granted">File access was not granted</string>
 </resources>

@@ -220,4 +220,14 @@
     <string name="diagnostic_none">нет</string>
     <string name="diagnostic_proxy">Прокси</string>
     <string name="diagnostic_seconds">с</string>
+    <string name="file_name">Имя файла</string>
+    <string name="save">Сохранить</string>
+    <string name="storage_locations">Накопители</string>
+    <string name="internal_storage">Внутренняя память</string>
+    <string name="invalid_file_name">Недопустимое имя файла</string>
+    <string name="replace_file_confirmation">Файл уже существует. Заменить его?</string>
+    <string name="replace">Заменить</string>
+    <string name="file_picker_unavailable">На устройстве отсутствует системный выбор файлов. Для продолжения предоставьте приложению доступ к файлам.</string>
+    <string name="grant_access">Предоставить доступ</string>
+    <string name="storage_access_not_granted">Доступ к файлам не предоставлен</string>
 </resources>

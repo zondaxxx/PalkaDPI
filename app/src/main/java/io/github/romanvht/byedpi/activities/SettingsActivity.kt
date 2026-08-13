@@ -1,8 +1,10 @@
 package io.github.romanvht.byedpi.activities
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
@@ -13,12 +15,20 @@ import io.github.romanvht.byedpi.fragments.ByeDpiUISettingsFragment
 import io.github.romanvht.byedpi.fragments.MainSettingsFragment
 import io.github.romanvht.byedpi.utility.SettingsUtils
 import io.github.romanvht.byedpi.utility.SettingsUtils.Section
+import java.io.File
 
 class SettingsActivity : BaseActivity() {
     private var exportSections = Section.entries.toSet()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        exportSections = savedInstanceState
+            ?.getStringArrayList("export_sections")
+            ?.map(Section::valueOf)
+            ?.toSet()
+            ?: Section.entries.toSet()
+
         setContentView(R.layout.activity_settings)
         setupToolbar()
 
@@ -50,6 +60,14 @@ class SettingsActivity : BaseActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putStringArrayList(
+            "export_sections",
+            ArrayList(exportSections.map { it.name })
+        )
+    }
+
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_settings, menu)
         return true
@@ -74,41 +92,57 @@ class SettingsActivity : BaseActivity() {
                 availableSections = Section.entries.toSet()
             ) { sections ->
                 exportSections = sections
-                val fileName = "bbd_${System.currentTimeMillis().toReadableDateTime()}.json"
-                exportSettingsLauncher.launch(fileName)
+                openFile(FileActivity.MODE_CREATE)
             }
             true
         }
 
         R.id.action_import_settings -> {
-            importSettingsLauncher.launch(arrayOf("application/json"))
+            openFile(FileActivity.MODE_OPEN)
             true
         }
 
         else -> super.onOptionsItemSelected(item)
     }
 
-    private val exportSettingsLauncher = registerForActivityResult(
-        ActivityResultContracts.CreateDocument("application/json")
-    ) { uri ->
-        uri?.let {
-            SettingsUtils.exportSettings(this, it, exportSections)
+    private val fileLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+        ::handleFileResult
+    )
+
+    private fun handleFileResult(result: ActivityResult) {
+        if (result.resultCode != RESULT_OK) return
+        val data = result.data ?: return
+        val mode = data.getStringExtra(FileActivity.EXTRA_MODE)
+        val uri = data.data
+        val path = data.getStringExtra(FileActivity.EXTRA_PATH)
+        val file = if (path == null) null else File(path)
+
+        when (mode) {
+            FileActivity.MODE_OPEN -> {
+                val settings = when {
+                    uri != null -> SettingsUtils.readSettings(this, uri)
+                    file != null -> SettingsUtils.readSettings(this, file)
+                    else -> null
+                } ?: return
+                val availableSections = SettingsUtils.getAvailableSections(settings)
+                if (availableSections.isNotEmpty()) {
+                    showImportDialog(settings, availableSections)
+                }
+            }
+
+            FileActivity.MODE_CREATE -> when {
+                uri != null -> SettingsUtils.exportSettings(this, uri, exportSections)
+                file != null -> SettingsUtils.exportSettings(this, file, exportSections)
+            }
         }
     }
 
-    private val importSettingsLauncher = registerForActivityResult(
-        ActivityResultContracts.OpenDocument()
-    ) { uri ->
-        uri?.let {
-            val settings = SettingsUtils.readSettings(this, it) ?: return@let
-            val availableSections = SettingsUtils.getAvailableSections(settings)
-
-            if (availableSections.isEmpty()) {
-                return@let
-            }
-
-            showImportDialog(settings, availableSections)
-        }
+    private fun openFile(mode: String) {
+        val intent = Intent(this, FileActivity::class.java)
+        intent.putExtra(FileActivity.EXTRA_MODE, mode)
+        intent.putExtra(FileActivity.EXTRA_TYPE, FileActivity.TYPE_SETTINGS)
+        fileLauncher.launch(intent)
     }
 
     private fun showImportDialog(settings: AppSettings, availableSections: Set<Section>) {
@@ -171,8 +205,4 @@ class SettingsActivity : BaseActivity() {
             Section.DOMAIN_LISTS -> R.string.backup_domain_lists
         }
 
-    private fun Long.toReadableDateTime(): String {
-        val format = java.text.SimpleDateFormat("yyyyMMdd_HHmm", java.util.Locale.getDefault())
-        return format.format(this)
-    }
 }

@@ -52,13 +52,13 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
 
         findPreferenceNotNull<Preference>("battery_optimization")
             .setOnPreferenceClickListener {
-                BatteryUtils.requestBatteryOptimization(requireContext())
+                PermissionUtils.requestBatteryOptimization(requireContext())
                 true
             }
 
         findPreferenceNotNull<Preference>("storage_access")
             .setOnPreferenceClickListener {
-                StorageUtils.requestStoragePermission(this)
+                PermissionUtils.requestStorageAccess(this)
                 true
             }
 
@@ -152,13 +152,13 @@ class MainSettingsFragment : PreferenceFragmentCompat() {
             }
         }
 
-        if (BatteryUtils.isOptimizationDisabled(requireContext())) {
+        if (PermissionUtils.isBatteryOptimizationDisabled(requireContext())) {
             batteryOptimization.summary = getString(R.string.battery_optimization_disabled_summary)
         } else {
             batteryOptimization.summary = getString(R.string.battery_optimization_summary)
         }
 
-        if (StorageUtils.hasStoragePermission(requireContext())) {
+        if (PermissionUtils.hasStorageAccess(requireContext())) {
             storageAccess.summary = getString(R.string.storage_access_allowed_summary)
         } else {
             storageAccess.summary = getString(R.string.storage_access_summary)

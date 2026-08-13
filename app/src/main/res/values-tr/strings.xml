@@ -220,4 +220,14 @@
     <string name="diagnostic_none">yok</string>
     <string name="diagnostic_proxy">Proxy</string>
     <string name="diagnostic_seconds">sn</string>
+    <string name="file_name">Dosya adı</string>
+    <string name="save">Kaydet</string>
+    <string name="storage_locations">Depolama konumları</string>
+    <string name="internal_storage">Dahili depolama</string>
+    <string name="invalid_file_name">Geçersiz dosya adı</string>
+    <string name="replace_file_confirmation">Dosya zaten var. Değiştirilsin mi?</string>
+    <string name="replace">Değiştir</string>
+    <string name="file_picker_unavailable">Cihazda sistem dosya seçicisi yok. Devam etmek için uygulamaya dosya erişimi verin.</string>
+    <string name="grant_access">Erişim ver</string>
+    <string name="storage_access_not_granted">Dosya erişimi verilmedi</string>
 </resources>

@@ -67,12 +67,12 @@ object DiagnosticUtils {
             appendLine(value(
                 context,
                 R.string.diagnostic_battery_exclusion,
-                availability(context, BatteryUtils.isOptimizationDisabled(context))
+                availability(context, PermissionUtils.isBatteryOptimizationDisabled(context))
             ))
             appendLine(value(
                 context,
                 R.string.storage_access,
-                availability(context, StorageUtils.hasStoragePermission(context))
+                availability(context, PermissionUtils.hasStorageAccess(context))
             ))
 
             appendLine()
