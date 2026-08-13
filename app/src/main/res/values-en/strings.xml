@@ -200,4 +200,24 @@
     <string name="dns_custom">Custom</string>
     <string name="main_strategy_picker">Change strategy</string>
     <string name="main_strategy_no_pinned">Pin the strategies you need in the editor</string>
+    <string name="diagnostics">Diagnostics</string>
+    <string name="diagnostic_copy">Copy</string>
+    <string name="diagnostic_device">Device</string>
+    <string name="diagnostic_android_version">Android version</string>
+    <string name="diagnostic_kernel_version">Kernel version</string>
+    <string name="diagnostic_app_version">App version</string>
+    <string name="diagnostic_app_settings">App settings</string>
+    <string name="diagnostic_command_line">Command line</string>
+    <string name="diagnostic_strategy">Strategy</string>
+    <string name="diagnostic_battery_exclusion">Battery optimization exemption</string>
+    <string name="diagnostic_test_settings">Strategy test settings</string>
+    <string name="diagnostic_enabled">enabled</string>
+    <string name="diagnostic_disabled">disabled</string>
+    <string name="diagnostic_yes">yes</string>
+    <string name="diagnostic_no">no</string>
+    <string name="diagnostic_available">granted</string>
+    <string name="diagnostic_unavailable">not granted</string>
+    <string name="diagnostic_none">none</string>
+    <string name="diagnostic_proxy">Proxy</string>
+    <string name="diagnostic_seconds">s</string>
 </resources>

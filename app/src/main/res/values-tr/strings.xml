@@ -200,4 +200,24 @@
     <string name="dns_custom">Özel</string>
     <string name="main_strategy_picker">Ayarları değiştir</string>
     <string name="main_strategy_no_pinned">İhtiyacınız olan stratejileri düzenleyicide sabitleyin</string>
+    <string name="diagnostics">Tanılama</string>
+    <string name="diagnostic_copy">Kopyala</string>
+    <string name="diagnostic_device">Cihaz</string>
+    <string name="diagnostic_android_version">Android sürümü</string>
+    <string name="diagnostic_kernel_version">Çekirdek sürümü</string>
+    <string name="diagnostic_app_version">Uygulama sürümü</string>
+    <string name="diagnostic_app_settings">Uygulama ayarları</string>
+    <string name="diagnostic_command_line">Komut satırı</string>
+    <string name="diagnostic_strategy">Strateji</string>
+    <string name="diagnostic_battery_exclusion">Pil optimizasyonu istisnası</string>
+    <string name="diagnostic_test_settings">Strateji testi ayarları</string>
+    <string name="diagnostic_enabled">etkin</string>
+    <string name="diagnostic_disabled">devre dışı</string>
+    <string name="diagnostic_yes">evet</string>
+    <string name="diagnostic_no">hayır</string>
+    <string name="diagnostic_available">verildi</string>
+    <string name="diagnostic_unavailable">verilmedi</string>
+    <string name="diagnostic_none">yok</string>
+    <string name="diagnostic_proxy">Proxy</string>
+    <string name="diagnostic_seconds">sn</string>
 </resources>

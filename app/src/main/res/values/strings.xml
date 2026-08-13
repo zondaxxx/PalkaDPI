@@ -200,4 +200,24 @@
     <string name="dns_custom">Свой</string>
     <string name="main_strategy_picker">Сменить стратегию</string>
     <string name="main_strategy_no_pinned">Закрепите нужные стратегии в редакторе</string>
+    <string name="diagnostics">Диагностика</string>
+    <string name="diagnostic_copy">Копировать</string>
+    <string name="diagnostic_device">Устройство</string>
+    <string name="diagnostic_android_version">Версия Android</string>
+    <string name="diagnostic_kernel_version">Версия ядра</string>
+    <string name="diagnostic_app_version">Версия приложения</string>
+    <string name="diagnostic_app_settings">Настройки приложения</string>
+    <string name="diagnostic_command_line">Командная строка</string>
+    <string name="diagnostic_strategy">Стратегия</string>
+    <string name="diagnostic_battery_exclusion">Исключение из оптимизации батареи</string>
+    <string name="diagnostic_test_settings">Настройки подбора</string>
+    <string name="diagnostic_enabled">включена</string>
+    <string name="diagnostic_disabled">выключена</string>
+    <string name="diagnostic_yes">да</string>
+    <string name="diagnostic_no">нет</string>
+    <string name="diagnostic_available">есть</string>
+    <string name="diagnostic_unavailable">нет</string>
+    <string name="diagnostic_none">нет</string>
+    <string name="diagnostic_proxy">Прокси</string>
+    <string name="diagnostic_seconds">с</string>
 </resources>

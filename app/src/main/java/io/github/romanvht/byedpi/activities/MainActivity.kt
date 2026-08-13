@@ -17,6 +17,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.ListView
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -257,6 +258,11 @@ class MainActivity : BaseActivity() {
         val (status, _) = appStatus
 
         return when (item.itemId) {
+            R.id.action_diagnostics -> {
+                showDiagnostics()
+                true
+            }
+
             R.id.action_save_logs -> {
                 val intent =
                     Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
@@ -278,6 +284,30 @@ class MainActivity : BaseActivity() {
 
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    private fun showDiagnostics() {
+        val report = DiagnosticUtils.buildReport(this)
+        val padding = (24 * resources.displayMetrics.density).toInt()
+
+        val textView = TextView(this).apply {
+            text = report
+            setTextIsSelectable(true)
+            setPadding(padding, padding / 2, padding, padding / 2)
+        }
+
+        val scrollView = ScrollView(this).apply {
+            addView(textView)
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle(R.string.diagnostics)
+            .setView(scrollView)
+            .setPositiveButton(R.string.diagnostic_copy) { _, _ ->
+                ClipboardUtils.copy(this, report, getString(R.string.diagnostics))
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     private fun start() {

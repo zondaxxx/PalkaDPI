@@ -200,4 +200,24 @@
     <string name="dns_custom">Таңдамалы</string>
     <string name="main_strategy_picker">Параметрлерді өзгерту</string>
     <string name="main_strategy_no_pinned">Қажетті стратегияларды редакторда бекітіңіз</string>
+    <string name="diagnostics">Диагностика</string>
+    <string name="diagnostic_copy">Көшіру</string>
+    <string name="diagnostic_device">Құрылғы</string>
+    <string name="diagnostic_android_version">Android нұсқасы</string>
+    <string name="diagnostic_kernel_version">Ядро нұсқасы</string>
+    <string name="diagnostic_app_version">Қолданба нұсқасы</string>
+    <string name="diagnostic_app_settings">Қолданба баптаулары</string>
+    <string name="diagnostic_command_line">Пәрмен жолы</string>
+    <string name="diagnostic_strategy">Стратегия</string>
+    <string name="diagnostic_battery_exclusion">Батареяны оңтайландырудан шығару</string>
+    <string name="diagnostic_test_settings">Стратегияны тексеру баптаулары</string>
+    <string name="diagnostic_enabled">қосылған</string>
+    <string name="diagnostic_disabled">өшірілген</string>
+    <string name="diagnostic_yes">иә</string>
+    <string name="diagnostic_no">жоқ</string>
+    <string name="diagnostic_available">бар</string>
+    <string name="diagnostic_unavailable">жоқ</string>
+    <string name="diagnostic_none">жоқ</string>
+    <string name="diagnostic_proxy">Прокси</string>
+    <string name="diagnostic_seconds">с</string>
 </resources>

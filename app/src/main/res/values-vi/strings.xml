@@ -201,4 +201,24 @@
     <string name="dns_custom">Tùy chỉnh</string>
     <string name="main_strategy_picker">Thay đổi cài đặt</string>
     <string name="main_strategy_no_pinned">Ghim các chiến lược bạn cần trong trình chỉnh sửa</string>
+    <string name="diagnostics">Chẩn đoán</string>
+    <string name="diagnostic_copy">Sao chép</string>
+    <string name="diagnostic_device">Thiết bị</string>
+    <string name="diagnostic_android_version">Phiên bản Android</string>
+    <string name="diagnostic_kernel_version">Phiên bản nhân</string>
+    <string name="diagnostic_app_version">Phiên bản ứng dụng</string>
+    <string name="diagnostic_app_settings">Cài đặt ứng dụng</string>
+    <string name="diagnostic_command_line">Dòng lệnh</string>
+    <string name="diagnostic_strategy">Chiến lược</string>
+    <string name="diagnostic_battery_exclusion">Loại trừ tối ưu hóa pin</string>
+    <string name="diagnostic_test_settings">Cài đặt kiểm tra chiến lược</string>
+    <string name="diagnostic_enabled">bật</string>
+    <string name="diagnostic_disabled">tắt</string>
+    <string name="diagnostic_yes">có</string>
+    <string name="diagnostic_no">không</string>
+    <string name="diagnostic_available">đã cấp</string>
+    <string name="diagnostic_unavailable">chưa cấp</string>
+    <string name="diagnostic_none">không có</string>
+    <string name="diagnostic_proxy">Proxy</string>
+    <string name="diagnostic_seconds">giây</string>
 </resources>
