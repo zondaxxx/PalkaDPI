@@ -213,6 +213,7 @@ class FileActivity : BaseActivity() {
     }
 
     private fun hasSystemFilePicker(): Boolean {
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) return false
         return packageManager.resolveActivity(systemFileIntent(), PackageManager.MATCH_DEFAULT_ONLY) != null
     }
 
