@@ -59,6 +59,11 @@
 "palkaAutoDescription" = "PalkaDPI проверит подписанные стратегии на выбранных сервисах, выберет самую надёжную, сохранит её для этого типа сети и подключится.";
 "palkaAutoStart" = "Подобрать и подключить";
 "palkaAutoCancel" = "Остановить проверку";
+"palkaAutoStoppingVPN" = "Отключаем предыдущий системный VPN…";
+"palkaAutoConnectingVPN" = "Ждём подключения системного VPN…";
+"palkaAutoProbingThroughVPN" = "VPN подключён — проверяем сервисы через туннель";
+"palkaVPNConnectTimeout" = "Системный VPN не подключился за 20 секунд";
+"palkaVPNDisconnectTimeout" = "Системный VPN не отключился за 12 секунд";
 "palkaAutoSelectedFormat" = "Выбрана стратегия: %@";
 "palkaAutoResults" = "Результаты проверки";
 "palkaAutoCatalogNeeded" = "Проверенный каталог ещё загружается. Попробуй через несколько секунд.";

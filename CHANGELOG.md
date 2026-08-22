@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## PalkaDPI 0.4.2
+
+### 22.08.2026
+
+- Fixed automatic selection starting probes before the system VPN had connected
+- Wait for real NetworkExtension `connected` and `disconnected` states instead of fixed delays
+- Show whether auto-selection is stopping, connecting, or probing through the tunnel
+- Added explicit start/stop timeouts and surfaced lifecycle errors
+- Fixed manual and network-profile reconnection flows to wait for actual VPN state transitions
+
 ## PalkaDPI 0.4.1
 
 ### 22.08.2026

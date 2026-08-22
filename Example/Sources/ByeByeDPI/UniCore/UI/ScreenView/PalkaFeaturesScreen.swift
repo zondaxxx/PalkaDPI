@@ -23,8 +23,13 @@ struct AutomationScreen: View {
                 if automation.isRunning {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
-                            Text(automation.currentStrategyName)
-                                .font(.system(size: 15, weight: .bold))
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(automation.currentStrategyName)
+                                    .font(.system(size: 15, weight: .bold))
+                                Text(automation.currentStage)
+                                    .font(.system(size: 11, weight: .medium))
+                                    .foregroundColor(PalkaDesign.textSecondary)
+                            }
                             Spacer()
                             Text("\(automation.completedStrategies)/\(automation.totalStrategies)")
                                 .font(.system(size: 12, weight: .semibold, design: .monospaced))

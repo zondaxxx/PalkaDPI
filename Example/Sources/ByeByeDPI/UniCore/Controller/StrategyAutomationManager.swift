@@ -24,6 +24,7 @@ struct PalkaRecoverySuggestion: Identifiable, Equatable {
 final class StrategyAutomationManager: ObservableObject {
     @Published private(set) var isRunning = false
     @Published private(set) var currentStrategyName = ""
+    @Published private(set) var currentStage = ""
     @Published private(set) var completedStrategies = 0
     @Published private(set) var totalStrategies = 0
     @Published private(set) var scores: [PalkaStrategyTestScore] = []
@@ -86,6 +87,7 @@ final class StrategyAutomationManager: ObservableObject {
         generation = UUID()
         let currentGeneration = generation
         isRunning = true
+        currentStage = palkaLocalized("palkaAutoStoppingVPN")
         errorText = nil
         bestStrategyName = nil
         completedStrategies = 0
@@ -118,7 +120,14 @@ final class StrategyAutomationManager: ObservableObject {
                 self.isRunning = false
                 self.errorText = palkaLocalized("palkaAutoNoWorkingStrategy")
                 if shouldReconnectOnFailure {
-                    self.neManager.startConnection { _, _ in }
+                    self.currentStage = palkaLocalized("palkaAutoConnectingVPN")
+                    self.neManager.startConnection { [weak self] _, _ in
+                        DispatchQueue.main.async {
+                            self?.currentStage = ""
+                        }
+                    }
+                } else {
+                    self.currentStage = ""
                 }
                 return
             }
@@ -131,9 +140,11 @@ final class StrategyAutomationManager: ObservableObject {
             self.properties.saveCurrentStrategy(for: self.network.kind)
             self.bestStrategyName = strategy.displayName
             self.currentStrategyName = strategy.displayName
+            self.currentStage = palkaLocalized("palkaAutoConnectingVPN")
             self.neManager.startConnection { [weak self] success, error in
                 DispatchQueue.main.async {
                     self?.isRunning = false
+                    self?.currentStage = ""
                     if !success {
                         self?.errorText = error?.localizedDescription
                             ?? palkaLocalized("palkaAutoStartFailed")
@@ -147,11 +158,18 @@ final class StrategyAutomationManager: ObservableObject {
         generation = UUID()
         isRunning = false
         currentStrategyName = ""
-        diagnostics.refresh(
-            serviceIDs: properties.selectedServiceIDs,
-            customDomains: properties.customServiceDomains,
-            attempts: 1
-        )
+        currentStage = palkaLocalized("palkaAutoStoppingVPN")
+        neManager.stopConnection { [weak self] _, _ in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                self.currentStage = ""
+                self.diagnostics.refresh(
+                    serviceIDs: self.properties.selectedServiceIDs,
+                    customDomains: self.properties.customServiceDomains,
+                    attempts: 1
+                )
+            }
+        }
     }
 
     func evaluateRecovery(results: [PalkaServiceProbe]) {
@@ -185,15 +203,16 @@ final class StrategyAutomationManager: ObservableObject {
         guard let suggestion = recoverySuggestion else { return }
         recoverySuggestion = nil
         failureStreak = 0
-        neManager.stopConnection()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in
-            guard let self = self else { return }
-            self.properties.applyCatalogStrategy(
-                id: suggestion.id,
-                name: suggestion.name,
-                commandTemplate: suggestion.commandTemplate
-            )
-            self.neManager.startConnection { _, _ in }
+        neManager.stopConnection { [weak self] stopped, _ in
+            guard let self = self, stopped else { return }
+            DispatchQueue.main.async {
+                self.properties.applyCatalogStrategy(
+                    id: suggestion.id,
+                    name: suggestion.name,
+                    commandTemplate: suggestion.commandTemplate
+                )
+                self.neManager.startConnection { _, _ in }
+            }
         }
     }
 
@@ -221,44 +240,76 @@ final class StrategyAutomationManager: ObservableObject {
     ) {
         guard self.generation == generation else { return }
         guard index < candidates.count else {
-            neManager.stopConnection()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8, execute: completion)
+            currentStage = palkaLocalized("palkaAutoStoppingVPN")
+            neManager.stopConnection { _, _ in
+                DispatchQueue.main.async(execute: completion)
+            }
             return
         }
 
         let strategy = candidates[index]
         currentStrategyName = strategy.displayName
-        neManager.stopConnection()
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) { [weak self] in
-            guard let self = self, self.generation == generation else { return }
-            self.properties.applyCatalogStrategy(
-                id: strategy.id,
-                name: strategy.displayName,
-                commandTemplate: strategy.commandArgs
-            )
-            self.neManager.startConnection { [weak self] success, error in
+        currentStage = palkaLocalized("palkaAutoStoppingVPN")
+        neManager.stopConnection { [weak self] stopped, stopError in
+            DispatchQueue.main.async {
                 guard let self = self, self.generation == generation else { return }
-                guard success else {
-                    DispatchQueue.main.async {
-                        self.appendScore(strategy: strategy, results: [])
-                        self.completedStrategies += 1
-                        self.test(candidates: candidates, index: index + 1, generation: generation, completion: completion)
-                    }
+                guard stopped else {
+                    self.errorText = stopError?.localizedDescription
+                    self.appendScore(strategy: strategy, results: [])
+                    self.completedStrategies += 1
+                    self.test(
+                        candidates: candidates,
+                        index: index + 1,
+                        generation: generation,
+                        completion: completion
+                    )
                     return
                 }
 
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) { [weak self] in
-                    guard let self = self, self.generation == generation else { return }
-                    self.diagnostics.refresh(
-                        serviceIDs: self.properties.selectedServiceIDs,
-                        customDomains: self.properties.customServiceDomains,
-                        attempts: 2
-                    ) { [weak self] results in
+                self.properties.applyCatalogStrategy(
+                    id: strategy.id,
+                    name: strategy.displayName,
+                    commandTemplate: strategy.commandArgs
+                )
+                self.errorText = nil
+                self.currentStage = palkaLocalized("palkaAutoConnectingVPN")
+                self.neManager.startConnection { [weak self] success, error in
+                    DispatchQueue.main.async {
                         guard let self = self, self.generation == generation else { return }
-                        self.appendScore(strategy: strategy, results: results)
-                        self.completedStrategies += 1
-                        self.test(candidates: candidates, index: index + 1, generation: generation, completion: completion)
+                        guard success else {
+                            self.errorText = error?.localizedDescription
+                            self.appendScore(strategy: strategy, results: [])
+                            self.completedStrategies += 1
+                            self.test(
+                                candidates: candidates,
+                                index: index + 1,
+                                generation: generation,
+                                completion: completion
+                            )
+                            return
+                        }
+
+                        // startConnection completes only after NetworkExtension has
+                        // reached .connected, so these requests cannot race the tunnel.
+                        self.currentStage = palkaLocalized("palkaAutoProbingThroughVPN")
+                        self.diagnostics.refresh(
+                            serviceIDs: self.properties.selectedServiceIDs,
+                            customDomains: self.properties.customServiceDomains,
+                            attempts: 2
+                        ) { [weak self] results in
+                            guard let self = self, self.generation == generation else { return }
+                            // If the extension died while probing, iOS may fall back to
+                            // the direct route. Never count those responses as a success.
+                            let tunnelVerifiedResults = self.neManager.vpnRunning ? results : []
+                            self.appendScore(strategy: strategy, results: tunnelVerifiedResults)
+                            self.completedStrategies += 1
+                            self.test(
+                                candidates: candidates,
+                                index: index + 1,
+                                generation: generation,
+                                completion: completion
+                            )
+                        }
                     }
                 }
             }

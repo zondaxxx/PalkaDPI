@@ -59,6 +59,11 @@
 "palkaAutoDescription" = "PalkaDPI will test verified strategies against your selected services, choose the most reliable one, save it for this network type, and connect.";
 "palkaAutoStart" = "Find and connect";
 "palkaAutoCancel" = "Stop testing";
+"palkaAutoStoppingVPN" = "Disconnecting the previous system VPN…";
+"palkaAutoConnectingVPN" = "Waiting for the system VPN to connect…";
+"palkaAutoProbingThroughVPN" = "VPN connected — testing services through the tunnel";
+"palkaVPNConnectTimeout" = "The system VPN did not connect within 20 seconds";
+"palkaVPNDisconnectTimeout" = "The system VPN did not disconnect within 12 seconds";
 "palkaAutoSelectedFormat" = "Selected: %@";
 "palkaAutoResults" = "Test results";
 "palkaAutoCatalogNeeded" = "The verified catalog is still loading. Try again in a moment.";

@@ -513,9 +513,14 @@ struct HomeScreen: View {
 #endif
         vpnStartFailErrorText = ""
         if (neManager.vpnRunning) {
-            neManager.stopConnection()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                connectionActionInFlight = false
+            neManager.stopConnection { success, error in
+                DispatchQueue.main.async {
+                    self.connectionActionInFlight = false
+                    guard !success else { return }
+                    self.vpnStartFailErrorText = error?.localizedDescription
+                        ?? R.string.localizable.homeStartByeDPIErrUnknownMsg()
+                    self.showAlertType = .vpnStartError
+                }
             }
             return
         }

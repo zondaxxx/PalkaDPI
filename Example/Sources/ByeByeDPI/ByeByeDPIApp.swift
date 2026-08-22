@@ -199,14 +199,19 @@ struct ByeByeDPIApp: App {
                     return
                 }
                 let reconnect = neManager.vpnRunning
-                if reconnect {
-                    neManager.stopConnection()
-                }
-                DispatchQueue.main.asyncAfter(deadline: .now() + (reconnect ? 1.0 : 0.0)) {
+                let applyProfile = {
                     guard appProps.applyNetworkProfile(for: networkKind) else { return }
                     if reconnect {
                         neManager.startConnection { _, _ in }
                     }
+                }
+                if reconnect {
+                    neManager.stopConnection { stopped, _ in
+                        guard stopped else { return }
+                        DispatchQueue.main.async(execute: applyProfile)
+                    }
+                } else {
+                    applyProfile()
                 }
             }
         }

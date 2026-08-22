@@ -32,6 +32,9 @@ class NEObservableManager: ObservableObject {
     fileprivate let _cfNotificationCenter: CFNotificationCenter
     fileprivate var _startVpnObserver: UnsafeRawPointer?
     fileprivate var _stopVpnObserver: UnsafeRawPointer?
+    fileprivate var _vpnStartedNotificationObserver: NSObjectProtocol?
+    fileprivate var _vpnStoppedNotificationObserver: NSObjectProtocol?
+    fileprivate var _vpnStatusNotificationObserver: NSObjectProtocol?
     
     init(initCompletion: @escaping (NETunnelProviderManager?, (any Error)?) -> Void) {
         neTunnelProviderManager = nil
@@ -39,9 +42,29 @@ class NEObservableManager: ObservableObject {
         _cfNotificationCenter = CFNotificationCenterGetDarwinNotifyCenter()
         _startVpnObserver = nil
         _stopVpnObserver = nil
+        _vpnStartedNotificationObserver = nil
+        _vpnStoppedNotificationObserver = nil
+        _vpnStatusNotificationObserver = nil
         
-        NotificationCenter.default.addObserver(forName: .BBDVpnStarted, object: nil, queue: .main, using: handleVpnStart)
-        NotificationCenter.default.addObserver(forName: .BBDVpnStopped, object: nil, queue: .main, using: handleVpnStop)
+        _vpnStartedNotificationObserver = NotificationCenter.default.addObserver(
+            forName: .BBDVpnStarted,
+            object: nil,
+            queue: .main,
+            using: handleVpnStart
+        )
+        _vpnStoppedNotificationObserver = NotificationCenter.default.addObserver(
+            forName: .BBDVpnStopped,
+            object: nil,
+            queue: .main,
+            using: handleVpnStop
+        )
+        _vpnStatusNotificationObserver = NotificationCenter.default.addObserver(
+            forName: .NEVPNStatusDidChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.syncVpnState()
+        }
         
         
         _startVpnObserver = UnsafeRawPointer(Unmanaged.passUnretained(self).toOpaque())
@@ -54,8 +77,15 @@ class NEObservableManager: ObservableObject {
     deinit {
         CFNotificationCenterRemoveEveryObserver(_cfNotificationCenter, _startVpnObserver)
         CFNotificationCenterRemoveEveryObserver(_cfNotificationCenter, _stopVpnObserver)
-        NotificationCenter.default.removeObserver(self, name: .BBDVpnStarted, object: nil)
-        NotificationCenter.default.removeObserver(self, name: .BBDVpnStopped, object: nil)
+        if let observer = _vpnStartedNotificationObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        if let observer = _vpnStoppedNotificationObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        if let observer = _vpnStatusNotificationObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
     }
     
     func startConnection(completion: @escaping (_ success: Bool, _ error: Error?) -> Void) {
@@ -80,26 +110,41 @@ class NEObservableManager: ObservableObject {
         }
     }
     
-    func stopConnection() {
+    func stopConnection(
+        completion: @escaping (_ success: Bool, _ error: Error?) -> Void = { _, _ in }
+    ) {
 #if DEBUG
         if (ProcessInfo.processInfo.previewMode) {
             //Disable real VPN connection for preview
             vpnRunning = false
+            completion(true, nil)
             return
         }
 #endif
         if let safeManager = neTunnelProviderManager {
-            vpnRunning = NEObservableManager.isVpnRunning(status: safeManager.connection.status)
-            safeManager.connection.stopVPNTunnel()
+            stopConnection(manager: safeManager, completion: completion)
             return
         }
         getOrInitNEManager { manager, err in
             guard let safeManager = manager else {
+                completion(false, err)
                 return
             }
-            self.vpnRunning = NEObservableManager.isVpnRunning(status: safeManager.connection.status)
-            safeManager.connection.stopVPNTunnel()
+            self.stopConnection(manager: safeManager, completion: completion)
         }
+    }
+
+    fileprivate func stopConnection(
+        manager: NETunnelProviderManager,
+        completion: @escaping (_ success: Bool, _ error: Error?) -> Void
+    ) {
+        manager.connection.stopVPNTunnel()
+        waitForTunnel(
+            manager: manager,
+            shouldBeConnected: false,
+            deadline: Date().addingTimeInterval(12),
+            completion: completion
+        )
     }
     
     fileprivate func startConnection(manager: NETunnelProviderManager, completion: @escaping (_ success: Bool, _ error: Error?) -> Void) {
@@ -114,6 +159,7 @@ class NEObservableManager: ObservableObject {
             let firstTimeVpnSet = manager.protocolConfiguration == nil
             let startTunnelOptions = NEUtil.generateConnectionParamsFromAppUserDefaults()
             manager.isEnabled = true
+            manager.localizedDescription = "PalkaDPI"
             let vpnProtocol = NETunnelProviderProtocol()
             vpnProtocol.providerConfiguration = startTunnelOptions
             vpnProtocol.serverAddress = UserDefaultsAppProperties.byeDPIListenIp
@@ -146,8 +192,12 @@ class NEObservableManager: ObservableObject {
                 }
                 do {
                     try manager.connection.startVPNTunnel(options: startTunnelOptions)
-                    self.vpnRunning = true
-                    completion(true, nil)
+                    self.waitForTunnel(
+                        manager: manager,
+                        shouldBeConnected: true,
+                        deadline: Date().addingTimeInterval(20),
+                        completion: completion
+                    )
                 } catch {
 #if DEBUG
                     print("Start VPN error")
@@ -207,7 +257,7 @@ class NEObservableManager: ObservableObject {
     
     fileprivate func getOrInitNEManager(completion: @escaping (NETunnelProviderManager?, (any Error)?) -> Void) {
         if let safeManager = neTunnelProviderManager {
-            vpnRunning = NEObservableManager.isVpnRunning(status: safeManager.connection.status)
+            syncVpnState(manager: safeManager)
             completion(safeManager, nil)
             return
         }
@@ -238,23 +288,88 @@ class NEObservableManager: ObservableObject {
                 return
             }
             self.neTunnelProviderManager = safeManagers[0]
-            self.vpnRunning = NEObservableManager.isVpnRunning(status: safeManagers[0].connection.status)
+            self.syncVpnState(manager: safeManagers[0])
             completion(safeManagers[0], nil)
         }
     }
     
     fileprivate func handleVpnStart(_ notification: Notification) {
-        if (vpnRunning) {
-            return
-        }
-        vpnRunning = true
+        syncVpnState()
     }
     
     fileprivate func handleVpnStop(_ notification: Notification) {
-        if (!vpnRunning) {
-            return
-        }
         vpnRunning = false
+    }
+
+    private func syncVpnState(manager: NETunnelProviderManager? = nil) {
+        let update = {
+            let activeManager = manager ?? self.neTunnelProviderManager
+            self.vpnRunning = activeManager.map {
+                NEObservableManager.isVpnRunning(status: $0.connection.status)
+            } ?? false
+        }
+        if Thread.isMainThread {
+            update()
+        } else {
+            DispatchQueue.main.async(execute: update)
+        }
+    }
+
+    private func waitForTunnel(
+        manager: NETunnelProviderManager,
+        shouldBeConnected: Bool,
+        deadline: Date,
+        completion: @escaping (_ success: Bool, _ error: Error?) -> Void
+    ) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            let status = manager.connection.status
+            self.vpnRunning = NEObservableManager.isVpnRunning(status: status)
+
+            let reachedTarget: Bool
+            if shouldBeConnected {
+                // PacketTunnelProvider reports .connected only after network settings,
+                // ByeDPI and tun2socks have all started successfully.
+                reachedTarget = status == .connected
+            } else {
+                reachedTarget = status == .disconnected || status == .invalid
+            }
+
+            if reachedTarget {
+                completion(true, nil)
+                return
+            }
+
+            if Date() >= deadline {
+                if shouldBeConnected {
+                    manager.connection.stopVPNTunnel()
+                }
+                let messageKey = shouldBeConnected
+                    ? "palkaVPNConnectTimeout"
+                    : "palkaVPNDisconnectTimeout"
+                completion(
+                    false,
+                    NSError(
+                        domain: "PalkaDPI.VPN",
+                        code: shouldBeConnected ? 1001 : 1002,
+                        userInfo: [
+                            NSLocalizedDescriptionKey:
+                                "\(palkaLocalized(messageKey)) [NEVPNStatus=\(status.rawValue)]"
+                        ]
+                    )
+                )
+                return
+            }
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+                self?.waitForTunnel(
+                    manager: manager,
+                    shouldBeConnected: shouldBeConnected,
+                    deadline: deadline,
+                    completion: completion
+                )
+            }
+        }
     }
     
     fileprivate static func isVpnRunning(status: NEVPNStatus) -> Bool {
