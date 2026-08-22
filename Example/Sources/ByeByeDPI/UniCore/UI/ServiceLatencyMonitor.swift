@@ -42,14 +42,18 @@ private struct PalkaHTTPProbeMeasurement {
 }
 
 private final class PalkaHTTPProbe: NSObject, URLSessionDataDelegate, URLSessionTaskDelegate {
+    private let service: PalkaService
     private let completion: (PalkaHTTPProbeMeasurement) -> Void
     private let startedAt = Date()
     private var metrics: URLSessionTaskMetrics?
     private var receivedBytes = 0
+    private var receivedData = Data()
+    private var cancelledForSize = false
     private var completed = false
     private var session: URLSession?
 
-    init(url: URL, timeout: TimeInterval, completion: @escaping (PalkaHTTPProbeMeasurement) -> Void) {
+    init(service: PalkaService, timeout: TimeInterval, completion: @escaping (PalkaHTTPProbeMeasurement) -> Void) {
+        self.service = service
         self.completion = completion
         super.init()
 
@@ -61,8 +65,9 @@ private final class PalkaHTTPProbe: NSObject, URLSessionDataDelegate, URLSession
         let session = URLSession(configuration: configuration, delegate: self, delegateQueue: nil)
         self.session = session
 
-        var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: timeout)
+        var request = URLRequest(url: service.probeURL, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: timeout)
         request.httpMethod = "GET"
+        request.setValue("bytes=0-131071", forHTTPHeaderField: "Range")
         session.dataTask(with: request).resume()
     }
 
@@ -72,7 +77,11 @@ private final class PalkaHTTPProbe: NSObject, URLSessionDataDelegate, URLSession
 
     func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
         receivedBytes += data.count
+        if receivedData.count < 128 * 1024 {
+            receivedData.append(data.prefix((128 * 1024) - receivedData.count))
+        }
         if receivedBytes > 128 * 1024 {
+            cancelledForSize = true
             dataTask.cancel()
         }
     }
@@ -86,7 +95,11 @@ private final class PalkaHTTPProbe: NSObject, URLSessionDataDelegate, URLSession
         completed = true
 
         let statusCode = (task.response as? HTTPURLResponse)?.statusCode
-        let succeeded = error == nil && statusCode.map { (200..<500).contains($0) } == true
+        let transportSucceeded = error == nil || cancelledForSize
+        let succeeded = transportSucceeded && service.validatesProbeResponse(
+            data: receivedData,
+            response: task.response
+        )
         let transaction = metrics?.transactionMetrics.last
         let total = max(1, Int(Date().timeIntervalSince(startedAt) * 1000))
         let dns = Self.duration(
@@ -104,7 +117,7 @@ private final class PalkaHTTPProbe: NSObject, URLSessionDataDelegate, URLSession
             dnsMilliseconds: dns,
             tlsMilliseconds: tls,
             statusCode: statusCode,
-            errorText: error?.localizedDescription
+            errorText: succeeded ? nil : (error?.localizedDescription ?? "Unexpected service response")
         ))
         session.finishTasksAndInvalidate()
         self.session = nil
@@ -178,7 +191,7 @@ final class ServiceDiagnosticsMonitor: ObservableObject {
         for service in selected {
             for _ in 0..<safeAttempts {
                 group.enter()
-                let probe = PalkaHTTPProbe(url: service.probeURL, timeout: 7) { measurement in
+                let probe = PalkaHTTPProbe(service: service, timeout: 7) { measurement in
                     measurementQueue.sync {
                         measurements[service.id, default: []].append(measurement)
                     }

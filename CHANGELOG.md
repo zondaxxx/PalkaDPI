@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## PalkaDPI 0.4.1
+
+### 22.08.2026
+
+- Replaced ineffective v1 presets with independent upstream iOS-compatible strategies
+- Added QUIC/UDP 443 fallback variants
+- Require expected official service response content during automatic selection
+- Reject HTTP error responses and cross-host block-page redirects
+- Fixed the Telegram diagnostic endpoint
+
 ## PalkaDPI 0.4.0
 
 ### 22.08.2026

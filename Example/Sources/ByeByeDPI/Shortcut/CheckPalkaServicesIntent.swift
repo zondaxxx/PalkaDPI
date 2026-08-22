@@ -27,9 +27,8 @@ struct CheckPalkaServicesIntent: AppIntent {
             request.timeoutInterval = 7
             request.cachePolicy = .reloadIgnoringLocalCacheData
             do {
-                let (_, response) = try await URLSession.shared.data(for: request)
-                let code = (response as? HTTPURLResponse)?.statusCode
-                if code.map({ (200..<500).contains($0) }) == true {
+                let (data, response) = try await URLSession.shared.data(for: request)
+                if service.validatesProbeResponse(data: data, response: response) {
                     available.append(service.name)
                 } else {
                     unavailable.append(service.name)

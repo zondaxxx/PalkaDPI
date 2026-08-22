@@ -10,6 +10,7 @@ struct PalkaService: Identifiable, Codable, Hashable {
     let name: String
     let icon: String
     let probeURL: URL
+    let expectedResponseMarker: String?
     let domains: [String]
 
     static let all: [PalkaService] = [
@@ -18,6 +19,7 @@ struct PalkaService: Identifiable, Codable, Hashable {
             name: "Discord",
             icon: "bubble.left.and.bubble.right.fill",
             probeURL: URL(string: "https://discord.com/api/v10/gateway")!,
+            expectedResponseMarker: "gateway.discord.gg",
             domains: [
                 "dis.gd", "discord-activities.com", "discord.app", "discord.co",
                 "discord.com", "discord.design", "discord.dev", "discord.gg",
@@ -33,6 +35,7 @@ struct PalkaService: Identifiable, Codable, Hashable {
             name: "YouTube",
             icon: "play.rectangle.fill",
             probeURL: URL(string: "https://www.youtube.com/robots.txt")!,
+            expectedResponseMarker: "robots.txt file for YouTube",
             domains: [
                 "ggpht.com", "googleapis.com", "googleusercontent.com",
                 "googlevideo.com", "returnyoutubedislikeapi.com", "youtu.be",
@@ -45,6 +48,7 @@ struct PalkaService: Identifiable, Codable, Hashable {
             name: "Instagram",
             icon: "camera.fill",
             probeURL: URL(string: "https://www.instagram.com/robots.txt")!,
+            expectedResponseMarker: "Instagram",
             domains: ["cdninstagram.com", "instagram.com", "instagram.net"]
         ),
         PalkaService(
@@ -52,6 +56,7 @@ struct PalkaService: Identifiable, Codable, Hashable {
             name: "TikTok",
             icon: "music.note",
             probeURL: URL(string: "https://www.tiktok.com/robots.txt")!,
+            expectedResponseMarker: "User-agent:",
             domains: [
                 "byteoversea.com", "ibytedtos.com", "ibyteimg.com", "muscdn.com",
                 "musical.ly", "sgpstatp.com", "tiktok.com", "tiktokcdn.com",
@@ -63,13 +68,15 @@ struct PalkaService: Identifiable, Codable, Hashable {
             name: "X / Twitter",
             icon: "at",
             probeURL: URL(string: "https://x.com/robots.txt")!,
+            expectedResponseMarker: "Google / Bing Search Engine Robots",
             domains: ["t.co", "twimg.com", "twitter.com", "x.com"]
         ),
         PalkaService(
             id: "telegram",
             name: "Telegram",
             icon: "paperplane.fill",
-            probeURL: URL(string: "https://telegram.org/robots.txt")!,
+            probeURL: URL(string: "https://telegram.org/")!,
+            expectedResponseMarker: "Telegram Messenger",
             domains: ["t.me", "telegram.dog", "telegram.me", "telegram.org"]
         ),
     ]
@@ -121,10 +128,23 @@ struct PalkaService: Identifiable, Codable, Hashable {
                 name: domain,
                 icon: "globe",
                 probeURL: url,
+                expectedResponseMarker: nil,
                 domains: [domain]
             )
         }
         return selected(from: serviceIDs) + custom
+    }
+
+    func validatesProbeResponse(data: Data, response: URLResponse?) -> Bool {
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200..<300).contains(httpResponse.statusCode),
+              let expectedHost = probeURL.host?.lowercased(),
+              let finalHost = httpResponse.url?.host?.lowercased(),
+              finalHost == expectedHost || finalHost.hasSuffix("." + expectedHost) else {
+            return false
+        }
+        guard let marker = expectedResponseMarker else { return true }
+        return String(data: data, encoding: .utf8)?.localizedCaseInsensitiveContains(marker) == true
     }
 }
 
