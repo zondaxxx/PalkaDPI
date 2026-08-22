@@ -74,14 +74,14 @@ class AppProperties: Codable, ObservableObject
     
 #if DEBUG
     init() {
-        byeDPILaunchConfig = SBDConfig(commandArgs: ["-s1", "-d1", "-r1+s", "-a1", "-Ar", "-o1", "-a1", "-At", "-r1+s", "-a1"])
+        byeDPILaunchConfig = SBDConfig(commandArgs: PalkaPreset.recommendedCommandArgs)
         byeDPITestConfig = SBDTestConfig(domainRequestsCount: 2, parallelRequestsCount: 5, domainAnswerTimeoutInS: 3, delayBetweenRequestsInS: 1, fakeSNI: "google.com", domainListIDs: Set(), strategyListIDs: Set())
         byeDPICmdEditorHistory = [
-            SBDConfig(commandArgs: ["-s1", "-d1", "-r1+s", "-a1", "-Ar", "-o1", "-a1", "-At", "-r1+s", "-a1"]).cmdArgs.joined(separator: " "),
+            SBDConfig(commandArgs: PalkaPreset.recommendedCommandArgs).cmdArgs.joined(separator: " "),
             SBDConfig(commandArgs: ["-n", "google.com", "-d1", "-s1+s", "-r1+s", "-e1", "-m1", "-o1+s", "-t2", "-a1"]).cmdArgs.joined(separator: " ")
         ]
         _byeDPICmdEditorHistorySet = Set<String>([
-            SBDConfig(commandArgs: ["-s1", "-d1", "-r1+s", "-a1", "-Ar", "-o1", "-a1", "-At", "-r1+s", "-a1"]).cmdArgs.joined(separator: " "),
+            SBDConfig(commandArgs: PalkaPreset.recommendedCommandArgs).cmdArgs.joined(separator: " "),
             SBDConfig(commandArgs: ["-n", "google.com", "-d1", "-s1+s", "-r1+s", "-e1", "-m1", "-o1+s", "-t2", "-a1"]).cmdArgs.joined(separator: " ")
         ])
         byeDPIDomainListsIDsBypass = [
@@ -132,7 +132,8 @@ class AppProperties: Codable, ObservableObject
             return loadedProperties
         }
         let cpuCores = UInt8(ProcessInfo.processInfo.processorCount)
-        let properties = AppProperties(byeDPILaunchConfig: SBDConfig(), byeDPITestConfig: SBDTestConfig(domainRequestsCount: 2, parallelRequestsCount: cpuCores * 2, domainAnswerTimeoutInS: 5, delayBetweenRequestsInS: 1, fakeSNI: "google.com", domainListIDs: Set<String>([
+        let properties = AppProperties(byeDPILaunchConfig: SBDConfig(commandArgs: PalkaPreset.recommendedCommandArgs), byeDPITestConfig: SBDTestConfig(domainRequestsCount: 2, parallelRequestsCount: cpuCores * 2, domainAnswerTimeoutInS: 5, delayBetweenRequestsInS: 1, fakeSNI: "google.com", domainListIDs: Set<String>([
+            DiscordTestDomains.domainsList.id,
             YouTubeTestDomains.domainsList.id,
             GoogleVideoTestDomains.domainsList.id
         ]), strategyListIDs: Set<String>([
@@ -155,6 +156,15 @@ class AppProperties: Codable, ObservableObject
         properties.save()
         syncUserDefaults(properties: properties)
         return properties
+    }
+
+    /// Restores the shipping Discord + YouTube preset while preserving proxy
+    /// address, buffer, connection, TTL, and logging preferences.
+    func applyRecommendedPreset() {
+        byeDPILaunchConfig = byeDPILaunchConfig.copyWith(
+            commandArgs: PalkaPreset.recommendedCommandArgs
+        )
+        save()
     }
     
     fileprivate class func syncUserDefaults(properties: AppProperties) {

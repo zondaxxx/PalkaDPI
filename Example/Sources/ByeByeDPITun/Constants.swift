@@ -15,6 +15,11 @@ final class Constants {
     
     static var APP_GROUP_ID: String {
         get {
+            if let configured = Bundle.main.object(forInfoDictionaryKey: "PalkaAppGroupIdentifier") as? String,
+               !configured.isEmpty,
+               !configured.contains("$(") {
+                return configured
+            }
             var splitted = PSEUDO_BUNDLE_ID.split(separator: ".")
             _ = splitted.removeLast()
             _ = splitted.removeLast()

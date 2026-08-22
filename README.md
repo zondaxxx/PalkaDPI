@@ -1,4 +1,25 @@
-#  SwByeDPI - Swift wrapper for [byedpi](https://github.com/hufrea/byedpi)
+# BVDPI-IOS
+
+[![Build and Release](https://github.com/zondaxxx/BVDPI-IOS/actions/workflows/build-release.yml/badge.svg)](https://github.com/zondaxxx/BVDPI-IOS/actions/workflows/build-release.yml)
+
+Developer-signed iOS packet-tunnel app with a local ByeDPI core and a preset
+for Discord and YouTube. It does not use a remote VPN server.
+
+The CI pipeline builds an **unsigned IPA** on every push to `main`. Tags matching
+`v*` additionally publish that IPA on the GitHub Releases page. Before installing
+it, sign both the embedded packet-tunnel extension and the host app with matching
+App Group and Network Extension provisioning profiles.
+
+Build, signing, testing, and platform limitations are documented in
+[PALKA-README.md](./PALKA-README.md).
+
+This is an AGPL-3.0 derivative of
+[mIwr/SwByeDPI](https://github.com/mIwr/SwByeDPI), which embeds
+[hufrea/byedpi](https://github.com/hufrea/byedpi).
+
+---
+
+# SwByeDPI - Swift wrapper for [byedpi](https://github.com/hufrea/byedpi)
 
 <div align="center">
   <p>
@@ -227,4 +248,3 @@ Artifacts from the script's output are located in [Releases](https://github.com/
 <img src="https://github.com/mIwr/SwByeDPI/blob/master/RepoAssets/test_settings.png?raw=true"> 
 <img src="https://github.com/mIwr/SwByeDPI/blob/master/RepoAssets/analyzer.png?raw=true"> 
 </p>
-

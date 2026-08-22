@@ -1,7 +1,12 @@
-"homeVpnStateOff" = "ByeDPI - Off";
-"homeVpnStateOn" = "ByeDPI - On";
-"homeSettingsAccessHint" = "Disable ByeDPI before go to settings";
-"homeStartByeDPIErrTitle" = "ByeDPI fail start";
+"palkaTitle" = "PalkaDPI";
+"palkaSubtitle" = "Local DPI bypass without a remote VPN";
+"palkaPreset" = "Preset: %@";
+"palkaApplyPreset" = "Restore Discord + YouTube preset";
+"palkaApplyPresetDescription" = "Resets only the DPI strategy; DNS and proxy address stay unchanged";
+"homeVpnStateOff" = "Bypass is off";
+"homeVpnStateOn" = "Bypass is on";
+"homeSettingsAccessHint" = "Disable PalkaDPI before opening settings";
+"homeStartByeDPIErrTitle" = "PalkaDPI failed to start";
 "homeStartByeDPIErrUnknownMsg" = "Unknown error";
 
 "settingsGeneralSection" = "General";

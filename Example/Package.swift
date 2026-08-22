@@ -18,7 +18,7 @@ let package = Package(
         .package(url: "https://github.com/EbrahimTahernejad/Tun2SocksKit", from: "5.14.4"),
         .package(url: "https://github.com/mac-cain13/R.swift.git", from: "7.8.0"),
         .package(url: "https://github.com/sochalewski/TextFieldAlert", from: "1.4.0"),
-        .package(path: "../"),//Local SwByeDPI dependency
+        .package(name: "SwByeDPI", path: "../"),//Local SwByeDPI dependency
     ],
     targets: [
         .target(name: "ByeByeDPI", dependencies: [

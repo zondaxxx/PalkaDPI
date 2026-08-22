@@ -55,6 +55,12 @@ struct HomeScreen: View {
     var body: some View {
         VStack(alignment: .center, spacing: 8.0) {
             Spacer(minLength: 16)
+            Text(R.string.localizable.palkaTitle())
+                .font(.largeTitle)
+                .fontWeight(.bold)
+            Text(R.string.localizable.palkaSubtitle())
+                .foregroundColor(Color(R.color.grSecondary))
+                .font(.subheadline)
             Button {
                 toggleVpn()
             } label: {
@@ -74,7 +80,10 @@ struct HomeScreen: View {
                 .fontWeight(.semibold)
             Text(byeDPIProxyAddr)
                 .foregroundColor(Color(R.color.grSecondary))
-                .font(.headline)
+                .font(.caption)
+            Text(R.string.localizable.palkaPreset(PalkaPreset.name))
+                .foregroundColor(Color(R.color.grSecondary))
+                .font(.caption)
                 .fontWeight(.semibold)
             Spacer(minLength: 16)
             if (neManager.vpnRunning) {

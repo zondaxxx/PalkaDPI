@@ -1,7 +1,12 @@
-"homeVpnStateOff" = "ByeDPI - Выключено";
-"homeVpnStateOn" = "ByeDPI - Включено";
-"homeSettingsAccessHint" = "Отключите ByeDPI для перехода в настройки";
-"homeStartByeDPIErrTitle" = "Ошибка запуска ByeDPI";
+"palkaTitle" = "PalkaDPI";
+"palkaSubtitle" = "Локальный обход DPI без внешнего VPN";
+"palkaPreset" = "Пресет: %@";
+"palkaApplyPreset" = "Вернуть пресет Discord + YouTube";
+"palkaApplyPresetDescription" = "Сбросить только DPI-стратегию; DNS и адрес прокси не изменятся";
+"homeVpnStateOff" = "Обход выключен";
+"homeVpnStateOn" = "Обход включен";
+"homeSettingsAccessHint" = "Отключите PalkaDPI для перехода в настройки";
+"homeStartByeDPIErrTitle" = "Ошибка запуска PalkaDPI";
 "homeStartByeDPIErrUnknownMsg" = "Неизвестная ошибка";
 
 "settingsGeneralSection" = "Общее";

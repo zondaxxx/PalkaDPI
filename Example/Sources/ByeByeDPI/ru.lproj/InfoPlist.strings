@@ -1,1 +1,1 @@
-"NSLocalNetworkUsageDescription" = "ByeDPI будет доступен для использования устройствами в локальной сети";
+"NSLocalNetworkUsageDescription" = "PalkaDPI использует локальный прокси для обработки трафика на этом устройстве";

@@ -24,7 +24,9 @@
 		<true/>
 	</dict>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>ByeDPI will share its feature with local network devices</string>
+	<string>PalkaDPI uses a local proxy to process traffic on this device.</string>
+	<key>PalkaAppGroupIdentifier</key>
+	<string>$(PALKA_APP_GROUP)</string>
 	<key>UILaunchStoryboardName</key>
 	<string>$(INFOPLIST_KEY_UILaunchStoryboardName)</string>
 	<key>UIRequiresFullScreen</key>

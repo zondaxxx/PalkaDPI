@@ -117,6 +117,13 @@ struct SettingsScreen: View {
                         .font(.title3)
                         .fontWeight(.semibold)
                         .foregroundColor(Color(R.color.grSecondary))
+                    SettingsButtonView(
+                        title: R.string.localizable.palkaApplyPreset(),
+                        text: R.string.localizable.palkaApplyPresetDescription(),
+                        leadingIcon: Image(R.image.icCheck)
+                    ) {
+                        properties.applyRecommendedPreset()
+                    }
                     NavigationLink {
                         ByeDPICmdEditorScreen()
                     } label: {

@@ -97,13 +97,15 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
                 } else {
                     socksListenIp = "0.0.0.0"
                 }
-            }/* else {
+            } else if (PacketTunnelProvider.enabledNetworkInterface == .wwan) {
                 if let cellularAddress = getCellularAddress(), !cellularAddress.isEmpty {
                    socksListenIp = cellularAddress
                 } else {
                     socksListenIp = "0.0.0.0"
                 }
-            }*/
+            } else {
+                socksListenIp = "0.0.0.0"
+            }
         }
         
         var port = options?[UserDefaultsAppKeys.selectedByeDPIListenPortKey.rawValue] as? UInt16 ?? cachedConfig?.byeDPIListenPort ?? 10800
@@ -238,6 +240,15 @@ misc:
             ipv4Settings.excludedRoutes?.append(NEIPv4Route(destinationAddress: socksListenIp, subnetMask: "255.255.255.255"))
         }
         tunnelSettings.ipv4Settings = ipv4Settings
+
+        // Capture IPv6 as well. Without this route, IPv6-capable apps can bypass
+        // the local DPI strategy on dual-stack Wi-Fi and cellular networks.
+        let ipv6Settings = NEIPv6Settings(
+            addresses: ["fd00::1"],
+            networkPrefixLengths: [64]
+        )
+        ipv6Settings.includedRoutes = [NEIPv6Route.default()]
+        tunnelSettings.ipv6Settings = ipv6Settings
     
         let tun2SocksConfig = Socks5Tunnel.Config.string(content: tun2SocksConfigYAML)
         

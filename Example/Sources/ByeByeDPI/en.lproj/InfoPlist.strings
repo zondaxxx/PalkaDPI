@@ -1,1 +1,1 @@
-"NSLocalNetworkUsageDescription" = "ByeDPI will share its feature with local network devices";
+"NSLocalNetworkUsageDescription" = "PalkaDPI uses a local proxy to process traffic on this device";
