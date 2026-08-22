@@ -7,6 +7,9 @@
 
 import SwiftUI
 import SwByeDPI
+#if canImport(UIKit)
+import UIKit
+#endif
 
 #if DEBUG
 let previewProperties = AppProperties()
@@ -37,6 +40,18 @@ struct ByeByeDPIApp: App {
     @StateObject fileprivate var testManager: TestManager
     
     init() {
+#if canImport(UIKit)
+        let navigationAppearance = UINavigationBarAppearance()
+        navigationAppearance.configureWithTransparentBackground()
+        navigationAppearance.backgroundColor = .clear
+        navigationAppearance.shadowColor = .clear
+        navigationAppearance.titleTextAttributes = [.foregroundColor: UIColor.white]
+        navigationAppearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
+        UINavigationBar.appearance().standardAppearance = navigationAppearance
+        UINavigationBar.appearance().compactAppearance = navigationAppearance
+        UINavigationBar.appearance().scrollEdgeAppearance = navigationAppearance
+#endif
+
         //App Delegate launch analogue
         let props = AppProperties.load()
         _appProps = StateObject(wrappedValue: props)
@@ -113,6 +128,8 @@ struct ByeByeDPIApp: App {
             NavigationView {
                 HomeScreen()
             }
+            .accentColor(PalkaDesign.textPrimary)
+            .preferredColorScheme(.dark)
             .environmentObject(appProps)
             .environmentObject(lnwPermissionManager)
             .environmentObject(domainsManager)

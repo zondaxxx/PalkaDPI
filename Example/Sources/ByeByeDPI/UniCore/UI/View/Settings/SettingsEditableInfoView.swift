@@ -38,29 +38,38 @@ struct SettingsEditableInfoView: View {
         Button {
             showTextFieldAlert = true
         } label: {
-            HStack(alignment: .center, spacing: 12.0) {
-                leadingIcon
-                    .resizable()
-                    .frame(width: 24, height: 24)
-                    .foregroundColor(Color(R.color.grSecondary))
-                VStack(alignment: .leading, spacing: 0, content: {
+            HStack(alignment: .center, spacing: 12) {
+                PalkaIconBadge(image: leadingIcon)
+
+                VStack(alignment: .leading, spacing: 4, content: {
                     Text(title)
-                        .font(.caption).fontWeight(.semibold)
+                        .font(.system(size: 11, weight: .semibold))
+                        .tracking(0.4)
+                        .textCase(.uppercase)
                         .multilineTextAlignment(.leading)
-                        .foregroundColor(Color(R.color.grSecondary))
+                        .foregroundColor(PalkaDesign.textMuted)
                     Text(value + valueTextSuffix)
-                        .font(.body).fontWeight(.regular)
+                        .font(.system(size: 14, weight: .regular))
+                        .monospacedDigit()
                         .multilineTextAlignment(.leading)
-                        .foregroundColor(Color(R.color.grPrimary))
+                        .foregroundColor(PalkaDesign.textPrimary)
                         .lineLimit(4)
+                        .lineSpacing(3)
                 })
+
+                Spacer(minLength: 4)
+
+                Image(systemName: "square.and.pencil")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(PalkaDesign.textDim)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(14)
+            .palkaCard(radius: 16)
+            .contentShape(Rectangle())
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(EdgeInsets(top: 12, leading: 12, bottom: 12, trailing: 8))
-        .background(Color(R.color.bgSecondary))
-        .cornerRadius(12.0)
+        .buttonStyle(PalkaPressButtonStyle())
         .textFieldAlert(isPresented: $showTextFieldAlert, text: $tfValue, title: title, autocapitalizationType: autocapitalizationType, keyboardType: keyboardType, validator: validator, onCancel: {
             tfValue = value
             showTextFieldAlert = false

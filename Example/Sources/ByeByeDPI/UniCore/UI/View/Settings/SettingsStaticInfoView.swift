@@ -12,41 +12,53 @@ struct SettingsStaticInfoView: View {
     fileprivate let title: String
     fileprivate let text: String
     fileprivate let leadingIcon: Image
+    fileprivate let showsDisclosure: Bool
     
-    init(title: String, text: String, leadingIcon: Image) {
+    init(title: String, text: String, leadingIcon: Image, showsDisclosure: Bool = true) {
         self.title = title
         self.text = text
         self.leadingIcon = leadingIcon
+        self.showsDisclosure = showsDisclosure
     }
     
     var body: some View {
-        HStack(alignment: .center, spacing: 12.0) {
-            leadingIcon
-                .resizable()
-                .frame(width: 24, height: 24)
-                .foregroundColor(Color(R.color.grSecondary))
-            VStack(alignment: .leading, spacing: 0, content: {
+        HStack(alignment: .center, spacing: 12) {
+            PalkaIconBadge(image: leadingIcon)
+
+            VStack(alignment: .leading, spacing: 4, content: {
                 Text(title)
-                    .font(.caption).fontWeight(.semibold)
+                    .font(.system(size: 11, weight: .semibold))
+                    .tracking(0.4)
+                    .textCase(.uppercase)
                     .multilineTextAlignment(.leading)
-                    .foregroundColor(Color(R.color.grSecondary))
+                    .foregroundColor(PalkaDesign.textMuted)
                 Text(text)
-                    .font(.body).fontWeight(.regular)
+                    .font(.system(size: 14, weight: .regular))
+                    .monospacedDigit()
                     .multilineTextAlignment(.leading)
-                    .foregroundColor(Color(R.color.grPrimary))
+                    .foregroundColor(PalkaDesign.textPrimary)
+                    .lineSpacing(3)
             })
+
+            Spacer(minLength: 4)
+
+            if showsDisclosure {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(PalkaDesign.textDim)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(EdgeInsets(top: 12, leading: 12, bottom: 12, trailing: 8))
-        .background(Color(R.color.bgSecondary))
-        .cornerRadius(12.0)
+        .padding(14)
+        .palkaCard(radius: 16)
+        .contentShape(Rectangle())
     }
 }
 
 #if DEBUG
 #Preview {
     VStack(alignment: .leading, spacing: 12.0) {
-        SettingsStaticInfoView(title: "Some category", text: "Category Value", leadingIcon: Image(R.image.icInfo))
+        SettingsStaticInfoView(title: "Some category", text: "Category Value", leadingIcon: Image(R.image.icInfo), showsDisclosure: false)
         SettingsStaticInfoView(title: "Some category long-long-long text with additional info...", text: "Category Value", leadingIcon: Image(R.image.icInfo))
         SettingsStaticInfoView(title: "Some category long-long-long text with additional info...", text: "Category Value long-long-long text with additional info", leadingIcon: Image(R.image.icInfo))
     }

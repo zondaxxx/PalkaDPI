@@ -9,261 +9,336 @@ import SwiftUI
 import SwByeDPI
 
 struct SettingsScreen: View {
-    
+
     @EnvironmentObject var properties: AppProperties
     @EnvironmentObject var domainsManager: DomainsManager
-    
-    @State fileprivate var dnsOverAddr = ""
-    @State fileprivate var resolvedDnsServers = ""
-    @State fileprivate var ipAddr = ""
-    @State fileprivate var port = ""
-    @State fileprivate var bufSize = ""
-    
-    @State fileprivate var showShareActivityVC = false
-    
+
+    @State private var dnsOverAddr = ""
+    @State private var resolvedDnsServers = ""
+    @State private var ipAddr = ""
+    @State private var port = ""
+    @State private var bufSize = ""
+
+    @State private var showShareActivityVC = false
+    @State private var presetApplied = false
+
+    private var exportFileURL: URL {
+        FileManager.default.temporaryDirectory
+            .appendingPathComponent("palkadpi-config.json", isDirectory: false)
+    }
+
     var body: some View {
-        ScrollView(.vertical) {
-            VStack(alignment: .leading, spacing: 8.0) {
-                VStack(alignment: .leading) {
-                    Text(R.string.localizable.settingsGeneralSection)
-                        .font(.title3)
-                        .fontWeight(.semibold)
-                        .foregroundColor(Color(R.color.grSecondary))
-                    //TODO language, theme
-                    SettingsEditableInfoView(title: R.string.localizable.settingsGeneralDNSOption(), value: $dnsOverAddr, leadingIcon: Image(R.image.icWorld), validator: { input in
-                        if (input.isEmpty) {
-                            return false
-                        }
-                        return true
-                    }, onNewValue: { newVal in
-                        if (properties.dnsOverAddr == newVal) {
-                            return
-                        }
-                        dnsOverAddr = newVal
-                        properties.dnsOverAddr = newVal
-                        properties.save()
-                    }, keyboardType: .URL, autocapitalizationType: .none)
-                    SettingsEditableInfoView(title: R.string.localizable.settingsGeneralDNSResolvedOption(), value: $resolvedDnsServers, leadingIcon: Image(R.image.icWorld), validator: { input in
-                        if (input.isEmpty) {
-                            return false
-                        }
-                        let splitted = input.split(separator: " ", omittingEmptySubsequences: true)
-                        for split in splitted {
-                            let innerSplitted = split.split(separator: ",", omittingEmptySubsequences: true)
-                            for innerSplit in innerSplitted {
-                                let ipAddrSplit = innerSplit.split(separator: ".")
-                                if (ipAddrSplit.count != 4) {
-                                    return false
-                                }
-                            }
-                        }
-                        return true
-                    }, onNewValue: { newVal in
-                        if (properties.resolvedDnsServers.joined(separator: " ") == newVal) {
-                            return
-                        }
-                        var servers: [String] = []
-                        let splitted = newVal.split(separator: " ", omittingEmptySubsequences: true)
-                        for split in splitted {
-                            let innerSplitted = split.split(separator: ",", omittingEmptySubsequences: true)
-                            for innerSplit in innerSplitted {
-                                let ipAddrSplit = innerSplit.split(separator: ".")
-                                if (ipAddrSplit.count != 4) {
-                                    continue
-                                }
-                                servers.append(String(innerSplit))
-                            }
-                        }
-                        resolvedDnsServers = servers.joined(separator: " ")
-                        properties.resolvedDnsServers = servers
-                        properties.save()
-                    }, keyboardType: .numbersAndPunctuation, autocapitalizationType: .none)
-#if canImport(UIKit) && !os(tvOS)
-                    /*SettingsButtonView(title: R.string.localizable.settingsGeneralImportSettingsOption(), text: R.string.localizable.settingsGeneralImportSettingsOptionDesc(), leadingIcon: Image(R.image.icDownload)) {
-                        //TODO import settings via file picker
-                    }*/
-                    SettingsButtonView(title: R.string.localizable.settingsGeneralExportSettingsOption(), text: R.string.localizable.settingsGeneralExportSettingsOptionDesc(), leadingIcon: Image(R.image.icShare)) {
-                        if (showShareActivityVC) {
-                            return
-                        }
-                        let bbdConfig = SBDByeDPIAndroidConfig(dpiConfig: properties.byeDPILaunchConfig, domainLists: domainsManager.lists, testConfig: properties.byeDPITestConfig, apps: [], cmdHistory: properties.byeDPICmdEditorHistory, dnsIpAddr: properties.dnsOverAddr)
-                        let tempDirUrl = FileManager.default.temporaryDirectory
-                        let exportFileUrl = tempDirUrl.appendingPathComponent("bbdconfig.json", isDirectory: false)
-                        do {
-                            let exportData = try JSONSerialization.data(withJSONObject: bbdConfig.asExportDictionary())
-                            try exportData.write(to: exportFileUrl)
-                            showShareActivityVC = true
-                        } catch {
-                            print(error)
-                            return
-                        }
-                    }
-                    .sheet(isPresented: $showShareActivityVC, onDismiss: {
-                        showShareActivityVC = false
-                        let tempDirUrl = FileManager.default.temporaryDirectory
-                        let exportFileUrl = tempDirUrl.appendingPathComponent("bbdconfig.json", isDirectory: false)
-                        try? FileManager.default.removeItem(at: exportFileUrl)
-                    }, content: {
-                        let tempDirUrl = FileManager.default.temporaryDirectory
-                        let exportFileUrl = tempDirUrl.appendingPathComponent("bbdconfig.json", isDirectory: false)
-                        ActivityVC(presented: $showShareActivityVC, activityItems: [exportFileUrl])
-                            .ignoresSafeArea(.all, edges: .bottom)
-                    })
-#endif
+        ZStack {
+            PalkaBackground()
+
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(alignment: .leading, spacing: PalkaDesign.sectionSpacing) {
+                    settingsHeader
+                        .palkaEntrance()
+                    quickSetupSection
+                        .palkaEntrance(delay: 0.05)
+                    connectionSection
+                        .palkaEntrance(delay: 0.10)
+                    advancedSection
+                        .palkaEntrance(delay: 0.15)
+                    proxySection
+                        .palkaEntrance(delay: 0.20)
+                    aboutSection
+                        .palkaEntrance(delay: 0.25)
                 }
-                .padding(EdgeInsets(top: .zero, leading: .zero, bottom: 8.0, trailing: .zero))
-                VStack(alignment: .leading) {
-                    Text(R.string.localizable.settingsByeDPISection)
-                        .font(.title3)
-                        .fontWeight(.semibold)
-                        .foregroundColor(Color(R.color.grSecondary))
-                    SettingsButtonView(
-                        title: R.string.localizable.palkaApplyPreset(),
-                        text: R.string.localizable.palkaApplyPresetDescription(),
-                        leadingIcon: Image(R.image.icCheck)
-                    ) {
-                        properties.applyRecommendedPreset()
-                    }
-                    NavigationLink {
-                        ByeDPICmdEditorScreen()
-                    } label: {
-                        SettingsStaticInfoView(title: R.string.localizable.settingsByeDPIArgsOption(), text: R.string.localizable.settingsByeDPIArgsOptionDesc(), leadingIcon: Image(R.image.icCodeTags))
-                    }
-                    NavigationLink {
-                        DomainListsScreen()
-                    } label: {
-                        SettingsStaticInfoView(title: R.string.localizable.settingsDomainsListOption(), text: R.string.localizable.settingsDomainsListOptionDesc(), leadingIcon: Image(R.image.icList))
-                    }
-                    NavigationLink {
-                        StrategyListsScreen()
-                    } label: {
-                        SettingsStaticInfoView(title: R.string.localizable.settingsStrategiesListOption(), text: R.string.localizable.settingsStrategiesListOptionDesc(), leadingIcon: Image(R.image.icGridHexagon))
-                    }
-                    NavigationLink {
-                        ByeDPIStrategyTesterScreen()
-                    } label: {
-                        SettingsStaticInfoView(title: R.string.localizable.settingsByeDPIStrategyTestOption(), text: R.string.localizable.settingsByeDPIStrategyTestOptionDesc(), leadingIcon: Image(R.image.icSpeedometer))
-                    }
-                    NavigationLink {
-                        ByeDPITestResultsAnalyzerScreen()
-                    } label: {
-                        SettingsStaticInfoView(title: R.string.localizable.settingsByeDPITestAnalyzerOption(), text: R.string.localizable.settingsByeDPITestAnalyzerOptionDesc(), leadingIcon: Image(R.image.icTool))
-                    }
-                    NavigationLink {
-                        ByeDPIStrategyDebuggerScreen(initTestConfig: properties.byeDPITestConfig, initStrategyCmdArgs: properties.byeDPILaunchConfig.cmdArgs)
-                    } label: {
-                        SettingsStaticInfoView(title: R.string.localizable.settingsByeDPIDebugOption(), text: R.string.localizable.settingsByeDPIDebugOptionDesc(), leadingIcon: Image(R.image.icBracketsCheck))
-                    }
-                }
-                .padding(EdgeInsets(top: .zero, leading: .zero, bottom: 8.0, trailing: .zero))
-                VStack(alignment: .leading) {
-                    Text(R.string.localizable.settingsByeDPIProxySection)
-                        .font(.title3)
-                        .fontWeight(.semibold)
-                        .foregroundColor(Color(R.color.grSecondary))
-                    SettingsEditableInfoView(title: R.string.localizable.settingsByeDPIProxyIpAddr(), value: $ipAddr, leadingIcon: Image(R.image.icWorld), validator: { input in
-                        if (input.isEmpty) {
-                            return false
-                        }
-                        let splitted = input.split(separator: ".")
-                        if (splitted.count != 4) {
-                            return false
-                        }
-                        for ipByte in splitted {
-                            if (!ipByte.isEmpty) {
-                                continue
-                            }
-                            if let _ = UInt8(ipByte) {
-                                continue
-                            }
-                            return false
-                        }
-                        return true
-                    }, onNewValue: { newVal in
-                        if (properties.byeDPILaunchConfig.listenIP == newVal) {
-                            return
-                        }
-                        ipAddr = newVal
-                        properties.byeDPILaunchConfig = properties.byeDPILaunchConfig.copyWith(listenIP: newVal)
-                        properties.save()
-                    }, keyboardType: .numbersAndPunctuation, autocapitalizationType: .none)
-                    SettingsEditableInfoView(title: R.string.localizable.settingsByeDPIProxyPort(), value: $port, leadingIcon: Image(R.image.icWorld), validator: { input in
-                        if (input.isEmpty) {
-                            return false
-                        }
-                        guard let _ = UInt16(input) else {
-                            return false
-                        }
-                        return true
-                    }, onNewValue: { newVal in
-                        guard let parsedNum = UInt16(newVal) else {
-                            return
-                        }
-                        if (properties.byeDPILaunchConfig.listenPort == parsedNum) {
-                            return
-                        }
-                        port = newVal
-                        properties.byeDPILaunchConfig = properties.byeDPILaunchConfig.copyWith(listenPort: parsedNum)
-                        properties.save()
-                    }, keyboardType: .numberPad, autocapitalizationType: .none)
-                    SettingsEditableInfoView(title: R.string.localizable.settingsByeDPIProxyBufSize(), value: $bufSize, leadingIcon: Image(R.image.icDb), validator: { input in
-                        if (input.isEmpty) {
-                            return false
-                        }
-                        guard let parsedInput = Int(input), parsedInput > 0 else {
-                            return false
-                        }
-                        return true
-                    }, onNewValue: { newVal in
-                        guard let parsedNum = UInt32(newVal), parsedNum > 0 else {
-                            return
-                        }
-                        if (properties.byeDPILaunchConfig.bufSize == parsedNum) {
-                            return
-                        }
-                        bufSize = newVal
-                        properties.byeDPILaunchConfig = properties.byeDPILaunchConfig.copyWith(bufSize: parsedNum)
-                        properties.save()
-                    }, keyboardType: .numberPad, autocapitalizationType: .none)
-                }
-                .padding(EdgeInsets(top: .zero, leading: .zero, bottom: 8.0, trailing: .zero))
-                VStack(alignment: .leading) {
-                    Text(R.string.localizable.settingsAboutSecton)
-                        .font(.title3)
-                        .fontWeight(.semibold)
-                        .foregroundColor(Color(R.color.grSecondary))
-                    Link(destination: URL(string: Constants.sourceCodeLink)!) {
-                        SettingsStaticInfoView(title: R.string.localizable.settingsAboutSourceCode(), text: "Github", leadingIcon: Image(R.image.icGithub))
-                    }
-                    SettingsStaticInfoView(title: R.string.localizable.settingsAboutAppVersionCode(), text: Constants.PSEUDO_BUNDLE_VERSION, leadingIcon: Image(R.image.icInfo))
-                    SettingsStaticInfoView(title: R.string.localizable.settingsAboutByeDPIVersion(), text: ByeDPI.versionCode, leadingIcon: Image(R.image.icInfo))
-                }
-                Rectangle()
-                    .frame(width: 1.0, height: 12.0)
-                    .opacity(0.0)
+                .padding(.horizontal, PalkaDesign.screenPadding)
+                .padding(.top, 12)
+                .padding(.bottom, 28)
             }
-            .padding(.horizontal, 12)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .onAppear {
-            dnsOverAddr = properties.dnsOverAddr
-            resolvedDnsServers = properties.resolvedDnsServers.joined(separator: " ")
-            ipAddr = properties.byeDPILaunchConfig.listenIP
-            port = String(properties.byeDPILaunchConfig.listenPort)
-            bufSize = String(properties.byeDPILaunchConfig.bufSize)
-            //Launch speed up tip - Load data from storage for domains/strategies/tests??
-        }
+        .foregroundColor(PalkaDesign.textPrimary)
+        .onAppear(perform: loadValues)
         .onDisappear {
-            let tempDirUrl = FileManager.default.temporaryDirectory
-            let exportFileUrl = tempDirUrl.appendingPathComponent("bbdconfig.json", isDirectory: false)
-            try? FileManager.default.removeItem(at: exportFileUrl)
+            try? FileManager.default.removeItem(at: exportFileURL)
         }
+#if canImport(UIKit) && !os(tvOS)
+        .sheet(isPresented: $showShareActivityVC, onDismiss: {
+            showShareActivityVC = false
+            try? FileManager.default.removeItem(at: exportFileURL)
+        }, content: {
+            ActivityVC(presented: $showShareActivityVC, activityItems: [exportFileURL])
+                .ignoresSafeArea(.all, edges: .bottom)
+        })
+#endif
 #if !os(tvOS)
         .navigationTitle(R.string.localizable.generalSettings())
 #if !os(macOS)
         .navigationBarTitleDisplayMode(.inline)
 #endif
 #endif
+    }
+
+    private var settingsHeader: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(palkaLocalized("palkaSettingsTitle"))
+                .font(.system(size: 28, weight: .heavy))
+                .tracking(-0.85)
+
+            Text(palkaLocalized("palkaSettingsDescription"))
+                .font(.system(size: 14, weight: .regular))
+                .foregroundColor(PalkaDesign.textSecondary)
+                .lineSpacing(4)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var quickSetupSection: some View {
+        PalkaSettingsSection(palkaLocalized("palkaQuickSetupSection")) {
+            SettingsButtonView(
+                title: R.string.localizable.palkaApplyPreset(),
+                text: R.string.localizable.palkaApplyPresetDescription(),
+                leadingIcon: Image(R.image.icCheck)
+            ) {
+                properties.applyRecommendedPreset()
+                withAnimation(.easeOut(duration: 0.18)) {
+                    presetApplied = true
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.4) {
+                    withAnimation(.easeOut(duration: 0.18)) {
+                        presetApplied = false
+                    }
+                }
+            }
+
+            if presetApplied {
+                PalkaFeedbackBanner(
+                    text: palkaLocalized("palkaPresetApplied"),
+                    kind: .success
+                )
+                .transition(.opacity)
+            }
+        }
+    }
+
+    private var connectionSection: some View {
+        PalkaSettingsSection(R.string.localizable.settingsGeneralSection()) {
+            SettingsEditableInfoView(
+                title: R.string.localizable.settingsGeneralDNSOption(),
+                value: $dnsOverAddr,
+                leadingIcon: Image(R.image.icWorld),
+                validator: { input in
+                    !input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                },
+                onNewValue: { newValue in
+                    guard properties.dnsOverAddr != newValue else { return }
+                    dnsOverAddr = newValue
+                    properties.dnsOverAddr = newValue
+                    properties.save()
+                },
+                keyboardType: .URL,
+                autocapitalizationType: .none
+            )
+
+            SettingsEditableInfoView(
+                title: R.string.localizable.settingsGeneralDNSResolvedOption(),
+                value: $resolvedDnsServers,
+                leadingIcon: Image(R.image.icWorld),
+                validator: { input in
+                    let servers = parseServers(input)
+                    return !servers.isEmpty && servers.allSatisfy(isValidIPv4)
+                },
+                onNewValue: { newValue in
+                    let servers = parseServers(newValue).filter(isValidIPv4)
+                    let normalized = servers.joined(separator: " ")
+                    guard properties.resolvedDnsServers != servers else { return }
+                    resolvedDnsServers = normalized
+                    properties.resolvedDnsServers = servers
+                    properties.save()
+                },
+                keyboardType: .numbersAndPunctuation,
+                autocapitalizationType: .none
+            )
+
+#if canImport(UIKit) && !os(tvOS)
+            SettingsButtonView(
+                title: R.string.localizable.settingsGeneralExportSettingsOption(),
+                text: R.string.localizable.settingsGeneralExportSettingsOptionDesc(),
+                leadingIcon: Image(R.image.icShare),
+                onPressed: exportSettings
+            )
+#endif
+        }
+    }
+
+    private var advancedSection: some View {
+        PalkaSettingsSection(R.string.localizable.settingsByeDPISection()) {
+            settingsLink(
+                title: R.string.localizable.settingsByeDPIArgsOption(),
+                text: R.string.localizable.settingsByeDPIArgsOptionDesc(),
+                icon: Image(R.image.icCodeTags),
+                destination: ByeDPICmdEditorScreen()
+            )
+            settingsLink(
+                title: R.string.localizable.settingsDomainsListOption(),
+                text: R.string.localizable.settingsDomainsListOptionDesc(),
+                icon: Image(R.image.icList),
+                destination: DomainListsScreen()
+            )
+            settingsLink(
+                title: R.string.localizable.settingsStrategiesListOption(),
+                text: R.string.localizable.settingsStrategiesListOptionDesc(),
+                icon: Image(R.image.icGridHexagon),
+                destination: StrategyListsScreen()
+            )
+            settingsLink(
+                title: R.string.localizable.settingsByeDPIStrategyTestOption(),
+                text: R.string.localizable.settingsByeDPIStrategyTestOptionDesc(),
+                icon: Image(R.image.icSpeedometer),
+                destination: ByeDPIStrategyTesterScreen()
+            )
+            settingsLink(
+                title: R.string.localizable.settingsByeDPITestAnalyzerOption(),
+                text: R.string.localizable.settingsByeDPITestAnalyzerOptionDesc(),
+                icon: Image(R.image.icTool),
+                destination: ByeDPITestResultsAnalyzerScreen()
+            )
+            settingsLink(
+                title: R.string.localizable.settingsByeDPIDebugOption(),
+                text: R.string.localizable.settingsByeDPIDebugOptionDesc(),
+                icon: Image(R.image.icBracketsCheck),
+                destination: ByeDPIStrategyDebuggerScreen(
+                    initTestConfig: properties.byeDPITestConfig,
+                    initStrategyCmdArgs: properties.byeDPILaunchConfig.cmdArgs
+                )
+            )
+        }
+    }
+
+    private var proxySection: some View {
+        PalkaSettingsSection(R.string.localizable.settingsByeDPIProxySection()) {
+            SettingsEditableInfoView(
+                title: R.string.localizable.settingsByeDPIProxyIpAddr(),
+                value: $ipAddr,
+                leadingIcon: Image(R.image.icWorld),
+                validator: isValidIPv4,
+                onNewValue: { newValue in
+                    guard properties.byeDPILaunchConfig.listenIP != newValue else { return }
+                    ipAddr = newValue
+                    properties.byeDPILaunchConfig = properties.byeDPILaunchConfig.copyWith(listenIP: newValue)
+                    properties.save()
+                },
+                keyboardType: .numbersAndPunctuation,
+                autocapitalizationType: .none
+            )
+
+            SettingsEditableInfoView(
+                title: R.string.localizable.settingsByeDPIProxyPort(),
+                value: $port,
+                leadingIcon: Image(R.image.icWorld),
+                validator: { UInt16($0) != nil },
+                onNewValue: { newValue in
+                    guard let parsedNumber = UInt16(newValue),
+                          properties.byeDPILaunchConfig.listenPort != parsedNumber else { return }
+                    port = newValue
+                    properties.byeDPILaunchConfig = properties.byeDPILaunchConfig.copyWith(listenPort: parsedNumber)
+                    properties.save()
+                },
+                keyboardType: .numberPad,
+                autocapitalizationType: .none
+            )
+
+            SettingsEditableInfoView(
+                title: R.string.localizable.settingsByeDPIProxyBufSize(),
+                value: $bufSize,
+                leadingIcon: Image(R.image.icDb),
+                validator: { input in
+                    guard let parsedInput = UInt32(input) else { return false }
+                    return parsedInput > 0
+                },
+                onNewValue: { newValue in
+                    guard let parsedNumber = UInt32(newValue), parsedNumber > 0,
+                          properties.byeDPILaunchConfig.bufSize != parsedNumber else { return }
+                    bufSize = newValue
+                    properties.byeDPILaunchConfig = properties.byeDPILaunchConfig.copyWith(bufSize: parsedNumber)
+                    properties.save()
+                },
+                keyboardType: .numberPad,
+                autocapitalizationType: .none
+            )
+        }
+    }
+
+    private var aboutSection: some View {
+        PalkaSettingsSection(R.string.localizable.settingsAboutSecton()) {
+            Link(destination: URL(string: Constants.sourceCodeLink)!) {
+                SettingsStaticInfoView(
+                    title: R.string.localizable.settingsAboutSourceCode(),
+                    text: "GitHub",
+                    leadingIcon: Image(R.image.icGithub)
+                )
+            }
+            .buttonStyle(PalkaPressButtonStyle())
+
+            SettingsStaticInfoView(
+                title: R.string.localizable.settingsAboutAppVersionCode(),
+                text: Constants.PSEUDO_BUNDLE_VERSION,
+                leadingIcon: Image(R.image.icInfo),
+                showsDisclosure: false
+            )
+            SettingsStaticInfoView(
+                title: R.string.localizable.settingsAboutByeDPIVersion(),
+                text: ByeDPI.versionCode,
+                leadingIcon: Image(R.image.icInfo),
+                showsDisclosure: false
+            )
+        }
+    }
+
+    private func settingsLink<Destination: View>(
+        title: String,
+        text: String,
+        icon: Image,
+        destination: Destination
+    ) -> some View {
+        NavigationLink(destination: destination) {
+            SettingsStaticInfoView(title: title, text: text, leadingIcon: icon)
+        }
+        .buttonStyle(PalkaPressButtonStyle())
+    }
+
+    private func loadValues() {
+        dnsOverAddr = properties.dnsOverAddr
+        resolvedDnsServers = properties.resolvedDnsServers.joined(separator: " ")
+        ipAddr = properties.byeDPILaunchConfig.listenIP
+        port = String(properties.byeDPILaunchConfig.listenPort)
+        bufSize = String(properties.byeDPILaunchConfig.bufSize)
+    }
+
+    private func exportSettings() {
+        guard !showShareActivityVC else { return }
+
+        let config = SBDByeDPIAndroidConfig(
+            dpiConfig: properties.byeDPILaunchConfig,
+            domainLists: domainsManager.lists,
+            testConfig: properties.byeDPITestConfig,
+            apps: [],
+            cmdHistory: properties.byeDPICmdEditorHistory,
+            dnsIpAddr: properties.dnsOverAddr
+        )
+
+        do {
+            let exportData = try JSONSerialization.data(withJSONObject: config.asExportDictionary())
+            try exportData.write(to: exportFileURL)
+            showShareActivityVC = true
+        } catch {
+            print(error)
+        }
+    }
+
+    private func parseServers(_ input: String) -> [String] {
+        input
+            .split(whereSeparator: { $0.isWhitespace || $0 == "," })
+            .map(String.init)
+    }
+
+    private func isValidIPv4(_ input: String) -> Bool {
+        let octets = input.split(separator: ".", omittingEmptySubsequences: false)
+        return octets.count == 4 && octets.allSatisfy { UInt8($0) != nil }
     }
 }
 
@@ -272,6 +347,7 @@ struct SettingsScreen: View {
     NavigationView {
         SettingsScreen()
     }
+    .preferredColorScheme(.dark)
     .environmentObject(previewProperties)
     .environmentObject(previewDomainsManager)
     .environmentObject(previewStrategiesManager)
