@@ -219,7 +219,6 @@ struct HomeScreen: View {
 
             Text(value)
                 .font(.system(size: 12, weight: .semibold, design: monospaced ? .monospaced : .default))
-                .monospacedDigit()
                 .foregroundColor(PalkaDesign.textPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
