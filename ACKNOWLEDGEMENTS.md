@@ -46,19 +46,24 @@
 | [ByeDPI_Channel](https://t.me/ByeDPI_Channel) | Опубликованные сообществом тестовые домены и стратегии. | Условия отдельных публикаций; ссылка сохранена для атрибуции. |
 
 Онлайн-каталог PalkaDPI содержит небольшие Apple-совместимые комбинации
-документированных аргументов ByeDPI. Каждая запись также хранит собственную
-HTTPS-ссылку `sourceURL`.
+документированных аргументов ByeDPI. Профили `flowseal-*.v3` также включают в
+виде hex две неизменённые UDP-приманки Flowseal/bol-van: QUIC Initial и Discord
+UDP. Их контрольные суммы и MIT-лицензия сохранены в
+[`THIRD_PARTY_LICENSES/Flowseal-zapret.txt`](./THIRD_PARTY_LICENSES/Flowseal-zapret.txt).
+Каждая запись каталога также хранит собственную HTTPS-ссылку `sourceURL`.
 
-## Вдохновение, без включения кода и бинарников
+## Источники перенесённых стратегий и идеи
 
 | Репозиторий | Влияние |
 |---|---|
-| [Flowseal/zapret-discord-youtube](https://github.com/Flowseal/zapret-discord-youtube) | Пользовательский сценарий «Discord + YouTube», подход с несколькими готовыми профилями и поддерживаемые списки целевых сервисов. |
-| [bol-van/zapret](https://github.com/bol-van/zapret) | Общая экосистема и терминология методов DPI desync, используемая Flowseal. |
+| [Flowseal/zapret-discord-youtube](https://github.com/Flowseal/zapret-discord-youtube) | Пользовательский сценарий, актуальные параметры профилей и две UDP-приманки в подписанном каталоге. Raw-packet TCP-команды не переносятся. |
+| [bol-van/zapret](https://github.com/bol-van/zapret) | Исходный проект payload-файлов и описание DPI desync; MIT-лицензия сохранена отдельно. |
 | [BDManual/ByeByeDPI-Manual](https://github.com/BDManual/ByeByeDPI-Manual) | Пользовательская документация и рекомендации по подбору стратегий. |
 
-PalkaDPI **не включает** `winws`, WinDivert, batch-файлы, бинарники или исходный
-код Flowseal/zapret. Эти Windows-механизмы несовместимы с публичными iOS API.
+PalkaDPI **не включает** `winws`, WinDivert, batch-файлы или raw-packet код
+Flowseal/zapret. Эти Windows-механизмы несовместимы с публичными iOS API. В
+каталог включены только две неисполняемые UDP-приманки, которые отправляет
+встроенное ядро ByeDPI с ограниченным TTL.
 
 ## Apple
 

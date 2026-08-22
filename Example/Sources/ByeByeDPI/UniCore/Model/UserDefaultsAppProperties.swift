@@ -158,7 +158,7 @@ final class UserDefaultsAppProperties {
         get {
             return _appGroupUserDefaults.string(
                 forKey: UserDefaultsAppKeys.activeStrategyID.rawValue
-            ) ?? "builtin.recommended"
+            ) ?? PalkaPreset.id
         }
         set {
             _appGroupUserDefaults.set(

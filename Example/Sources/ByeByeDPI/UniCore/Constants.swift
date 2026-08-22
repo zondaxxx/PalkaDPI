@@ -22,7 +22,7 @@ final class Constants {
     static let strategyCatalogSignatureURL = URL(
         string: "https://raw.githubusercontent.com/zondaxxx/PalkaDPI/main/strategy-catalog.json.sig"
     )!
-    static let strategyCatalogPublicKeyBase64 = "lATSTsJ1ZQFNO0mPa+QgQ1Linig8wGK6/thNL9A6Osk="
+    static let strategyCatalogPublicKeyBase64 = "18bFOLUFcXXG6/56v8NnWS/SO6SxTxFIhdD5Vmz43jg="
     
     static let buttonMinHeight = 40.0
     

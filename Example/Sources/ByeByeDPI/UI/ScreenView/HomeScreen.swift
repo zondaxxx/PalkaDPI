@@ -108,10 +108,20 @@ struct HomeScreen: View {
 
     private var header: some View {
         HStack(alignment: .top, spacing: 16) {
+            Image(R.image.appIconRounded)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 44, height: 44)
+                .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 13, style: .continuous)
+                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                )
+
             VStack(alignment: .leading, spacing: 6) {
                 Text(R.string.localizable.palkaTitle())
-                    .font(.system(size: 34, weight: .heavy))
-                    .tracking(-1.25)
+                    .font(.system(size: 30, weight: .heavy))
+                    .tracking(-1.1)
 
                 Text(R.string.localizable.palkaSubtitle())
                     .font(.system(size: 14, weight: .regular))

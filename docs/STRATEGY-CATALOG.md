@@ -42,6 +42,11 @@ swift scripts/validate_strategy_catalog.swift strategy-catalog.json strategy-cat
 - HTTPS для `sourceURL`, отсутствие NUL/CR/LF и ограничение длины аргументов;
 - совместимость команды со встроенным Apple-валидатором `SBDConfig`.
 
+Для неисполняемых бинарных UDP-приманок форк ядра PalkaDPI поддерживает
+`-l hex:<данные>`. Один аргумент ограничен 4096 символами, поэтому payload
+должен быть не больше 2046 байт. Источник, лицензия и SHA-256 таких данных
+обязательны в `THIRD_PARTY_LICENSES/`.
+
 Каталог не запускает shell-команды и не загружает исполняемые файлы. Профили с
 WinDivert, `--fake`, raw packet injection или файлами Windows zapret отклоняются.
 

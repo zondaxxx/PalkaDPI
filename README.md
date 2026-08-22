@@ -104,9 +104,12 @@ scripts/                         сборка и валидация
 ## Происхождение проекта
 
 PalkaDPI — производная работа от [mIwr/SwByeDPI](https://github.com/mIwr/SwByeDPI)
-с ядром [hufrea/byedpi](https://github.com/hufrea/byedpi). Идея простого профиля
-для Discord и YouTube вдохновлена [Flowseal/zapret-discord-youtube](https://github.com/Flowseal/zapret-discord-youtube),
-но Windows-компоненты zapret и WinDivert в приложение не входят.
+с ядром [hufrea/byedpi](https://github.com/hufrea/byedpi). iOS-профили основаны
+на актуальных конфигурациях [Flowseal/zapret-discord-youtube](https://github.com/Flowseal/zapret-discord-youtube)
+и документации [bol-van/zapret](https://github.com/bol-van/zapret): доступные на
+Apple TCP-приёмы переведены в split/TLS-record/OOB, а две UDP-приманки включены
+с исходной MIT-лицензией. Windows-компоненты `winws`, zapret и WinDivert в
+приложение не входят.
 
 Полный перечень встроенного кода, зависимостей, источников доменных списков,
 транзитивных проектов и лицензий находится в

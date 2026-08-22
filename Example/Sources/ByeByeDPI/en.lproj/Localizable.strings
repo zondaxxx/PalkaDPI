@@ -28,7 +28,7 @@
 "palkaCurrentStrategyFormat" = "Current: %@";
 "palkaAdvancedSection" = "For experienced users";
 "palkaAdvancedSettings" = "Expert settings";
-"palkaAdvancedSettingsDescription" = "DNS, proxy parameters, domain lists, testing, and raw ByeDPI commands";
+"palkaAdvancedSettingsDescription" = "DNS, proxy parameters, domain lists, testing, and raw PalkaDPI engine commands";
 "palkaExpertTitle" = "Expert controls";
 "palkaExpertDescription" = "These settings can break connectivity. Change them only when you know what the parameter does.";
 "palkaAcknowledgements" = "Sources and acknowledgements";
@@ -61,7 +61,7 @@
 "palkaAutoCancel" = "Stop testing";
 "palkaAutoStoppingVPN" = "Disconnecting the previous system VPN…";
 "palkaAutoConnectingVPN" = "Waiting for the system VPN to connect…";
-"palkaAutoProbingThroughVPN" = "VPN connected — testing services through the tunnel";
+"palkaAutoProbingThroughVPN" = "VPN connected — testing through the tunnel (up to 8 seconds)";
 "palkaVPNConnectTimeout" = "The system VPN did not connect within 20 seconds";
 "palkaVPNDisconnectTimeout" = "The system VPN did not disconnect within 12 seconds";
 "palkaAutoSelectedFormat" = "Selected: %@";
@@ -147,21 +147,21 @@
 "settingsGeneralExportSettingsOption" = "Export settings";
 "settingsGeneralExportSettingsOptionDesc" = "Export settings to file (Android BBD format)";
 
-"settingsByeDPISection" = "ByeDPI";
-"settingsByeDPIArgsOption" = "ByeDPI CMD args";
-"settingsByeDPIArgsOptionDesc" = "ByeDPI command line arguments editor";
-"settingsByeDPIArgsFieldTitle" = "ByeDPI CMD args";
+"settingsByeDPISection" = "PalkaDPI engine";
+"settingsByeDPIArgsOption" = "Strategy command";
+"settingsByeDPIArgsOptionDesc" = "Edit PalkaDPI engine arguments";
+"settingsByeDPIArgsFieldTitle" = "PalkaDPI engine arguments";
 "settingsByeDPIArgsFieldNoValuePlaceholder" = "No strategy args";
 "settingsByeDPIStrategyTestOption" = "Strategy checker";
-"settingsByeDPIStrategyTestOptionDesc" = "ByeDPI multiple CMD args testing";
+"settingsByeDPIStrategyTestOptionDesc" = "Advanced PalkaDPI strategy testing";
 "settingsByeDPITestAnalyzerOption" = "Strategy analyzer";
-"settingsByeDPITestAnalyzerOptionDesc" = "ByeDPI optimal strategy synthesis based on testing results";
+"settingsByeDPITestAnalyzerOptionDesc" = "Build a PalkaDPI strategy from test results";
 "settingsByeDPIDebugOption" = "Strategy debug";
-"settingsByeDPIDebugOptionDesc" = "ByeDPI strategy CMD args testing with editting support";
+"settingsByeDPIDebugOptionDesc" = "Debug a PalkaDPI strategy and edit its command";
 "settingsDomainsListOption" = "Domains list";
-"settingsDomainsListOptionDesc" = "Create, update or delete domains for testing and filtering byeDPI strategies";
+"settingsDomainsListOptionDesc" = "Create, update, or delete domains for PalkaDPI testing and filtering";
 "settingsStrategiesListOption" = "Strategies list";
-"settingsStrategiesListOptionDesc" = "Create, update or delete strategies for testing and using in byeDPI";
+"settingsStrategiesListOptionDesc" = "Create, update, or delete expert PalkaDPI strategies";
 
 "settingsByeDPIStrategyTestDelay" = "Delay between check (secs)";
 "settingsByeDPIStrategyTestDelayDesc" = "More delay improve check stability";
@@ -185,7 +185,7 @@
 "settingsByeDPIStrategyTestDomainsName" = "Strategy name";
 "settingsByeDPIStrategyTestDomainsHint" = "One cmd args set at line";
 
-"settingsByeDPIProxySection" = "ByeDPI SOCKS-proxy";
+"settingsByeDPIProxySection" = "PalkaDPI local SOCKS proxy";
 "settingsByeDPIProxyIpAddr" = "IP address";
 "settingsByeDPIProxyPort" = "Port";
 "settingsByeDPIProxyBufSizeShort" = "Buffer size (bytes)";
@@ -194,10 +194,10 @@
 "settingsAboutSecton" = "About";
 "settingsAboutSourceCode" = "Source code";
 "settingsAboutAppVersionCode" = "App version";
-"settingsAboutByeDPIVersion" = "ByeDPI version";
+"settingsAboutByeDPIVersion" = "Embedded engine version";
 
-"byeDPICmdEditorTitle" = "ByeDPI CMD editor";
-"byeDPICmdEditorHistory" = "ByeDPI strategy history";
+"byeDPICmdEditorTitle" = "PalkaDPI strategy editor";
+"byeDPICmdEditorHistory" = "PalkaDPI strategy history";
 "byeDPICmdEditorHistorySelectedItem" = "Selected";
 
 "byeDPITestNavTitle" = "Strategy checker";
@@ -212,13 +212,13 @@
 
 "byeDPITestAnalyzerNavTitle" = "Strategy Analyzer";
 "byeDPITestAnalyzerHint" = "Tip: To better strategy determine, select as many domain lists you need to access as possible, as well as more strategies";
-"byeDPITestAnalyzerFormatHint" = "Analyzer will build the strategy (ByeDPI cmd args) taking into account the following aspects";
-"byeDPITestAnalyzerFormatInfo1" = "ByeDPI-bypass block - Second-Level Domains (SLD) 'Black list' that will not be affected by ByeDPI";
+"byeDPITestAnalyzerFormatHint" = "The analyzer builds a PalkaDPI launch command using the following blocks";
+"byeDPITestAnalyzerFormatInfo1" = "Exclusions block — second-level domains that the PalkaDPI strategy will not modify";
 "byeDPITestAnalyzerFormatInfo2" = "Domain-specific strategies block - SLDs 'White lists', each of which has its own optimal strategy selected";
-"byeDPITestAnalyzerFormatInfo3" = "ByeDPI 'universal' strategy block - the best strategy (according test results). It will be applied to all other domains";
+"byeDPITestAnalyzerFormatInfo3" = "Universal PalkaDPI block — the best tested strategy for all remaining domains";
 "byeDPITestAnalyzerFormatInfo4" = "When determining a strategy, each block is optional: you can set only a universal strategy, or only black and white lists, etc.";
-"byeDPITestAnalyzerUseDnsBypassSwitch" = "Use ByeDPI DNS bypass (port 53)";
-"byeDPITestAnalyzerUseDomainBypassSwitch" = "Use ByeDPI domain bypass";
+"byeDPITestAnalyzerUseDnsBypassSwitch" = "Exclude DNS traffic (port 53)";
+"byeDPITestAnalyzerUseDomainBypassSwitch" = "Use domain exclusions";
 "byeDPITestAnalyzerBypassPick" = "Pick the domains";
 "byeDPITestAnalyzerUseDomainSpecificSwitch" = "Use Domain-specific strategies block";
 "byeDPITestAnalyzerUseUniversalSwitch" = "Use universal strategy";

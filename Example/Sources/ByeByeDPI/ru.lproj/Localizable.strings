@@ -28,7 +28,7 @@
 "palkaCurrentStrategyFormat" = "Сейчас: %@";
 "palkaAdvancedSection" = "Для опытных пользователей";
 "palkaAdvancedSettings" = "Экспертные настройки";
-"palkaAdvancedSettingsDescription" = "DNS, параметры прокси, списки доменов, тестирование и команды ByeDPI";
+"palkaAdvancedSettingsDescription" = "DNS, параметры прокси, списки доменов, тестирование и команды ядра PalkaDPI";
 "palkaExpertTitle" = "Экспертные параметры";
 "palkaExpertDescription" = "Эти настройки могут нарушить подключение. Меняй их, только если понимаешь назначение параметра.";
 "palkaAcknowledgements" = "Исходники и благодарности";
@@ -61,7 +61,7 @@
 "palkaAutoCancel" = "Остановить проверку";
 "palkaAutoStoppingVPN" = "Отключаем предыдущий системный VPN…";
 "palkaAutoConnectingVPN" = "Ждём подключения системного VPN…";
-"palkaAutoProbingThroughVPN" = "VPN подключён — проверяем сервисы через туннель";
+"palkaAutoProbingThroughVPN" = "VPN подключён — проверяем сервисы через туннель (до 8 секунд)";
 "palkaVPNConnectTimeout" = "Системный VPN не подключился за 20 секунд";
 "palkaVPNDisconnectTimeout" = "Системный VPN не отключился за 12 секунд";
 "palkaAutoSelectedFormat" = "Выбрана стратегия: %@";
@@ -147,21 +147,21 @@
 "settingsGeneralExportSettingsOption" = "Экспортировать настройки";
 "settingsGeneralExportSettingsOptionDesc" = "Экспорт настроек в виде файла (Android BBD формат)";
 
-"settingsByeDPISection" = "ByeDPI";
-"settingsByeDPIArgsOption" = "Аргументы командной строки ByeDPI";
-"settingsByeDPIArgsOptionDesc" = "Редактор командной строки ByeDPI";
-"settingsByeDPIArgsFieldTitle" = "Аргументы командной строки ByeDPI";
+"settingsByeDPISection" = "Ядро PalkaDPI";
+"settingsByeDPIArgsOption" = "Команда стратегии";
+"settingsByeDPIArgsOptionDesc" = "Редактор аргументов ядра PalkaDPI";
+"settingsByeDPIArgsFieldTitle" = "Аргументы ядра PalkaDPI";
 "settingsByeDPIArgsFieldNoValuePlaceholder" = "Стратегия не указана";
 "settingsByeDPIStrategyTestOption" = "Проверка стратегий";
-"settingsByeDPIStrategyTestOptionDesc" = "Тестирование работы стратегий ByeDPI";
+"settingsByeDPIStrategyTestOptionDesc" = "Расширенная проверка стратегий PalkaDPI";
 "settingsByeDPITestAnalyzerOption" = "Подбор стратегии";
-"settingsByeDPITestAnalyzerOptionDesc" = "Синтез оптимальной стратегий ByeDPI на основе результатов тестирования";
+"settingsByeDPITestAnalyzerOptionDesc" = "Сборка стратегии PalkaDPI по результатам тестирования";
 "settingsByeDPIDebugOption" = "Отладка стратегии";
-"settingsByeDPIDebugOptionDesc" = "Тестирование работы стратегии ByeDPI с возможностью изменения команд";
+"settingsByeDPIDebugOptionDesc" = "Отладка стратегии PalkaDPI с возможностью изменения команд";
 "settingsDomainsListOption" = "Списки доменов";
-"settingsDomainsListOptionDesc" = "Создавайте, изменяйте или удаляйте домены для тестирования стратегий и их фильтрации при работе byeDPI";
+"settingsDomainsListOptionDesc" = "Создавайте, изменяйте или удаляйте домены для тестирования и фильтрации стратегий PalkaDPI";
 "settingsStrategiesListOption" = "Списки стратегий";
-"settingsStrategiesListOptionDesc" = "Создавайте, изменяйте или удаляйте стратегии для тестирования и использования в byeDPI";
+"settingsStrategiesListOptionDesc" = "Создавайте, изменяйте или удаляйте экспертные стратегии PalkaDPI";
 
 "settingsByeDPIStrategyTestDelay" = "Ождидание между проверками (сек)";
 "settingsByeDPIStrategyTestDelayDesc" = "Увеличение значения ожидания улучшуает достоверность результатов проверки";
@@ -186,7 +186,7 @@
 "settingsByeDPIStrategyTestDomainsName" = "Имя стратегии";
 "settingsByeDPIStrategyTestDomainsHint" = "Одна стратегия на линию";
 
-"settingsByeDPIProxySection" = "ByeDPI SOCKS-прокси";
+"settingsByeDPIProxySection" = "Локальный SOCKS-прокси PalkaDPI";
 "settingsByeDPIProxyIpAddr" = "Прослушиваемый IP адрес";
 "settingsByeDPIProxyPort" = "Порт";
 "settingsByeDPIProxyBufSizeShort" = "Размер буфера (байты)";
@@ -195,7 +195,7 @@
 "settingsAboutSecton" = "О приложении";
 "settingsAboutSourceCode" = "Исходный код";
 "settingsAboutAppVersionCode" = "Версия приложения";
-"settingsAboutByeDPIVersion" = "Версия ByeDPI";
+"settingsAboutByeDPIVersion" = "Версия встроенного ядра";
 
 "byeDPICmdEditorTitle" = "Редактор командной строки";
 "byeDPICmdEditorHistory" = "История стратегий";
@@ -213,13 +213,13 @@
 
 "byeDPITestAnalyzerNavTitle" = "Подбор стратегии";
 "byeDPITestAnalyzerHint" = "Подсказка: для более лучшего подбора стратегии выберите как можно больше списков доменов, к которым необходимо получить доступ, а также больше стратегий";
-"byeDPITestAnalyzerFormatHint" = "Анализатор построит стратегию (команду запуска ByeDPI), учитывая следующие аспекты";
-"byeDPITestAnalyzerFormatInfo1" = "ByeDPI-bypass блок - 'Черный список' доменов 2-го уровня, к которым не будет применяться ByeDPI";
+"byeDPITestAnalyzerFormatHint" = "Анализатор построит команду запуска PalkaDPI, учитывая следующие аспекты";
+"byeDPITestAnalyzerFormatInfo1" = "Блок исключений — список доменов 2-го уровня, к которым стратегия PalkaDPI применяться не будет";
 "byeDPITestAnalyzerFormatInfo2" = "Domain-specific блок стратегий - 'Белые списки' доменов 2-го уровня, к каждому из которых подобрана своя наиболее оптимальная стратегия";
-"byeDPITestAnalyzerFormatInfo3" = "Блок 'универсальной' стратегии ByeDPI - самая лучшая (по итогам тестов) стратегия. Будет применяться для всех остальных доменов";
+"byeDPITestAnalyzerFormatInfo3" = "Блок универсальной стратегии PalkaDPI — лучший по итогам тестов вариант для остальных доменов";
 "byeDPITestAnalyzerFormatInfo4" = "При подборе стратегии каждый блок является опциональным: можно задать только универсальную стратегию, можно - только черные и белые списки итд";
-"byeDPITestAnalyzerUseDnsBypassSwitch" = "Использовать ByeDPI DNS bypass (53 порт)";
-"byeDPITestAnalyzerUseDomainBypassSwitch" = "Использовать ByeDPI domain bypass";
+"byeDPITestAnalyzerUseDnsBypassSwitch" = "Не применять стратегию к DNS (порт 53)";
+"byeDPITestAnalyzerUseDomainBypassSwitch" = "Использовать исключения доменов";
 "byeDPITestAnalyzerBypassPick" = "Выбрать домены";
 "byeDPITestAnalyzerUseDomainSpecificSwitch" = "Использовать Domain-specific блок стратегий";
 "byeDPITestAnalyzerUseUniversalSwitch" = "Использовать универсальную стратегию";

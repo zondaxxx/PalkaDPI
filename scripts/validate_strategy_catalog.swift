@@ -3,7 +3,7 @@
 import Foundation
 import CryptoKit
 
-private let publicKeyBase64 = "lATSTsJ1ZQFNO0mPa+QgQ1Linig8wGK6/thNL9A6Osk="
+private let publicKeyBase64 = "18bFOLUFcXXG6/56v8NnWS/SO6SxTxFIhdD5Vmz43jg="
 
 private struct Catalog: Decodable {
     let schemaVersion: Int

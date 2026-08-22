@@ -112,7 +112,7 @@ static const char help_text[] = {
     #endif
     "    -t, --ttl <num>           TTL of fake packets, default 8\n"
     "    -O, --fake-offset <pos_t> Fake data start offset\n"
-    "    -l, --fake-data <f|:str>  Set custom fake packet\n"
+    "    -l, --fake-data <f|:str|hex:data> Set custom fake packet\n"
     "    -Q, --fake-tls-mod <flag> Modify fake TLS CH: rand,orig,msize=<int>\n"
     "    -e, --oob-data <char>     Set custom OOB data\n"
     "    -M, --mod-http <h,d,r>    Modify HTTP: hcsmix,dcsmix,rmspace\n"
@@ -252,10 +252,52 @@ char *data_from_str(const char *str, ssize_t *size)
 }
 
 
+static int hex_value(char c)
+{
+    if (c >= '0' && c <= '9') return c - '0';
+    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+    return -1;
+}
+
+
+static char *data_from_hex(const char *str, ssize_t *size)
+{
+    size_t len = strlen(str);
+    if (len == 0 || len % 2 != 0) {
+        return 0;
+    }
+
+    size_t byte_count = len / 2;
+    char *data = malloc(byte_count);
+    if (!data) {
+        return 0;
+    }
+
+    for (size_t i = 0; i < byte_count; i++) {
+        int high = hex_value(str[i * 2]);
+        int low = hex_value(str[i * 2 + 1]);
+        if (high < 0 || low < 0) {
+            free(data);
+            return 0;
+        }
+        data[i] = (char)((high << 4) | low);
+    }
+
+    *size = (ssize_t)byte_count;
+    return data;
+}
+
+
 char *ftob(const char *str, ssize_t *sl)
 {
     if (*str == ':') {
         return data_from_str(str + 1, sl);
+    }
+    // PalkaDPI signed catalogs use inline hex for binary QUIC/STUN payloads.
+    // This avoids filesystem paths that are inaccessible across iOS sandboxes.
+    if (strncmp(str, "hex:", 4) == 0) {
+        return data_from_hex(str + 4, sl);
     }
     char *buffer = 0;
     long size;

@@ -44,6 +44,7 @@ private struct PalkaHTTPProbeMeasurement {
 private final class PalkaHTTPProbe: NSObject, URLSessionDataDelegate, URLSessionTaskDelegate {
     private let service: PalkaService
     private let completion: (PalkaHTTPProbeMeasurement) -> Void
+    private let stateLock = NSLock()
     private let startedAt = Date()
     private var metrics: URLSessionTaskMetrics?
     private var receivedBytes = 0
@@ -51,6 +52,7 @@ private final class PalkaHTTPProbe: NSObject, URLSessionDataDelegate, URLSession
     private var cancelledForSize = false
     private var completed = false
     private var session: URLSession?
+    private var watchdog: DispatchWorkItem?
 
     init(service: PalkaService, timeout: TimeInterval, completion: @escaping (PalkaHTTPProbeMeasurement) -> Void) {
         self.service = service
@@ -69,10 +71,41 @@ private final class PalkaHTTPProbe: NSObject, URLSessionDataDelegate, URLSession
         request.httpMethod = "GET"
         request.setValue("bytes=0-131071", forHTTPHeaderField: "Range")
         session.dataTask(with: request).resume()
+
+        // A broken packet tunnel can prevent URLSession from ever delivering its timeout
+        // callback. Keep an independent deadline so strategy automation always advances.
+        let watchdog = DispatchWorkItem { [weak self] in
+            self?.finish(
+                PalkaHTTPProbeMeasurement(
+                    succeeded: false,
+                    totalMilliseconds: nil,
+                    dnsMilliseconds: nil,
+                    tlsMilliseconds: nil,
+                    statusCode: nil,
+                    errorText: URLError(.timedOut).localizedDescription
+                ),
+                invalidateSession: true
+            )
+        }
+        self.watchdog = watchdog
+        DispatchQueue.global(qos: .utility).asyncAfter(
+            deadline: .now() + timeout + 1,
+            execute: watchdog
+        )
     }
 
     func cancel() {
-        session?.invalidateAndCancel()
+        finish(
+            PalkaHTTPProbeMeasurement(
+                succeeded: false,
+                totalMilliseconds: nil,
+                dnsMilliseconds: nil,
+                tlsMilliseconds: nil,
+                statusCode: nil,
+                errorText: URLError(.cancelled).localizedDescription
+            ),
+            invalidateSession: true
+        )
     }
 
     func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
@@ -91,9 +124,6 @@ private final class PalkaHTTPProbe: NSObject, URLSessionDataDelegate, URLSession
     }
 
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-        guard !completed else { return }
-        completed = true
-
         let statusCode = (task.response as? HTTPURLResponse)?.statusCode
         let transportSucceeded = error == nil || cancelledForSize
         let succeeded = transportSucceeded && service.validatesProbeResponse(
@@ -111,16 +141,42 @@ private final class PalkaHTTPProbe: NSObject, URLSessionDataDelegate, URLSession
             to: transaction?.secureConnectionEndDate
         )
 
-        completion(PalkaHTTPProbeMeasurement(
-            succeeded: succeeded,
-            totalMilliseconds: succeeded ? total : nil,
-            dnsMilliseconds: dns,
-            tlsMilliseconds: tls,
-            statusCode: statusCode,
-            errorText: succeeded ? nil : (error?.localizedDescription ?? "Unexpected service response")
-        ))
-        session.finishTasksAndInvalidate()
-        self.session = nil
+        finish(
+            PalkaHTTPProbeMeasurement(
+                succeeded: succeeded,
+                totalMilliseconds: succeeded ? total : nil,
+                dnsMilliseconds: dns,
+                tlsMilliseconds: tls,
+                statusCode: statusCode,
+                errorText: succeeded ? nil : (error?.localizedDescription ?? "Unexpected service response")
+            ),
+            invalidateSession: false
+        )
+    }
+
+    private func finish(
+        _ measurement: PalkaHTTPProbeMeasurement,
+        invalidateSession: Bool
+    ) {
+        stateLock.lock()
+        guard !completed else {
+            stateLock.unlock()
+            return
+        }
+        completed = true
+        let currentSession = session
+        session = nil
+        let currentWatchdog = watchdog
+        watchdog = nil
+        stateLock.unlock()
+
+        currentWatchdog?.cancel()
+        if invalidateSession {
+            currentSession?.invalidateAndCancel()
+        } else {
+            currentSession?.finishTasksAndInvalidate()
+        }
+        completion(measurement)
     }
 
     private static func duration(from start: Date?, to end: Date?) -> Int? {

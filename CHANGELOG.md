@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## PalkaDPI 0.4.3
+
+### 22.08.2026
+
+- Added an independent hard deadline to every HTTP probe so a dead packet tunnel cannot stall automatic selection
+- Replaced zero-filled UDP fakes with the current Flowseal QUIC and Discord payloads
+- Added inline hex payload support to the embedded Apple ByeDPI build
+- Rebuilt the signed catalog as six distinct iOS strategies and revoked all ineffective v1/v2 profiles
+- Migrated installed v1/v2 configurations to a safe native multisplit fallback
+- Replaced the inherited app icon with the PalkaDPI packet-split mark
+- Renamed user-facing engine, proxy, editor, tunnel, and analyzer labels to PalkaDPI
+- Added exact Flowseal/bol-van payload attribution, checksums, and MIT license text
+
 ## PalkaDPI 0.4.2
 
 ### 22.08.2026

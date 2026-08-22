@@ -213,6 +213,7 @@ class AppProperties: Codable, ObservableObject
         if let loadedProperties: AppProperties = PlistUtil.parsePropertyList(filename: AppProperties._plistFilename)
         {
             syncUserDefaults(properties: loadedProperties)
+            loadedProperties.migrateObsoletePalkaStrategyIfNeeded()
             return loadedProperties
         }
         let cpuCores = UInt8(ProcessInfo.processInfo.processorCount)
@@ -253,7 +254,7 @@ class AppProperties: Codable, ObservableObject
             )
         )
         activeStrategyName = PalkaPreset.name
-        activeStrategyID = "builtin.recommended"
+        activeStrategyID = PalkaPreset.id
         UserDefaultsAppProperties.activeStrategyTemplateArgs = PalkaPreset.recommendedTemplateArgs
         save()
     }
@@ -324,6 +325,30 @@ class AppProperties: Codable, ObservableObject
         guard !validatedArgs.isEmpty else { return }
         byeDPILaunchConfig = byeDPILaunchConfig.copyWith(commandArgs: validatedArgs)
         save()
+    }
+
+    private func migrateObsoletePalkaStrategyIfNeeded() {
+        let obsoleteIDs: Set<String> = [
+            "builtin.recommended",
+            "palka.balanced.v1",
+            "palka.light-split.v1",
+            "palka.tls-record.v1",
+            "palka.multisplit.v1",
+            "palka.reorder.v1",
+            "palka.discord-voice.v1",
+            "palka.ios.disorder-record.v2",
+            "palka.ios.oob-record.v2",
+            "palka.ios.alternating-multisplit.v2",
+            "palka.ios.disoob-chain.v2",
+            "palka.ios.disoob-short.v2",
+            "palka.ios.record-disoob.v2",
+            "palka.ios.oob-basic.v2",
+            "palka.ios.multisplit-quic.v2",
+            "palka.ios.oob-quic.v2",
+            "palka.ios.disorder-quic.v2",
+        ]
+        guard obsoleteIDs.contains(activeStrategyID) else { return }
+        applyRecommendedPreset()
     }
     
     fileprivate class func syncUserDefaults(properties: AppProperties) {
