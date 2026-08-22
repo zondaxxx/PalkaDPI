@@ -1,110 +1,173 @@
 {
   "schemaVersion": 2,
-  "generation": 3,
+  "generation": 4,
   "updatedAt": "2026-08-22",
   "minimumAppVersion": "0.4.0",
   "minimumEngineVersion": "0.17.3",
-  "revokedStrategyIDs": [],
+  "revokedStrategyIDs": [
+    "palka.balanced.v1",
+    "palka.light-split.v1",
+    "palka.tls-record.v1",
+    "palka.multisplit.v1",
+    "palka.reorder.v1",
+    "palka.discord-voice.v1"
+  ],
   "strategies": [
     {
-      "id": "palka.balanced.v1",
-      "name": "Balanced",
-      "nameRu": "Сбалансированная",
-      "summary": "Two-stage TLS handling plus Discord voice ranges. Recommended starting point.",
-      "summaryRu": "Двухэтапная обработка TLS и поддержка голосовых диапазонов Discord. Рекомендуется для начала.",
+      "id": "palka.ios.disorder-record.v2",
+      "name": "Disorder + TLS Record",
+      "nameRu": "Disorder + TLS-запись",
+      "summary": "Independent Apple-compatible upstream strategy using reordered writes, TLS record splitting, and OOB data.",
+      "summaryRu": "Независимая Apple-совместимая upstream-стратегия с перестановкой, TLS-записью и OOB-данными.",
       "services": ["Discord", "YouTube", "Instagram", "TikTok", "X / Twitter", "Telegram"],
-      "stability": "Recommended",
-      "stabilityRu": "Рекомендуется",
-      "sourceName": "PalkaDPI / ByeDPI",
-      "sourceURL": "https://github.com/hufrea/byedpi",
+      "stability": "Upstream / TCP",
+      "stabilityRu": "Upstream / TCP",
+      "sourceName": "mIwr/SwByeDPI BuiltInDPIeStrategies",
+      "sourceURL": "https://github.com/mIwr/SwByeDPI/blob/main/Assets/BuiltInDPIeStrategies.strategies",
       "commandArgs": [
-        "-Kt,h", "{palka_targets}", "-s1", "-d3+s", "-At,r,s",
-        "-Kt,h", "{palka_targets}", "-r1+s", "-s1+s", "-An",
+        "-Kt,h", "{palka_targets}", "-d1", "-s1+s", "-r1+s", "-e1", "-m1", "-o1+s", "-a1", "-An"
+      ]
+    },
+    {
+      "id": "palka.ios.oob-record.v2",
+      "name": "OOB + TLS Record",
+      "nameRu": "OOB + TLS-запись",
+      "summary": "Uses OOB, disorder, TLS-record and several SNI-relative split points.",
+      "summaryRu": "Использует OOB, disorder, TLS-запись и несколько точек разбиения относительно SNI.",
+      "services": ["Discord", "YouTube", "Instagram", "TikTok", "X / Twitter", "Telegram"],
+      "stability": "Upstream / TCP",
+      "stabilityRu": "Upstream / TCP",
+      "sourceName": "mIwr/SwByeDPI BuiltInDPIeStrategies",
+      "sourceURL": "https://github.com/mIwr/SwByeDPI/blob/main/Assets/BuiltInDPIeStrategies.strategies",
+      "commandArgs": [
+        "-Kt,h", "{palka_targets}", "-o1", "-d1", "-r1+s", "-s1+s", "-d3+s", "-a1", "-An"
+      ]
+    },
+    {
+      "id": "palka.ios.alternating-multisplit.v2",
+      "name": "Alternating Multisplit",
+      "nameRu": "Чередующееся разбиение",
+      "summary": "Alternates disorder and split operations across a longer part of ClientHello.",
+      "summaryRu": "Чередует disorder и split на более длинном участке ClientHello.",
+      "services": ["Discord", "YouTube", "Instagram", "TikTok", "X / Twitter", "Telegram"],
+      "stability": "Upstream / TCP",
+      "stabilityRu": "Upstream / TCP",
+      "sourceName": "mIwr/SwByeDPI BuiltInDPIeStrategies",
+      "sourceURL": "https://github.com/mIwr/SwByeDPI/blob/main/Assets/BuiltInDPIeStrategies.strategies",
+      "commandArgs": [
+        "-Kt,h", "{palka_targets}", "-d1", "-s1+s", "-d1+s", "-s3+s", "-d6+s", "-s12+s", "-d14+s", "-s20+s", "-d24+s", "-s30+s", "-a1", "-An"
+      ]
+    },
+    {
+      "id": "palka.ios.disoob-chain.v2",
+      "name": "Disoob Chain",
+      "nameRu": "Цепочка Disoob",
+      "summary": "A dense chain of disoob, split, TLS-record, and HTTP modifications from the upstream test set.",
+      "summaryRu": "Плотная цепочка disoob, split, TLS-записей и HTTP-модификаций из upstream-набора.",
+      "services": ["Discord", "YouTube", "Instagram", "TikTok", "X / Twitter", "Telegram"],
+      "stability": "Upstream / strong",
+      "stabilityRu": "Upstream / усиленная",
+      "sourceName": "mIwr/SwByeDPI BuiltInDPIeStrategies",
+      "sourceURL": "https://github.com/mIwr/SwByeDPI/blob/main/Assets/BuiltInDPIeStrategies.strategies",
+      "commandArgs": [
+        "-Kt,h", "{palka_targets}", "-q2", "-s2", "-s3+s", "-r3", "-s4", "-r4", "-s5+s", "-r5+s", "-s6", "-s7+s", "-r8", "-s9+s", "-Mh,d,r", "-a1", "-An"
+      ]
+    },
+    {
+      "id": "palka.ios.disoob-short.v2",
+      "name": "Short Disoob",
+      "nameRu": "Короткий Disoob",
+      "summary": "Short SNI-relative disorder/disoob sequence with little overhead.",
+      "summaryRu": "Короткая последовательность disorder/disoob относительно SNI с небольшой нагрузкой.",
+      "services": ["Discord", "YouTube", "Instagram", "TikTok", "X / Twitter", "Telegram"],
+      "stability": "Upstream / compact",
+      "stabilityRu": "Upstream / компактная",
+      "sourceName": "mIwr/SwByeDPI BuiltInDPIeStrategies",
+      "sourceURL": "https://github.com/mIwr/SwByeDPI/blob/main/Assets/BuiltInDPIeStrategies.strategies",
+      "commandArgs": [
+        "-Kt,h", "{palka_targets}", "-d6+s", "-q4+hm", "-o2", "-a1", "-An"
+      ]
+    },
+    {
+      "id": "palka.ios.record-disoob.v2",
+      "name": "Record + Disoob",
+      "nameRu": "TLS-запись + Disoob",
+      "summary": "Minimal TLS-record and disoob strategy with HTTP header/domain mixing.",
+      "summaryRu": "Минимальная стратегия TLS-record/disoob с перемешиванием HTTP-заголовка и домена.",
+      "services": ["Discord", "YouTube", "Instagram", "TikTok", "X / Twitter", "Telegram"],
+      "stability": "Upstream / compact",
+      "stabilityRu": "Upstream / компактная",
+      "sourceName": "mIwr/SwByeDPI BuiltInDPIeStrategies",
+      "sourceURL": "https://github.com/mIwr/SwByeDPI/blob/main/Assets/BuiltInDPIeStrategies.strategies",
+      "commandArgs": [
+        "-Kt,h", "{palka_targets}", "-r1+s", "-q1+s", "-Mh,d", "-An"
+      ]
+    },
+    {
+      "id": "palka.ios.oob-basic.v2",
+      "name": "Basic OOB",
+      "nameRu": "Базовый OOB",
+      "summary": "Small upstream OOB and disorder strategy for networks where large chains are unstable.",
+      "summaryRu": "Короткая upstream OOB/disorder-стратегия для сетей, где длинные цепочки нестабильны.",
+      "services": ["Discord", "YouTube", "Instagram", "TikTok", "X / Twitter", "Telegram"],
+      "stability": "Upstream / minimal",
+      "stabilityRu": "Upstream / минимальная",
+      "sourceName": "mIwr/SwByeDPI BuiltInDPIeStrategies",
+      "sourceURL": "https://github.com/mIwr/SwByeDPI/blob/main/Assets/BuiltInDPIeStrategies.strategies",
+      "commandArgs": [
+        "-Kt,h", "{palka_targets}", "-o1+s", "-d3+s", "-a1", "-An"
+      ]
+    },
+    {
+      "id": "palka.ios.multisplit-quic.v2",
+      "name": "Multisplit + QUIC Fallback",
+      "nameRu": "Multisplit + QUIC fallback",
+      "summary": "TCP multisplit plus UDP/443 disruption to force apps such as YouTube away from QUIC.",
+      "summaryRu": "TCP multisplit и обработка UDP/443, чтобы приложения вроде YouTube не обходили стратегию через QUIC.",
+      "services": ["Discord", "YouTube", "Instagram", "TikTok", "X / Twitter", "Telegram"],
+      "stability": "Upstream / QUIC",
+      "stabilityRu": "Upstream / QUIC",
+      "sourceName": "mIwr/SwByeDPI BuiltInDPIeStrategies",
+      "sourceURL": "https://github.com/mIwr/SwByeDPI/blob/main/Assets/BuiltInDPIeStrategies.strategies",
+      "commandArgs": [
+        "-Kt,h", "{palka_targets}", "-d1", "-s1+s", "-s3+s", "-s6+s", "-s9+s", "-s12+s", "-s15+s", "-s20+s", "-s30+s", "-a1", "-An",
+        "-Ku", "-V443", "-a5", "-An",
         "-Ku", "-V19294-19344", "-a6", "-An",
         "-Ku", "-V50000-50100", "-a6", "-An"
       ]
     },
     {
-      "id": "palka.light-split.v1",
-      "name": "Light Split",
-      "nameRu": "Лёгкое разделение",
-      "summary": "Minimal TLS split with low processing overhead and Discord voice support.",
-      "summaryRu": "Минимальное разделение TLS с небольшой нагрузкой и поддержкой голоса Discord.",
+      "id": "palka.ios.oob-quic.v2",
+      "name": "OOB + QUIC Fallback",
+      "nameRu": "OOB + QUIC fallback",
+      "summary": "OOB/TLS-record TCP handling with UDP/443 and Discord voice processing.",
+      "summaryRu": "OOB/TLS-record для TCP с обработкой UDP/443 и голосовых диапазонов Discord.",
       "services": ["Discord", "YouTube", "Instagram", "TikTok", "X / Twitter", "Telegram"],
-      "stability": "Fast",
-      "stabilityRu": "Быстрая",
-      "sourceName": "PalkaDPI / ByeDPI",
-      "sourceURL": "https://github.com/hufrea/byedpi",
+      "stability": "Upstream / QUIC",
+      "stabilityRu": "Upstream / QUIC",
+      "sourceName": "mIwr/SwByeDPI BuiltInDPIeStrategies",
+      "sourceURL": "https://github.com/mIwr/SwByeDPI/blob/main/Assets/BuiltInDPIeStrategies.strategies",
       "commandArgs": [
-        "-Kt,h", "{palka_targets}", "-s1", "-d3+s", "-An",
+        "-Kt,h", "{palka_targets}", "-o1", "-d1", "-r1+s", "-s1+s", "-d3+s", "-a1", "-An",
+        "-Ku", "-V443", "-a5", "-An",
         "-Ku", "-V19294-19344", "-a6", "-An",
         "-Ku", "-V50000-50100", "-a6", "-An"
       ]
     },
     {
-      "id": "palka.tls-record.v1",
-      "name": "TLS Record",
-      "nameRu": "TLS-запись",
-      "summary": "Fragments the ClientHello across TLS records when a simple split is not enough.",
-      "summaryRu": "Делит ClientHello между TLS-записями, если обычного разделения недостаточно.",
+      "id": "palka.ios.disorder-quic.v2",
+      "name": "Disorder + QUIC Fallback",
+      "nameRu": "Disorder + QUIC fallback",
+      "summary": "Alternating TCP disorder plus UDP/443 and Discord voice processing.",
+      "summaryRu": "Чередующийся TCP disorder с обработкой UDP/443 и голосовых диапазонов Discord.",
       "services": ["Discord", "YouTube", "Instagram", "TikTok", "X / Twitter", "Telegram"],
-      "stability": "Alternative",
-      "stabilityRu": "Альтернатива",
-      "sourceName": "PalkaDPI / ByeDPI",
-      "sourceURL": "https://github.com/hufrea/byedpi",
+      "stability": "Upstream / QUIC",
+      "stabilityRu": "Upstream / QUIC",
+      "sourceName": "mIwr/SwByeDPI BuiltInDPIeStrategies",
+      "sourceURL": "https://github.com/mIwr/SwByeDPI/blob/main/Assets/BuiltInDPIeStrategies.strategies",
       "commandArgs": [
-        "-Kt,h", "{palka_targets}", "-r1+s", "-s1+s", "-An",
-        "-Ku", "-V19294-19344", "-a6", "-An",
-        "-Ku", "-V50000-50100", "-a6", "-An"
-      ]
-    },
-    {
-      "id": "palka.multisplit.v1",
-      "name": "Multi Split",
-      "nameRu": "Мульти-разделение",
-      "summary": "Uses several early TLS split points for providers with stricter filtering.",
-      "summaryRu": "Использует несколько ранних точек разделения TLS для более строгой фильтрации.",
-      "services": ["Discord", "YouTube", "Instagram", "TikTok", "X / Twitter", "Telegram"],
-      "stability": "Stronger",
-      "stabilityRu": "Усиленная",
-      "sourceName": "PalkaDPI / ByeDPI",
-      "sourceURL": "https://github.com/hufrea/byedpi",
-      "commandArgs": [
-        "-Kt,h", "{palka_targets}", "-d1", "-s1+s", "-s3+s", "-s6+s", "-s9+s", "-s12+s", "-An",
-        "-Ku", "-V19294-19344", "-a6", "-An",
-        "-Ku", "-V50000-50100", "-a6", "-An"
-      ]
-    },
-    {
-      "id": "palka.reorder.v1",
-      "name": "Reorder",
-      "nameRu": "Перестановка",
-      "summary": "Combines reordered writes and TLS fragmentation for difficult networks.",
-      "summaryRu": "Сочетает перестановку записей и фрагментацию TLS для сложных сетей.",
-      "services": ["Discord", "YouTube", "Instagram", "TikTok", "X / Twitter", "Telegram"],
-      "stability": "Experimental",
-      "stabilityRu": "Экспериментальная",
-      "sourceName": "PalkaDPI / ByeDPI",
-      "sourceURL": "https://github.com/hufrea/byedpi",
-      "commandArgs": [
-        "-Kt,h", "{palka_targets}", "-o1", "-d1", "-r1+s", "-s1+s", "-d3+s", "-An",
-        "-Ku", "-V19294-19344", "-a6", "-An",
-        "-Ku", "-V50000-50100", "-a6", "-An"
-      ]
-    },
-    {
-      "id": "palka.discord-voice.v1",
-      "name": "Discord Voice",
-      "nameRu": "Голос Discord",
-      "summary": "A focused Discord profile with TCP handling and common voice UDP ranges.",
-      "summaryRu": "Профиль Discord с обработкой TCP и распространённых UDP-диапазонов голосовой связи.",
-      "services": ["Discord"],
-      "stability": "Focused",
-      "stabilityRu": "Профильная",
-      "sourceName": "PalkaDPI / ByeDPI",
-      "sourceURL": "https://github.com/hufrea/byedpi",
-      "commandArgs": [
-        "-Kt,h", "{palka_targets}", "-s1", "-d3+s", "-At,r,s", "-An",
+        "-Kt,h", "{palka_targets}", "-d1", "-s1+s", "-d1+s", "-s3+s", "-d6+s", "-s12+s", "-d14+s", "-s20+s", "-d24+s", "-s30+s", "-a1", "-An",
+        "-Ku", "-V443", "-a5", "-An",
         "-Ku", "-V19294-19344", "-a6", "-An",
         "-Ku", "-V50000-50100", "-a6", "-An"
       ]
