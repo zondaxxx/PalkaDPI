@@ -596,6 +596,9 @@ enum PalkaSupportReportBuilder {
     }
 
     private static func jsonValue(_ value: Int?) -> Any {
-        value.map { $0 as NSNumber } ?? NSNull()
+        if let value = value {
+            return NSNumber(value: value)
+        }
+        return NSNull()
     }
 }

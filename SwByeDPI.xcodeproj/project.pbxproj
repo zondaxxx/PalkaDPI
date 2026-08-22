@@ -236,8 +236,6 @@
 		C0D300000000000000000006 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Sources/PalkaWidget/Info.plist,
-				Sources/PalkaWidget/PalkaWidget.entitlements,
 				Sources/PalkaWidget/PalkaWidget.swift,
 			);
 			target = C0D300000000000000000002 /* PalkaWidget */;

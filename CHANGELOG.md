@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## PalkaDPI 0.4.0
+
+### 22.08.2026
+
+- Automatic strategy selection and per-network profiles
+- Discord, YouTube, Instagram, TikTok, X/Twitter, Telegram, and custom targets
+- Multi-sample DNS/TLS/HTTP diagnostics and smart recovery
+- On Demand rules for Wi-Fi and cellular
+- Signed Ed25519 strategy catalog with compatibility, revocation, and rollback
+- Search, favorites, application history, and local success statistics
+- WidgetKit status widget and Siri/Shortcuts actions
+- Privacy-preserving support report
+
 ## Version 0.17.3
 
 ### 10.04.2026

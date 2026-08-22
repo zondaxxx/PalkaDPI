@@ -63,7 +63,8 @@ PalkaDPI **не включает** `winws`, WinDivert, batch-файлы, бин�
 ## Apple
 
 Приложение использует системные фреймворки Apple SwiftUI, NetworkExtension,
-Foundation и UIKit в соответствии с условиями Apple SDK и программы разработчика.
+Network, CryptoKit, WidgetKit, AppIntents, Foundation и UIKit в соответствии с
+условиями Apple SDK и программы разработчика.
 
 Если источник или автор указаны неточно, создайте issue с ссылкой на конкретный
 файл/набор данных — атрибуция будет исправлена.
