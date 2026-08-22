@@ -27,10 +27,14 @@ public class SBDTestController {
     fileprivate var _testThread: Thread?
     /// Test process concurrent cancellation token
     fileprivate var _testThreadCancelTkSource: ConcurrentCancellationTokenSource
+    /// Protects the lifecycle state shared by UI and worker threads.
+    fileprivate let _stateLock = NSLock()
     
     /// Test process in progress
     public var testingInProgress: Bool {
         get {
+            _stateLock.lock()
+            defer { _stateLock.unlock() }
             return _testThread != nil
         }
     }
@@ -38,7 +42,7 @@ public class SBDTestController {
     /// Can start the new test flag
     public var canStartTest: Bool {
         get {
-            return _testThread == nil && !ByeDPI.proxyStarted
+            return !testingInProgress && !ByeDPI.proxyStarted
         }
     }
     
@@ -49,9 +53,21 @@ public class SBDTestController {
     
     /// Cancels the current test, if in progress
     public func cancelTest() {
-        _testThread?.cancel()
-        _testThreadCancelTkSource.cancel()
+        _stateLock.lock()
+        let thread = _testThread
+        let tokenSource = _testThreadCancelTkSource
+        _stateLock.unlock()
+        thread?.cancel()
+        tokenSource.cancel()
+        // Keep the thread registered until it has actually exited. Clearing it
+        // here allowed a second scan to start while the first still owned the
+        // process-global ByeDPI core.
+    }
+
+    fileprivate func finishTest() {
+        _stateLock.lock()
         _testThread = nil
+        _stateLock.unlock()
     }
     
     /// Test strategies
@@ -117,10 +133,23 @@ public class SBDTestController {
         }
         
         let cancelTkSource = ConcurrentCancellationTokenSource()
-        _testThreadCancelTkSource = cancelTkSource
         nonisolated(unsafe) let unsafeCompletion = completion
+        nonisolated(unsafe) let unsafeController = self
+        let completionLock = NSLock()
+        nonisolated(unsafe) var didComplete = false
+        let finish: @Sendable (Result<[SBDStrategyTestResult], SBDError>) -> Void = { result in
+            completionLock.lock()
+            guard !didComplete else {
+                completionLock.unlock()
+                return
+            }
+            didComplete = true
+            completionLock.unlock()
+            unsafeController.finishTest()
+            unsafeCompletion(result)
+        }
         SBDTestController.notifyProgressUpdate(testedStrategiesCount: 1, totalStrategiesCount: strategies.count)
-        _testThread = Thread {
+        let thread = Thread {
             var taskDomains: [[String]] = [[String]].init(repeating: [], count: Int(config.parallelRequestsCount))
             var taskI = 0
             for domain in domains {
@@ -131,10 +160,19 @@ public class SBDTestController {
             let totalDomainRequestsCount = SBDTestController.calculateTotalRequestsCount(domainRequestsCount: Int(config.domainRequestsCount), domainsCount: domains.count)
             var strategiesScanRes: [SBDStrategyTestResult] = []
             
-            SBDTestController.testRecurse(currentStrategyIndex: 0, config: config, totalDomainsCount: domains.count, totalDomainRequestsCount: totalDomainRequestsCount, strategiesScanRes: &strategiesScanRes, taskDomains: taskDomains, strategies: strategies, cancelTkSource: cancelTkSource, completion: unsafeCompletion)
+            SBDTestController.testRecurse(currentStrategyIndex: 0, config: config, totalDomainsCount: domains.count, totalDomainRequestsCount: totalDomainRequestsCount, strategiesScanRes: &strategiesScanRes, taskDomains: taskDomains, strategies: strategies, cancelTkSource: cancelTkSource, completion: finish)
         }
-        _testThread?.name = "ByeDPI tester"
-        _testThread?.start()
+        thread.name = "ByeDPI tester"
+        _stateLock.lock()
+        guard _testThread == nil else {
+            _stateLock.unlock()
+            completion(.failure(.general(errCode: -1, desc: "Another test in progress")))
+            return
+        }
+        _testThreadCancelTkSource = cancelTkSource
+        _testThread = thread
+        _stateLock.unlock()
+        thread.start()
     }
     
     /// Recursive strrategy test function
@@ -180,11 +218,14 @@ public class SBDTestController {
         print(String(currentStrategyIndex + 1) + "/" + String(strategies.count) + " - Testing strategy '" + strategy.cmdArgsLine + "'")
 #endif
         SBDTestController.testStrategy(strategy, config: config, taskDomains: taskDomains, totalDomainsCount: totalDomainsCount, totalDomainRequestsCount: totalDomainRequestsCount, cancelTkSource: cancelTkSource) { result in
-            do {
-                let scan = try result.get()
+            switch result {
+            case .success(let scan):
                 closureStrategiesScanRes.append(scan)
-            } catch {
-                print(error)
+            case .failure(let error):
+                _ = ByeDPI.stop()
+                SBDTestController.notifyNoTestingStrategy()
+                completion(.failure(error))
+                return
             }
             if (currentStrategyIndex + 1 == strategies.count) {
                 //All strategies tested -> recurse exit
@@ -221,7 +262,27 @@ public class SBDTestController {
         let byeDPIConfig = strategy.generateConfig()
         _ = ByeDPI.stop()
         ByeDPI.start(args: byeDPIConfig.args) { err in
+#if DEBUG
             print(err)
+#endif
+        }
+
+        // start(args:) only reports failures; it has no success callback. Wait
+        // for the native listener before creating requests, otherwise the first
+        // strategy is tested against a port that is not listening yet.
+        let launchDeadline = Date().addingTimeInterval(3)
+        while !ByeDPI.proxyStarted,
+              Date() < launchDeadline,
+              !cancelTkSource.cancellationToken.cancellationRequested {
+            usleep(25_000)
+        }
+        guard ByeDPI.proxyStarted else {
+            _ = ByeDPI.stop()
+            completion(.failure(.general(
+                errCode: -1,
+                desc: "ByeDPI SOCKS listener did not start for strategy \(strategy.id)"
+            )))
+            return
         }
         
         let testedDomainsIncrementor = ConcurrentIncrementor()
@@ -257,7 +318,7 @@ public class SBDTestController {
                 #if DEBUG
                 print("Dispatch worker #" + String(i) + " finish. Remains active dispatch workers - " + String(taskDomains.count - finsihedCount))
                 #endif 
-                if (finsihedCount == config.parallelRequestsCount) {
+                if (finsihedCount == taskDomains.count) {
                     #if DEBUG
                     print("All dispatch workers finish")
                     #endif
@@ -265,8 +326,28 @@ public class SBDTestController {
                 }
             }
         }
-        _ = strategyTestFinishSemaphore.wait(timeout: .distantFuture)
+        let largestWorkerDomainCount = taskDomains.map(\.count).max() ?? 0
+        let perDomainSeconds = Int(config.domainRequestsCount)
+            * (Int(config.domainAnswerTimeoutInS) + Int(config.delayBetweenRequestsInS) + 2)
+        let strategyDeadlineSeconds = max(10, largestWorkerDomainCount * perDomainSeconds + 5)
+        let waitResult = strategyTestFinishSemaphore.wait(
+            timeout: .now() + .seconds(strategyDeadlineSeconds)
+        )
         _ = ByeDPI.stop()
+        guard waitResult == .success else {
+            cancelTkSource.cancel()
+            // Every domain request has its own hard deadline. Give workers one
+            // final bounded window to observe cancellation before releasing the
+            // process-global ByeDPI core to a future scan.
+            _ = strategyTestFinishSemaphore.wait(
+                timeout: .now() + .seconds(Int(config.domainAnswerTimeoutInS) + 2)
+            )
+            completion(.failure(.general(
+                errCode: -1,
+                desc: "Strategy \(strategy.id) test exceeded its deadline"
+            )))
+            return
+        }
         let scanRes = SBDStrategyTestResult(strategy: strategy, domainsTestResult: domainsScanResult.threadSafeSnapshot)
         SBDTestController.notifyTestedStrategy(testResult: scanRes)
         completion(.success(scanRes))
@@ -293,46 +374,32 @@ public class SBDTestController {
         var success: UInt8 = 0
         var fail: UInt8 = 0
         
-        let successIncrementor = ConcurrentIncrementor()
-        let failIncrementor = ConcurrentIncrementor()
-        
         for i in 0..<requestsCount {
             if (Thread.current.isCancelled || cancelTkSource.cancellationToken.cancellationRequested) {
-                var successThreadSafe: UInt8 = 0
-                successThreadSafe = UInt8(successIncrementor.get())
-                return SBDDomainTestResult(domain: domain, successRequestsCount: successThreadSafe, failedRequestsCount: requestsCount - successThreadSafe)
+                return SBDDomainTestResult(domain: domain, successRequestsCount: success, failedRequestsCount: requestsCount - success)
             }
             #if DEBUG
             print("Testing domain '" + domain + "' availability - " + String(i + 1) + "/" + String(requestsCount))
             #endif          
             let semaphore = DispatchSemaphore(value: 0)
             let urlReq = URLRequest(url: safeDomainUrl, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: TimeInterval(answerTimeoutInS))
-            let task = proxySession.dataTask(with: urlReq) { responseData, urlResponse, err in
-                if let _ = responseData {
-                    successIncrementor.increment()
-                } else {
-                    failIncrementor.increment()
-                }
+            let task = proxySession.dataTask(with: urlReq) { _, _, _ in
                 semaphore.signal()
             }
             task.resume()
-            /*while (Thread.current.isExecuting && !cancellationToken.cancellationRequested && task.response == nil && task.error == nil) {
-                if let _ = task.response {
-                    break
-                }
-                if let _ = task.error {
-                    break
-                }
-                if (cancellationToken.cancellationRequested || Thread.current.isCancelled || Thread.current.isFinished) {
-                    break
-                }
-                sleep(1)
-            }*/
-            _ = semaphore.wait(timeout: DispatchTime.distantFuture)
+            let waitResult = semaphore.wait(
+                timeout: .now() + .seconds(Int(answerTimeoutInS) + 1)
+            )
+            if waitResult == .timedOut {
+                task.cancel()
+                fail += 1
+                notifyTestingDomainProgressUpdate(domain, strategyID: strategy.id, successRequestsCount: success, failRequestsCount: fail, totalRequestsCount: Int(requestsCount))
+                continue
+            }
             if let httpResponse = task.response as? HTTPURLResponse {
-                if (httpResponse.statusCode >= 200 && httpResponse.statusCode < 300) {
-                    success += 1
-                } else if let safeContentLength = httpResponse.allHeaderFields["Content-Length"] as? String, !safeContentLength.isEmpty {
+                // Any non-server-error HTTP response proves that the request
+                // reached the target through the configured SOCKS transport.
+                if (httpResponse.statusCode >= 200 && httpResponse.statusCode < 500) {
                     success += 1
                 } else {
                     fail += 1
@@ -344,25 +411,14 @@ public class SBDTestController {
             if (delayBetweenRequestsInS == 0 || cancelTkSource.cancellationToken.cancellationRequested) {
                 continue
             }
-            sleep(UInt32(delayBetweenRequestsInS))
-        }
-        var successThreadSafe: UInt8 = 0
-        var failThreadSafe: UInt8 = 0
-
-        successThreadSafe = UInt8(successIncrementor.get())
-        failThreadSafe = UInt8(failIncrementor.get())
-        if (success != successThreadSafe) {
-            print("Test domain '" + domain + "'  warning: Success checks thread-safe value != 'Success' HTTPResponse checks value")
-        }
-        if (fail != failThreadSafe) {
-            print("Test domain '" + domain + "'  warning: Fail checks thread-safe value != 'Fail' HTTPResponse checks value")
-        }
-        if (fail + success != requestsCount) {
-            print("Test domain '" + domain + "'  warning: 'Success' and 'Fail' HTTPResponse count != Total requests count. Trying to correct by thread-safe values")
-            if (successThreadSafe + successThreadSafe == requestsCount) {
-                fail = failThreadSafe
-                success = successThreadSafe
+            let delayDeadline = Date().addingTimeInterval(TimeInterval(delayBetweenRequestsInS))
+            while Date() < delayDeadline,
+                  !cancelTkSource.cancellationToken.cancellationRequested {
+                usleep(100_000)
             }
+        }
+        if fail + success < requestsCount {
+            fail = requestsCount - success
         }
         let testRes = SBDDomainTestResult(domain: domain, successRequestsCount: success, failedRequestsCount: fail)
         

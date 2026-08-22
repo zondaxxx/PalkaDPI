@@ -71,6 +71,8 @@
 "palkaAutoStoppingVPN" = "Отключаем предыдущий системный VPN…";
 "palkaAutoConnectingVPN" = "Ждём подключения системного VPN…";
 "palkaAutoProbingThroughVPN" = "VPN подключён — проверяем сервисы через туннель (до 8 секунд)";
+"palkaAutoVerifyingTraffic" = "Проверяем счётчики пакетов внутри туннеля…";
+"palkaAutoNoTunnelTraffic" = "Туннель подключён формально, но его ядро не обработало ни одного пакета";
 "palkaVPNConnectTimeout" = "Системный VPN не подключился за 20 секунд";
 "palkaVPNDisconnectTimeout" = "Системный VPN не отключился за 12 секунд";
 "palkaAutoSelectedFormat" = "Выбрана стратегия: %@";
@@ -215,6 +217,8 @@
 "byeDPITestStop" = "Остановить";
 "byeDPITestStateNotStarted" = "Проверка завершена";
 "byeDPITestStateInProgress" = "Проверка";
+"palkaTesterStopping" = "Останавливаем проверку…";
+"palkaTesterTransportHint" = "Запросы идут через отдельный локальный SOCKS ByeDPI. Таймаут или ошибка запуска теперь считаются провалом, а не успешной стратегией.";
 "byeDPITestDomainsDetailsShow" = "Показать детали";
 "byeDPITestDomainsDetailsHide" = "Скрыть детали";
 

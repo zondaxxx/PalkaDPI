@@ -298,21 +298,62 @@ final class StrategyAutomationManager: ObservableObject {
                             attempts: 2
                         ) { [weak self] results in
                             guard let self = self, self.generation == generation else { return }
-                            // If the extension died while probing, iOS may fall back to
-                            // the direct route. Never count those responses as a success.
-                            let tunnelVerifiedResults = self.neManager.vpnRunning ? results : []
-                            self.appendScore(strategy: strategy, results: tunnelVerifiedResults)
-                            self.completedStrategies += 1
-                            self.test(
-                                candidates: candidates,
-                                index: index + 1,
+                            self.currentStage = palkaLocalized("palkaAutoVerifyingTraffic")
+                            self.verifyTunnelTraffic(
                                 generation: generation,
-                                completion: completion
-                            )
+                                deadline: Date().addingTimeInterval(3)
+                            ) { [weak self] trafficVerified in
+                                guard let self = self, self.generation == generation else { return }
+                                // A connected NE status is not enough: a dead tun2socks
+                                // path can let probes fail or fall back without ever
+                                // producing a packet. Only score results after the
+                                // extension confirms that its core processed traffic.
+                                let tunnelVerifiedResults = trafficVerified ? results : []
+                                if !trafficVerified {
+                                    self.errorText = palkaLocalized("palkaAutoNoTunnelTraffic")
+                                }
+                                self.appendScore(strategy: strategy, results: tunnelVerifiedResults)
+                                self.completedStrategies += 1
+                                self.test(
+                                    candidates: candidates,
+                                    index: index + 1,
+                                    generation: generation,
+                                    completion: completion
+                                )
+                            }
                         }
                     }
                 }
             }
+        }
+    }
+
+    private func verifyTunnelTraffic(
+        generation: UUID,
+        deadline: Date,
+        completion: @escaping (Bool) -> Void
+    ) {
+        guard self.generation == generation, neManager.vpnRunning else {
+            completion(false)
+            return
+        }
+        neManager.refreshTunnelStats()
+        if let stats = neManager.tunnelStats,
+           stats.coreRunning,
+           stats.totalPackets > 0 {
+            completion(true)
+            return
+        }
+        guard Date() < deadline else {
+            completion(false)
+            return
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+            self?.verifyTunnelTraffic(
+                generation: generation,
+                deadline: deadline,
+                completion: completion
+            )
         }
     }
 

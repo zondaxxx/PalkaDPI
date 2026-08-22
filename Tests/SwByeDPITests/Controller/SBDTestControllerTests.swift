@@ -87,6 +87,7 @@ final class SBDTestControllerTests: XCTestCase {
             let deltaTs = finishTestTs - nowTs
             XCTAssertGreaterThanOrEqual(deltaTs, 10, "Test finished earlier than cancel fire")
             XCTAssertLessThan(deltaTs, 20, "Testing was continued after cancel fire too long")
+            XCTAssertFalse(self.testController.testingInProgress, "Controller must release its lifecycle state before completion")
             exp.fulfill()
         }
         sleep(10)

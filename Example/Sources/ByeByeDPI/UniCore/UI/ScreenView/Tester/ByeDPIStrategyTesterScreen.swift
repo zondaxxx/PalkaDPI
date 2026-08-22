@@ -31,6 +31,7 @@ struct ByeDPIStrategyTesterScreen: View {
             Button {
                 if (testManager.testingInProgress) {
                     testManager.cancelTest()
+                    _testingProgressInfo = palkaLocalized("palkaTesterStopping")
                     return
                 }
                 _totalDomainRequestsCount = properties.byeDPITestConfig.retrieveDomains(domainLists: domainsManager.lists).count * Int(properties.byeDPITestConfig.domainRequestsCount)
@@ -44,7 +45,7 @@ struct ByeDPIStrategyTesterScreen: View {
                     self._testingProgressInfo = R.string.localizable.byeDPITestStateNotStarted()
                 }
             } label: {
-                if (_testingProgressInfo != R.string.localizable.byeDPITestStateNotStarted()) {
+                if (testManager.testingInProgress) {
                     Text(R.string.localizable.byeDPITestStop)
                         .foregroundColor(Color(R.color.grPrimary))
                         .fontWeight(.semibold)
@@ -62,10 +63,27 @@ struct ByeDPIStrategyTesterScreen: View {
             .foregroundColor(Color(R.color.grSecondary))
             .fontWeight(.semibold)
             .padding(.horizontal, 16)
+            Text(palkaLocalized("palkaTesterTransportHint"))
+                .font(.system(size: 11, weight: .regular))
+                .foregroundColor(Color(R.color.grSecondary))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
+            if let errorText = testManager.lastErrorText {
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                    Text(errorText)
+                        .font(.system(size: 12, weight: .medium))
+                }
+                .foregroundColor(.red)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(12)
+                .background(Color.red.opacity(0.1))
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .padding(.horizontal, 16)
+            }
             ScrollView(.vertical) {
                 LazyVStack(alignment: .leading, spacing: 8.0) {
-                    ForEach(0..<testManager.lastCheckResults.count, id: \.self) { index in
-                        let strategyTestResult = testManager.lastCheckResults[index]
+                    ForEach(testManager.lastCheckResults, id: \.strategy.id) { strategyTestResult in
                         StrategyTestResultView(strategyCmdArgs: strategyTestResult.strategy.cmdArgs, totalDomainRequestsCount: _totalDomainRequestsCount, domainsSuccessTestResults: strategyTestResult.sortedDomainsTestsResult.map({ domainTestResult in
                             return (domain: domainTestResult.domain, successRequestsCount: domainTestResult.successRequestsCount, failRequestsCount: domainTestResult.failedRequestsCount, successTest: domainTestResult.successTest)
                         }))

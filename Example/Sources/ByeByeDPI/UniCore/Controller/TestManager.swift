@@ -15,8 +15,11 @@ class TestManager: ObservableObject {
     fileprivate let _controller: SBDTestController
     
     @Published fileprivate(set) var lastCheckResults: [SBDStrategyTestResult]
+    @Published fileprivate(set) var testingInProgress: Bool
+    @Published fileprivate(set) var lastErrorText: String?
     fileprivate var _lastCheckResultsIndices: [Int: Int]
     fileprivate var _lastCheckResultsSuccessRequests: [Int: Int]
+    fileprivate var _observerTokens: [NSObjectProtocol]
     
     var checkResults: [Int: SBDStrategyTestResult] {
         get {
@@ -28,18 +31,15 @@ class TestManager: ObservableObject {
         }
     }
     
-    var testingInProgress: Bool {
-        get {
-            return _controller.testingInProgress
-        }
-    }
-    
 #if DEBUG
     init(lastCheckResults: [SBDStrategyTestResult]) {
         _controller = SBDTestController()
         self.lastCheckResults = lastCheckResults
+        testingInProgress = false
+        lastErrorText = nil
         _lastCheckResultsIndices = [:]
         _lastCheckResultsSuccessRequests = [:]
+        _observerTokens = []
         var iterator = 0
         for res in lastCheckResults {
             _lastCheckResultsIndices[res.strategy.id] = iterator
@@ -52,6 +52,9 @@ class TestManager: ObservableObject {
     init() {
         _controller = SBDTestController()
         let loadedResults = TestManager.loadSortedLists()
+        testingInProgress = false
+        lastErrorText = nil
+        _observerTokens = []
         if (loadedResults.isEmpty) {
             lastCheckResults = []
             _lastCheckResultsIndices = [:]
@@ -71,15 +74,33 @@ class TestManager: ObservableObject {
     }
     
     func test(config: SBDTestConfig, domainLists: [SBDDomainList], strategyLists: [SBDStrategyList], completion: @escaping (_ result: Result<[SBDStrategyTestResult], SBDError>) -> Void) {
-        if (!_controller.canStartTest) {
+        guard _controller.canStartTest else {
+            let result: Result<[SBDStrategyTestResult], SBDError> = .failure(
+                .general(errCode: -1, desc: "The tester is still stopping or ByeDPI is already running")
+            )
+            lastErrorText = result.failureDescription
+            completion(result)
             return
         }
+        let strategies = SBDStrategyController.retrieveSortedStrategies(config.retrieveStrategies(strategyLists: strategyLists))
+        let domains = SBDDomainController.retrieveSortedDomains(config.retrieveDomains(domainLists: domainLists))
+        guard !domains.isEmpty, !strategies.isEmpty else {
+            let reason = domains.isEmpty ? "No test domains selected" : "No strategies selected"
+            let result: Result<[SBDStrategyTestResult], SBDError> = .failure(
+                .general(errCode: -1, desc: reason)
+            )
+            lastErrorText = result.failureDescription
+            completion(result)
+            return
+        }
+
+        removeObservers()
+        testingInProgress = true
+        lastErrorText = nil
         _lastCheckResultsIndices.removeAll()
         _lastCheckResultsSuccessRequests.removeAll()
         TestManager.saveSortedLists([])
         var checkResults: [SBDStrategyTestResult] = []
-        let strategies = SBDStrategyController.retrieveSortedStrategies(config.retrieveStrategies(strategyLists: strategyLists))
-        let domains = SBDDomainController.retrieveSortedDomains(config.retrieveDomains(domainLists: domainLists))
         var emptyDomainsTestResults: [String: SBDDomainTestResult] = [:]
         for domain in domains {
             emptyDomainsTestResults[domain] = SBDDomainTestResult(domain: domain, successRequestsCount: 0, failedRequestsCount: config.domainRequestsCount)
@@ -91,27 +112,37 @@ class TestManager: ObservableObject {
             _lastCheckResultsSuccessRequests[strategy.id] = 0
         }
         lastCheckResults = checkResults
-        NotificationCenter.default.addObserver(forName: .SBDTestedStrategy, object: nil, queue: .main, using: onTestedStrategy)
-        NotificationCenter.default.addObserver(forName: .SBDTestedStrategyDomain, object: nil, queue: .main, using: onTestedStrategyDomain)
+        _observerTokens = [
+            NotificationCenter.default.addObserver(forName: .SBDTestedStrategy, object: nil, queue: .main, using: onTestedStrategy),
+            NotificationCenter.default.addObserver(forName: .SBDTestedStrategyDomain, object: nil, queue: .main, using: onTestedStrategyDomain)
+        ]
         _controller.test(config: config, domains: domains, strategies: strategies) { result in
-            NotificationCenter.default.removeObserver(self, name: .SBDTestedStrategy, object: nil)
-            NotificationCenter.default.removeObserver(self, name: .SBDTestedStrategyDomain, object: nil)
-            do {
-                let testResult = try result.get()
-                DispatchQueue.main.async {
+            DispatchQueue.main.async {
+                self.removeObservers()
+                self.testingInProgress = false
+                switch result {
+                case .success(let testResult):
                     self.lastCheckResults = testResult
+                    self.lastErrorText = nil
+                    TestManager.saveSortedLists(testResult)
+                case .failure(let error):
+                    self.lastErrorText = error.errorDescription
                 }
-            } catch {
-                print(error)
+                completion(result)
             }
-            completion(result)
         }
     }
     
     func cancelTest() {
-        NotificationCenter.default.removeObserver(self, name: .SBDTestedStrategy, object: nil)
-        NotificationCenter.default.removeObserver(self, name: .SBDTestedStrategyDomain, object: nil)
+        guard testingInProgress else { return }
         _controller.cancelTest()
+    }
+
+    fileprivate func removeObservers() {
+        for token in _observerTokens {
+            NotificationCenter.default.removeObserver(token)
+        }
+        _observerTokens.removeAll()
     }
     
     fileprivate func onTestedStrategy(_ notification: Notification) {
@@ -132,7 +163,7 @@ class TestManager: ObservableObject {
                 break
             }
         }
-        if (index < 0) {
+        if (index < 0 || index >= lastCheckResults.count) {
             return
         }
         _lastCheckResultsSuccessRequests[safeTestRes.strategy.id] = safeTestRes.successDomainRequestsCount
@@ -170,17 +201,15 @@ class TestManager: ObservableObject {
         guard let safeTestRes = parseRes.1 else {
             return
         }
-        guard let safeStrategyID = notification.object as? Int, let safeStrategyIndex = _lastCheckResultsIndices[safeStrategyID] else {
+        guard let safeStrategyID = notification.object as? Int,
+              let safeStrategyIndex = _lastCheckResultsIndices[safeStrategyID],
+              lastCheckResults.indices.contains(safeStrategyIndex) else {
             return
         }
         var updDict = lastCheckResults[safeStrategyIndex].domainsTestsResult
         updDict[safeTestRes.domain] = safeTestRes
         lastCheckResults[safeStrategyIndex] = lastCheckResults[safeStrategyIndex].copyWith(domainsTestsResult: updDict)
-        if let _ = _lastCheckResultsSuccessRequests[safeStrategyID] {
-            _lastCheckResultsSuccessRequests[safeStrategyID]? += lastCheckResults[safeStrategyIndex].successDomainRequestsCount
-        } else {
-            _lastCheckResultsSuccessRequests[safeStrategyID] = lastCheckResults[safeStrategyIndex].successDomainRequestsCount
-        }
+        _lastCheckResultsSuccessRequests[safeStrategyID] = lastCheckResults[safeStrategyIndex].successDomainRequestsCount
     }
 
     /// Export sorted test results to property list
@@ -199,5 +228,12 @@ class TestManager: ObservableObject {
             return []
         }
         return parsedLists
+    }
+}
+
+fileprivate extension Result where Failure == SBDError {
+    var failureDescription: String? {
+        guard case .failure(let error) = self else { return nil }
+        return error.errorDescription
     }
 }

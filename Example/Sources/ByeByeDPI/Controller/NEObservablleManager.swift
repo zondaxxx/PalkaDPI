@@ -366,8 +366,12 @@ class NEObservableManager: ObservableObject {
                     return
                 }
                 DispatchQueue.main.async {
-                    self?.tunnelStats = stats
-                    self?.mergeRuntimeLogs(stats.logs)
+                    guard let self = self,
+                          self.vpnRunning,
+                          let currentSession = self.neTunnelProviderManager?.connection as? NETunnelProviderSession,
+                          currentSession === session else { return }
+                    self.tunnelStats = stats
+                    self.mergeRuntimeLogs(stats.logs)
                 }
             }
         } catch {
@@ -421,6 +425,15 @@ class NEObservableManager: ObservableObject {
             }
 
             if reachedTarget {
+                if shouldBeConnected {
+                    // A new extension instance owns a new set of counters.
+                    // Never let automation validate it with data from the
+                    // previous tunnel session.
+                    self.tunnelStats = nil
+                    self.refreshTunnelStats()
+                } else {
+                    self.tunnelStats = nil
+                }
                 self.appendRuntimeLog(
                     shouldBeConnected ? "VPN connection is active" : "VPN connection is stopped",
                     level: "success"

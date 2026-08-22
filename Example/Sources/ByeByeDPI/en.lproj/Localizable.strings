@@ -71,6 +71,8 @@
 "palkaAutoStoppingVPN" = "Disconnecting the previous system VPN…";
 "palkaAutoConnectingVPN" = "Waiting for the system VPN to connect…";
 "palkaAutoProbingThroughVPN" = "VPN connected — testing through the tunnel (up to 8 seconds)";
+"palkaAutoVerifyingTraffic" = "Verifying packet counters inside the tunnel…";
+"palkaAutoNoTunnelTraffic" = "The tunnel connected, but its core did not process any packets";
 "palkaVPNConnectTimeout" = "The system VPN did not connect within 20 seconds";
 "palkaVPNDisconnectTimeout" = "The system VPN did not disconnect within 12 seconds";
 "palkaAutoSelectedFormat" = "Selected: %@";
@@ -214,6 +216,8 @@
 "byeDPITestStop" = "Stop";
 "byeDPITestStateNotStarted" = "Check completed";
 "byeDPITestStateInProgress" = "Checking";
+"palkaTesterStopping" = "Stopping the test…";
+"palkaTesterTransportHint" = "Requests use a dedicated local ByeDPI SOCKS proxy. A timeout or startup error is now reported as a failure, never as a working strategy.";
 "byeDPITestDomainsDetailsShow" = "Show details";
 "byeDPITestDomainsDetailsHide" = "Hide details";
 
