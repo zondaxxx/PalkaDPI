@@ -102,11 +102,12 @@ final class OnlineStrategyCatalogStore: ObservableObject {
     private static let cacheKey = "PalkaDPI.onlineStrategyCatalog.v2"
     private static let maximumCatalogSize = 512 * 1024
 
+    private let defaults = UserDefaults(suiteName: Constants.APP_GROUP_ID) ?? .standard
     private var tasks: [URLSessionDataTask] = []
     private var cacheEntries: [PalkaCatalogCacheEntry] = []
 
     init() {
-        if let cacheData = UserDefaults.standard.data(forKey: Self.cacheKey),
+        if let cacheData = defaults.data(forKey: Self.cacheKey),
            let entries = try? JSONDecoder().decode([PalkaCatalogCacheEntry].self, from: cacheData) {
             cacheEntries = entries
             if let latest = entries.first {
@@ -207,7 +208,7 @@ final class OnlineStrategyCatalogStore: ObservableObject {
     }
 
     private func persistCache() {
-        UserDefaults.standard.set(
+        defaults.set(
             try? JSONEncoder().encode(cacheEntries),
             forKey: Self.cacheKey
         )
@@ -227,11 +228,22 @@ final class OnlineStrategyCatalogStore: ObservableObject {
               data.count <= Self.maximumCatalogSize,
               let document = try? JSONDecoder().decode(OnlineStrategyCatalogDocument.self, from: data),
               document.schemaVersion == 2,
+              document.generation > 0,
               !document.strategies.isEmpty,
               document.strategies.count <= 100,
               version(Constants.PSEUDO_BUNDLE_VERSION, isAtLeast: document.minimumAppVersion),
               version(ByeDPI.versionCode, isAtLeast: document.minimumEngineVersion) else {
             return false
+        }
+
+        let allIDs = document.strategies.map(\.id)
+        guard Set(allIDs).count == allIDs.count else { return false }
+
+        if !isCache {
+            let highestCachedGeneration = cacheEntries.compactMap { entry in
+                try? JSONDecoder().decode(OnlineStrategyCatalogDocument.self, from: entry.data).generation
+            }.max() ?? 0
+            guard document.generation >= highestCachedGeneration else { return false }
         }
 
         let revoked = Set(document.revokedStrategyIDs)

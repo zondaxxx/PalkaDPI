@@ -35,6 +35,7 @@ swift scripts/validate_strategy_catalog.swift strategy-catalog.json strategy-cat
 
 - схема версии `2`, монотонное поколение и не более 100 стратегий;
 - Ed25519-подпись точных байтов JSON до декодирования;
+- защита от загрузки поколения старее уже проверенного кэша;
 - совместимость `minimumAppVersion` и `minimumEngineVersion`;
 - уникальность ID и отсутствие записи в `revokedStrategyIDs`;
 - размер каталога до 512 КиБ, до 160 аргументов на стратегию;

@@ -63,6 +63,7 @@ class NEObservableManager: ObservableObject {
         if (ProcessInfo.processInfo.previewMode) {
             //Disable real VPN connection for preview
             vpnRunning = true
+            completion(true, nil)
             return
         }
 #endif
@@ -72,6 +73,7 @@ class NEObservableManager: ObservableObject {
         }
         getOrInitNEManager { manager, err in
             guard let safeManager = manager else {
+                completion(false, err)
                 return
             }
             self.startConnection(manager: safeManager, completion: completion)
