@@ -47,8 +47,8 @@ jobs:
 
       - name: Build unsigned IPA
         env:
-          PALKA_BUNDLE_ID: io.github.zondaxxx.bvdpiios
-          PALKA_APP_GROUP: group.io.github.zondaxxx.bvdpiios
+          PALKA_BUNDLE_ID: io.github.zondaxxx.palkadpi
+          PALKA_APP_GROUP: group.io.github.zondaxxx.palkadpi
         run: ./scripts/build_unsigned_ipa.sh
 
       - name: Verify package

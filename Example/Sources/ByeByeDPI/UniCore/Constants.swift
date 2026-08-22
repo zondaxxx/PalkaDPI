@@ -14,10 +14,10 @@ final class Constants {
     static let PSEUDO_BUNDLE_VERSION = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
     static let PSEUDO_BUNDLE_BUILD_NUMBER = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
     
-    static let sourceCodeLink = "https://github.com/zondaxxx/BVDPI-IOS"
+    static let sourceCodeLink = "https://github.com/zondaxxx/PalkaDPI"
     static let acknowledgementsLink = sourceCodeLink + "/blob/main/ACKNOWLEDGEMENTS.md"
     static let strategyCatalogURL = URL(
-        string: "https://raw.githubusercontent.com/zondaxxx/BVDPI-IOS/main/strategy-catalog.json"
+        string: "https://raw.githubusercontent.com/zondaxxx/PalkaDPI/main/strategy-catalog.json"
     )!
     
     static let buttonMinHeight = 40.0

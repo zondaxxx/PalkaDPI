@@ -3,8 +3,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/zondaxxx/BVDPI-IOS/actions/workflows/build-release.yml"><img src="https://github.com/zondaxxx/BVDPI-IOS/actions/workflows/build-release.yml/badge.svg" alt="Build and Release" /></a>
-  <a href="https://github.com/zondaxxx/BVDPI-IOS/releases/latest"><img src="https://img.shields.io/github/v/release/zondaxxx/BVDPI-IOS?color=ffffff&label=release&labelColor=09090d" alt="Latest release" /></a>
+  <a href="https://github.com/zondaxxx/PalkaDPI/actions/workflows/build-release.yml"><img src="https://github.com/zondaxxx/PalkaDPI/actions/workflows/build-release.yml/badge.svg" alt="Build and Release" /></a>
+  <a href="https://github.com/zondaxxx/PalkaDPI/releases/latest"><img src="https://img.shields.io/github/v/release/zondaxxx/PalkaDPI?color=ffffff&label=release&labelColor=09090d" alt="Latest release" /></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-ffffff?labelColor=09090d" alt="AGPL-3.0" /></a>
   <img src="https://img.shields.io/badge/iOS-14%2B-ffffff?labelColor=09090d" alt="iOS 14+" />
 </p>
@@ -31,7 +31,7 @@
 
 ## Быстрый старт
 
-1. Скачайте [последний unsigned IPA](https://github.com/zondaxxx/BVDPI-IOS/releases/latest/download/PalkaDPI-unsigned.ipa).
+1. Скачайте [последний unsigned IPA](https://github.com/zondaxxx/PalkaDPI/releases/latest/download/PalkaDPI-unsigned.ipa).
 2. Подпишите сначала `ByeByeDPITun.appex`, затем основное приложение.
 3. Установите IPA на физический iPhone.
 4. Нажмите «Подключить» и разрешите добавление VPN-конфигурации.
@@ -65,8 +65,8 @@ Discord и YouTube. Это HTTP round trip, а не ICMP-ping: обычное iO
 ## Сборка
 
 ```bash
-git clone https://github.com/zondaxxx/BVDPI-IOS.git
-cd BVDPI-IOS
+git clone https://github.com/zondaxxx/PalkaDPI.git
+cd PalkaDPI
 open SwByeDPI.xcodeproj
 ```
 
