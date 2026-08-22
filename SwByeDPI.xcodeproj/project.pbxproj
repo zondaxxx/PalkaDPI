@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C0D30000000000000000000A /* PalkaWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C0D300000000000000000001 /* PalkaWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		8B09F8692F7A672E0065FB4D /* ByeByeDPITun.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 8BB4205C2F73FEE6005C2F2B /* ByeByeDPITun.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		8B2BF7B92F4DFB9D0016A26B /* RswiftLibrary in Frameworks */ = {isa = PBXBuildFile; productRef = 8B2BF7B82F4DFB9D0016A26B /* RswiftLibrary */; };
 		8B3AF57C2F6DCEDE0085E8BC /* SwByeDPI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8BD891882F3A1A750020D925 /* SwByeDPI.framework */; };
@@ -34,6 +35,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		C0D30000000000000000000C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8BD8917F2F3A1A750020D925 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C0D300000000000000000002;
+			remoteInfo = PalkaWidget;
+		};
 		8B09F86A2F7A672E0065FB4D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 8BD8917F2F3A1A750020D925 /* Project object */;
@@ -161,6 +169,7 @@
 			dstSubfolderSpec = 13;
 			files = (
 				8B09F8692F7A672E0065FB4D /* ByeByeDPITun.appex in Embed Foundation Extensions */,
+				C0D30000000000000000000A /* PalkaWidget.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -190,6 +199,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		C0D300000000000000000001 /* PalkaWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PalkaWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		8B23DCAB2FE3D491009243D0 /* assets_codegen.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = assets_codegen.sh; sourceTree = "<group>"; };
 		8B23DDD42FE3D5CD009243D0 /* xcodebuild_unsigned.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = xcodebuild_unsigned.sh; sourceTree = "<group>"; };
 		8B2BF7972F4DF9B20016A26B /* ByeByeDPI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ByeByeDPI.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -223,6 +233,15 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		C0D300000000000000000006 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Sources/PalkaWidget/Info.plist,
+				Sources/PalkaWidget/PalkaWidget.entitlements,
+				Sources/PalkaWidget/PalkaWidget.swift,
+			);
+			target = C0D300000000000000000002 /* PalkaWidget */;
+		};
 		8B2BF7AF2F4DF9C90016A26B /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -238,6 +257,7 @@
 				Sources/ByeByeDPI/LaunchScreenTvOS.storyboard,
 				Sources/ByeByeDPI/PreviewContent/PreviewAssets.xcassets,
 				Sources/ByeByeDPI/PrivacyInfo.xcprivacy,
+				Sources/ByeByeDPI/Shortcut/CheckPalkaServicesIntent.swift,
 				Sources/ByeByeDPI/Shortcut/StartByeDPIVPNIntent.swift,
 				Sources/ByeByeDPI/Shortcut/StopByeDPIVPNIntent.swift,
 				Sources/ByeByeDPI/Shortcut/ToggleByeDPIVPNIntent.swift,
@@ -248,6 +268,8 @@
 				Sources/ByeByeDPI/UniCore/Controller/DomainsManager.swift,
 				Sources/ByeByeDPI/UniCore/Controller/GuardActivityVC.swift,
 				Sources/ByeByeDPI/UniCore/Controller/LNWPermissionManager.swift,
+				Sources/ByeByeDPI/UniCore/Controller/NetworkEnvironmentMonitor.swift,
+				Sources/ByeByeDPI/UniCore/Controller/StrategyAutomationManager.swift,
 				Sources/ByeByeDPI/UniCore/Controller/StrategiesManager.swift,
 				Sources/ByeByeDPI/UniCore/Controller/StrategyDebugManager.swift,
 				Sources/ByeByeDPI/UniCore/Controller/TestManager.swift,
@@ -263,14 +285,17 @@
 				Sources/ByeByeDPI/UniCore/Model/PalkaPreset.swift,
 				Sources/ByeByeDPI/UniCore/Model/BitBool8.swift,
 				Sources/ByeByeDPI/UniCore/Model/LNWAuthorizationStatus.swift,
+				Sources/ByeByeDPI/UniCore/Model/PalkaService.swift,
 				Sources/ByeByeDPI/UniCore/Model/UserDefaultsAppKeys.swift,
 				Sources/ByeByeDPI/UniCore/Model/UserDefaultsAppProperties.swift,
+				Sources/ByeByeDPI/UniCore/Model/StrategyLibraryStore.swift,
 				Sources/ByeByeDPI/UniCore/UI/ScreenView/Analyzer/ByeDPITestResultsAnalyzerScreen.swift,
 				Sources/ByeByeDPI/UniCore/UI/ScreenView/ByeDPICmdEditorScreen.swift,
 				Sources/ByeByeDPI/UniCore/UI/ScreenView/DomainListCtorScreen.swift,
 				Sources/ByeByeDPI/UniCore/UI/ScreenView/DomainListsScreen.swift,
 				Sources/ByeByeDPI/UniCore/UI/ScreenView/ListRawDataScreen.swift,
 				Sources/ByeByeDPI/UniCore/UI/ScreenView/OnlineStrategyCatalogScreen.swift,
+				Sources/ByeByeDPI/UniCore/UI/ScreenView/PalkaFeaturesScreen.swift,
 				Sources/ByeByeDPI/UniCore/UI/ScreenView/Picker/ListPickerScreen.swift,
 				Sources/ByeByeDPI/UniCore/UI/ScreenView/SettingsScreen.swift,
 				Sources/ByeByeDPI/UniCore/UI/ScreenView/StrategyListCtorScreen.swift,
@@ -667,7 +692,7 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		8B2BF7922F4DF95E0016A26B /* Example */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (8B2BF7AF2F4DF9C90016A26B /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 8BB420712F73FEF7005C2F2B /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 8B3AF5752F6DCEA60085E8BC /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 8B5F84A02F9F5564001D2867 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 8BA5E1D82F710B0500F47B9C /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Example; sourceTree = "<group>"; };
+		8B2BF7922F4DF95E0016A26B /* Example */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (8B2BF7AF2F4DF9C90016A26B /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 8BB420712F73FEF7005C2F2B /* PBXFileSystemSynchronizedBuildFileExceptionSet */, C0D300000000000000000006 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 8B3AF5752F6DCEA60085E8BC /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 8B5F84A02F9F5564001D2867 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 8BA5E1D82F710B0500F47B9C /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Example; sourceTree = "<group>"; };
 		8B3311DC2F4A4E2C00E30583 /* Assets */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Assets; sourceTree = "<group>"; };
 		8B3B633E2F595401005BA55B /* Experimental */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Experimental; sourceTree = "<group>"; };
 		8BA5E6912F713A1000F47B9C /* RepoAssets */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = RepoAssets; sourceTree = "<group>"; };
@@ -676,6 +701,13 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		C0D300000000000000000004 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8B2BF7942F4DF9B20016A26B /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -824,6 +856,7 @@
 		8BD891892F3A1A750020D925 /* Products */ = {
 			isa = PBXGroup;
 			children = (
+				C0D300000000000000000001 /* PalkaWidget.appex */,
 				8BD891882F3A1A750020D925 /* SwByeDPI.framework */,
 				8BA6AC0F2F3A706D00999BF6 /* SwByeDPITests.xctest */,
 				8B8F7A142F4799180015A52A /* ByeDPIC.framework */,
@@ -860,6 +893,25 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		C0D300000000000000000002 /* PalkaWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C0D300000000000000000009 /* Build configuration list for PBXNativeTarget "PalkaWidget" */;
+			buildPhases = (
+				C0D300000000000000000003 /* Sources */,
+				C0D300000000000000000004 /* Frameworks */,
+				C0D300000000000000000005 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = PalkaWidget;
+			packageProductDependencies = (
+			);
+			productName = PalkaWidget;
+			productReference = C0D300000000000000000001 /* PalkaWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		8B2BF7962F4DF9B20016A26B /* ByeByeDPI */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 8B2BF7A22F4DF9B40016A26B /* Build configuration list for PBXNativeTarget "ByeByeDPI" */;
@@ -873,6 +925,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				C0D30000000000000000000B /* PBXTargetDependency */,
 				8B52DB1F2F62A683009BE7C3 /* PBXTargetDependency */,
 				8BBA638E2F6835F40092E52A /* PBXTargetDependency */,
 				8B09F86B2F7A672E0065FB4D /* PBXTargetDependency */,
@@ -1131,6 +1184,9 @@
 				LastSwiftUpdateCheck = 1620;
 				LastUpgradeCheck = 1620;
 				TargetAttributes = {
+					C0D300000000000000000002 = {
+						CreatedOnToolsVersion = 16.4;
+					};
 					8B2BF7962F4DF9B20016A26B = {
 						CreatedOnToolsVersion = 16.2;
 					};
@@ -1185,6 +1241,7 @@
 			targets = (
 				8B2BF7962F4DF9B20016A26B /* ByeByeDPI */,
 				8BB4205B2F73FEE6005C2F2B /* ByeByeDPITun */,
+				C0D300000000000000000002 /* PalkaWidget */,
 				8B3AF55D2F6DCCCF0085E8BC /* ByeDPI */,
 				8B5F84862F9F53F5001D2867 /* ByeDPIBg */,
 				8BA5E1BC2F7108D700F47B9C /* ByeDPImacOS */,
@@ -1200,6 +1257,13 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		C0D300000000000000000005 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8B2BF7952F4DF9B20016A26B /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1273,6 +1337,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		C0D300000000000000000003 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8B2BF7932F4DF9B20016A26B /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1360,6 +1431,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		C0D30000000000000000000B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C0D300000000000000000002 /* PalkaWidget */;
+			targetProxy = C0D30000000000000000000C /* PBXContainerItemProxy */;
+		};
 		8B09F86B2F7A672E0065FB4D /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 8BB4205B2F73FEE6005C2F2B /* ByeByeDPITun */;
@@ -1434,6 +1510,70 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		C0D300000000000000000007 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = Example/Sources/PalkaWidget/PalkaWidget.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 13;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Example/Sources/PalkaWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.4.0;
+				PALKA_APP_GROUP = group.dev.local.palkadpi;
+				PALKA_BUNDLE_ID = dev.local.palkadpi;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(PALKA_BUNDLE_ID).widget";
+				PRODUCT_NAME = PalkaWidget;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C0D300000000000000000008 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = Example/Sources/PalkaWidget/PalkaWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 13;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Example/Sources/PalkaWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.4.0;
+				PALKA_APP_GROUP = group.dev.local.palkadpi;
+				PALKA_BUNDLE_ID = dev.local.palkadpi;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(PALKA_BUNDLE_ID).widget";
+				PRODUCT_NAME = PalkaWidget;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		8B2BF7A32F4DF9B40016A26B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1442,7 +1582,7 @@
 				CODE_SIGN_ENTITLEMENTS = Example/Sources/ByeByeDPI/ByeByeDPIDebug.entitlements;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 12;
+				CURRENT_PROJECT_VERSION = 13;
 				DEVELOPMENT_ASSET_PATHS = Example/Sources/ByeByeDPI/PreviewContent/PreviewAssets.xcassets;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
@@ -1467,7 +1607,7 @@
 					"@executable_path/Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				MARKETING_VERSION = 0.3.0;
+				MARKETING_VERSION = 0.4.0;
 				PALKA_APP_GROUP = group.dev.local.palkadpi;
 				PALKA_BUNDLE_ID = dev.local.palkadpi;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(PALKA_BUNDLE_ID)";
@@ -1495,7 +1635,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Example/Sources/ByeByeDPI/ByeByeDPI.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 12;
+				CURRENT_PROJECT_VERSION = 13;
 				DEVELOPMENT_ASSET_PATHS = Example/Sources/ByeByeDPI/PreviewContent/PreviewAssets.xcassets;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
@@ -1520,7 +1660,7 @@
 					"@executable_path/Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				MARKETING_VERSION = 0.3.0;
+				MARKETING_VERSION = 0.4.0;
 				PALKA_APP_GROUP = group.dev.local.palkadpi;
 				PALKA_BUNDLE_ID = dev.local.palkadpi;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(PALKA_BUNDLE_ID)";
@@ -2151,7 +2291,7 @@
 				CODE_SIGN_ENTITLEMENTS = Example/Sources/ByeByeDPITun/ByeByeDPITunDebug.entitlements;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 12;
+				CURRENT_PROJECT_VERSION = 13;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = NO;
 				HEADER_SEARCH_PATHS = "${PROJECT_DIR}/Sources/ByeDPIC/include";
@@ -2166,7 +2306,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				MARKETING_VERSION = 0.3.0;
+				MARKETING_VERSION = 0.4.0;
 				PALKA_APP_GROUP = group.dev.local.palkadpi;
 				PALKA_BUNDLE_ID = dev.local.palkadpi;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(PALKA_BUNDLE_ID).tun";
@@ -2192,7 +2332,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = Example/Sources/ByeByeDPITun/ByeByeDPITun.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 12;
+				CURRENT_PROJECT_VERSION = 13;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = NO;
 				HEADER_SEARCH_PATHS = "${PROJECT_DIR}/Sources/ByeDPIC/include";
@@ -2207,7 +2347,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				MARKETING_VERSION = 0.3.0;
+				MARKETING_VERSION = 0.4.0;
 				PALKA_APP_GROUP = group.dev.local.palkadpi;
 				PALKA_BUNDLE_ID = dev.local.palkadpi;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(PALKA_BUNDLE_ID).tun";
@@ -2618,6 +2758,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		C0D300000000000000000009 /* Build configuration list for PBXNativeTarget "PalkaWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C0D300000000000000000007 /* Debug */,
+				C0D300000000000000000008 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		8B2BF7A22F4DF9B40016A26B /* Build configuration list for PBXNativeTarget "ByeByeDPI" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

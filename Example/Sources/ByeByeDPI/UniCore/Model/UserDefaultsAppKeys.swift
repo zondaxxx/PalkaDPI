@@ -22,5 +22,13 @@ enum UserDefaultsAppKeys: String {
     case selectedTunMtuKey = "tunMtu"
     case activeStrategyName = "activeStrategyName"
     case activeStrategyID = "activeStrategyID"
+    case activeStrategyTemplateArgs = "activeStrategyTemplateArgs"
+    case selectedServiceIDs = "selectedServiceIDs"
+    case customServiceDomains = "customServiceDomains"
+    case smartRecoveryEnabled = "smartRecoveryEnabled"
+    case onDemandEnabled = "onDemandEnabled"
+    case onDemandWiFiEnabled = "onDemandWiFiEnabled"
+    case onDemandCellularEnabled = "onDemandCellularEnabled"
+    case networkProfiles = "networkProfiles"
     
 }

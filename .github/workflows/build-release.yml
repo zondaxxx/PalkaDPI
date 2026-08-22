@@ -39,10 +39,14 @@ jobs:
           plutil -lint \
             Example/Sources/ByeByeDPI/Info.plist \
             Example/Sources/ByeByeDPITun/Info.plist \
+            Example/Sources/PalkaWidget/Info.plist \
             Example/Sources/ByeByeDPI/ByeByeDPI.entitlements \
-            Example/Sources/ByeByeDPITun/ByeByeDPITun.entitlements
+            Example/Sources/ByeByeDPITun/ByeByeDPITun.entitlements \
+            Example/Sources/PalkaWidget/PalkaWidget.entitlements
           bash -n scripts/build_unsigned_ipa.sh
-          swift scripts/validate_strategy_catalog.swift strategy-catalog.json
+          swift scripts/validate_strategy_catalog.swift \
+            strategy-catalog.json \
+            strategy-catalog.json.sig
           xcodebuild -project SwByeDPI.xcodeproj -list
 
       - name: Build unsigned IPA
@@ -55,6 +59,7 @@ jobs:
         run: |
           unzip -t packages/PalkaDPI-unsigned.ipa
           unzip -l packages/PalkaDPI-unsigned.ipa | grep -F "Payload/PalkaDPI.app/PlugIns/ByeByeDPITun.appex/"
+          unzip -l packages/PalkaDPI-unsigned.ipa | grep -F "Payload/PalkaDPI.app/PlugIns/PalkaWidget.appex/"
           shasum -a 256 packages/PalkaDPI-unsigned.ipa > packages/PalkaDPI-unsigned.ipa.sha256
 
       - name: Upload workflow artifact

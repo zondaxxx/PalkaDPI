@@ -29,8 +29,9 @@ struct HomeScreen: View {
     @EnvironmentObject fileprivate var properties: AppProperties
     @EnvironmentObject fileprivate var lnwPermissionManager: LNWPermissionManager
     @EnvironmentObject fileprivate var neManager: NEObservableManager
-
-    @StateObject private var latencyMonitor = ServiceLatencyMonitor()
+    @EnvironmentObject private var diagnosticsMonitor: ServiceDiagnosticsMonitor
+    @EnvironmentObject private var automationManager: StrategyAutomationManager
+    @EnvironmentObject private var networkMonitor: NetworkEnvironmentMonitor
     
     @State private var vpnStartFailErrorText = ""
     @State private var showAlertType: AlertType? = nil
@@ -52,12 +53,18 @@ struct HomeScreen: View {
                         .palkaEntrance()
                     connectionCard
                         .palkaEntrance(delay: 0.05)
-                    serviceLatencyCard
+                    if automationManager.recoverySuggestion != nil {
+                        recoverySuggestionCard
+                            .palkaEntrance(delay: 0.08)
+                    }
+                    smartSetupCard
                         .palkaEntrance(delay: 0.10)
-                    presetCard
+                    serviceLatencyCard
                         .palkaEntrance(delay: 0.15)
-                    settingsControl
+                    presetCard
                         .palkaEntrance(delay: 0.20)
+                    settingsControl
+                        .palkaEntrance(delay: 0.25)
                 }
                 .padding(.horizontal, PalkaDesign.screenPadding)
                 .padding(.top, 18)
@@ -67,11 +74,21 @@ struct HomeScreen: View {
         .foregroundColor(PalkaDesign.textPrimary)
         .navigationBarHidden(true)
         .onAppear {
-            latencyMonitor.refresh()
+            diagnosticsMonitor.refresh(
+                serviceIDs: properties.selectedServiceIDs,
+                customDomains: properties.customServiceDomains
+            ) { results in
+                automationManager.evaluateRecovery(results: results)
+            }
         }
         .onChange(of: neManager.vpnRunning) { _ in
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                latencyMonitor.refresh()
+                diagnosticsMonitor.refresh(
+                    serviceIDs: properties.selectedServiceIDs,
+                    customDomains: properties.customServiceDomains
+                ) { results in
+                    automationManager.evaluateRecovery(results: results)
+                }
             }
         }
         .alert(isPresented: Binding(get: {
@@ -282,9 +299,16 @@ struct HomeScreen: View {
 
                 Spacer(minLength: 8)
 
-                Button(action: latencyMonitor.refresh) {
+                Button(action: {
+                    diagnosticsMonitor.refresh(
+                        serviceIDs: properties.selectedServiceIDs,
+                        customDomains: properties.customServiceDomains
+                    ) { results in
+                        automationManager.evaluateRecovery(results: results)
+                    }
+                }) {
                     Group {
-                        if latencyMonitor.isRefreshing {
+                        if diagnosticsMonitor.isRefreshing {
                             ProgressView()
                                 .progressViewStyle(CircularProgressViewStyle(tint: PalkaDesign.textPrimary))
                         } else {
@@ -298,13 +322,21 @@ struct HomeScreen: View {
                     .overlay(Circle().stroke(Color.white.opacity(0.07), lineWidth: 1))
                 }
                 .buttonStyle(PalkaPressButtonStyle())
-                .disabled(latencyMonitor.isRefreshing)
+                .disabled(diagnosticsMonitor.isRefreshing || automationManager.isRunning)
                 .accessibilityLabel(palkaLocalized("palkaServicePingRefresh"))
             }
 
-            ForEach(latencyMonitor.services) { service in
+            ForEach(diagnosticsMonitor.services) { service in
                 serviceLatencyRow(service)
             }
+
+            NavigationLink(destination: DiagnosticsScreen()) {
+                Text(palkaLocalized("palkaDiagnosticsDetails"))
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(PalkaDesign.textSecondary)
+                    .frame(maxWidth: .infinity, minHeight: 44)
+            }
+            .buttonStyle(PalkaPressButtonStyle())
         }
         .padding(16)
         .palkaCard()
@@ -362,6 +394,8 @@ struct HomeScreen: View {
             return palkaLocalized("palkaServicePingTesting")
         case .reachable:
             return palkaLocalized("palkaServicePingAvailable")
+        case .partial:
+            return palkaLocalized("palkaDiagnosticsPartial")
         case .unavailable:
             return palkaLocalized("palkaServicePingUnavailable")
         }
@@ -371,11 +405,65 @@ struct HomeScreen: View {
         switch status {
         case .reachable:
             return PalkaDesign.success
+        case .partial:
+            return Color.orange
         case .unavailable:
             return PalkaDesign.errorText
         case .idle, .testing:
             return PalkaDesign.textDim
         }
+    }
+
+    private var smartSetupCard: some View {
+        NavigationLink(destination: AutomationScreen()) {
+            HStack(spacing: 14) {
+                Image(systemName: automationManager.isRunning ? "hourglass" : "wand.and.stars")
+                    .font(.system(size: 19, weight: .semibold))
+                    .frame(width: 44, height: 44)
+                    .background(Color.white.opacity(0.07))
+                    .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(palkaLocalized("palkaAutoTitle"))
+                        .font(.system(size: 15, weight: .bold))
+                    Text(automationManager.isRunning
+                         ? automationManager.currentStrategyName
+                         : palkaLocalized("palkaAutoHomeDescription"))
+                        .font(.system(size: 12, weight: .regular))
+                        .foregroundColor(PalkaDesign.textSecondary)
+                        .lineLimit(2)
+                }
+                Spacer(minLength: 8)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(PalkaDesign.textDim)
+            }
+            .padding(16)
+            .palkaCard(selected: automationManager.isRunning)
+        }
+        .buttonStyle(PalkaPressButtonStyle())
+    }
+
+    private var recoverySuggestionCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(palkaLocalized("palkaRecoverySuggestionTitle"))
+                .font(.system(size: 15, weight: .bold))
+            Text(String(
+                format: palkaLocalized("palkaRecoverySuggestionFormat"),
+                automationManager.recoverySuggestion?.name ?? ""
+            ))
+            .font(.system(size: 12))
+            .foregroundColor(PalkaDesign.textSecondary)
+
+            HStack(spacing: 10) {
+                Button(palkaLocalized("palkaRecoverySwitch"), action: automationManager.acceptRecoverySuggestion)
+                    .buttonStyle(PalkaCompactPrimaryButtonStyle())
+                Button(palkaLocalized("palkaRecoveryDismiss"), action: automationManager.dismissRecoverySuggestion)
+                    .buttonStyle(PalkaSecondaryButtonStyle())
+            }
+        }
+        .padding(16)
+        .palkaCard(selected: true)
     }
 
     @ViewBuilder
@@ -470,5 +558,10 @@ struct HomeScreen: View {
     .environmentObject(previewByeDPIManager)
     .environmentObject(previewNeManager)
     .environmentObject(previewTestManager)
+    .environmentObject(previewCatalogStore)
+    .environmentObject(previewStrategyLibrary)
+    .environmentObject(previewDiagnosticsMonitor)
+    .environmentObject(previewNetworkMonitor)
+    .environmentObject(previewAutomationManager)
 }
 #endif

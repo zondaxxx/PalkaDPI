@@ -1,7 +1,9 @@
-"appIntentStartByeDPIVPNTitle" = "Start ByeByeDPI";
-"appIntentStartByeDPIVPNDesc" = "Starts ByeByeDPI and initializes VPN TUNNEL session";
-"appIntentStopByeDPIVPNTitle" = "Stop ByeByeDPI";
-"appIntentStopByeDPIVPNDesc" = "Stops ByeByeDPI and VPN TUNNEL session";
-"appIntentToggleByeDPIVPNTitle" = "Toggle ByeByeDPI";
-"appIntentToggleByeDPIVPNDesc" = "Toggles ByeByeDPI and VPN TUNNEL session state";
-"appIntentToggleByeDPIVPRunngingParamTitle" = "Enable ByeByeDPI";
+"appIntentStartByeDPIVPNTitle" = "Start PalkaDPI";
+"appIntentStartByeDPIVPNDesc" = "Starts PalkaDPI and its local packet tunnel";
+"appIntentStopByeDPIVPNTitle" = "Stop PalkaDPI";
+"appIntentStopByeDPIVPNDesc" = "Stops PalkaDPI and its local packet tunnel";
+"appIntentToggleByeDPIVPNTitle" = "Toggle PalkaDPI";
+"appIntentToggleByeDPIVPNDesc" = "Toggles the PalkaDPI packet tunnel";
+"appIntentToggleByeDPIVPRunngingParamTitle" = "Enable PalkaDPI";
+"appIntentCheckServicesTitle" = "Check PalkaDPI services";
+"appIntentCheckServicesDesc" = "Checks selected services through the current connection";

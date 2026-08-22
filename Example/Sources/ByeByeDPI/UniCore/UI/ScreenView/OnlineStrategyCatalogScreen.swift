@@ -6,14 +6,19 @@
 import Foundation
 import SwiftUI
 import SwByeDPI
+import CryptoKit
 
-private struct OnlineStrategyCatalogDocument: Decodable {
+struct OnlineStrategyCatalogDocument: Decodable {
     let schemaVersion: Int
+    let generation: Int
     let updatedAt: String
+    let minimumAppVersion: String
+    let minimumEngineVersion: String
+    let revokedStrategyIDs: [String]
     let strategies: [OnlineStrategy]
 }
 
-private struct OnlineStrategy: Decodable, Identifiable {
+struct OnlineStrategy: Codable, Identifiable, Equatable {
     let id: String
     let name: String
     let nameRu: String?
@@ -25,6 +30,9 @@ private struct OnlineStrategy: Decodable, Identifiable {
     let sourceName: String
     let sourceURL: String
     let commandArgs: [String]
+    let minimumAppVersion: String?
+    let minimumEngineVersion: String?
+    let deprecated: Bool?
 
     private var prefersRussian: Bool {
         Locale.preferredLanguages.first?.lowercased().hasPrefix("ru") == true
@@ -53,13 +61,13 @@ private struct OnlineStrategy: Decodable, Identifiable {
         return url
     }
 
-    func resolvedCommandArgs() -> [String]? {
+    func resolvedCommandArgs(serviceIDs: [String], customDomains: [String] = []) -> [String]? {
         guard !commandArgs.isEmpty, commandArgs.count <= 160 else { return nil }
 
         var resolved: [String] = []
         for argument in commandArgs {
             if argument == PalkaPreset.catalogTargetsPlaceholder {
-                resolved.append(PalkaPreset.hostsArgument)
+                resolved.append(PalkaService.targetsArgument(for: serviceIDs, customDomains: customDomains))
                 continue
             }
 
@@ -77,27 +85,41 @@ private struct OnlineStrategy: Decodable, Identifiable {
     }
 }
 
-private final class OnlineStrategyCatalogStore: ObservableObject {
+private struct PalkaCatalogCacheEntry: Codable {
+    let data: Data
+    let signature: Data
+    let savedAt: Date
+}
+
+final class OnlineStrategyCatalogStore: ObservableObject {
     @Published private(set) var strategies: [OnlineStrategy] = []
     @Published private(set) var updatedAt = ""
+    @Published private(set) var generation = 0
     @Published private(set) var isLoading = false
     @Published private(set) var isUsingCache = false
     @Published private(set) var errorText: String? = nil
 
-    private static let cacheKey = "PalkaDPI.onlineStrategyCatalog.v1"
+    private static let cacheKey = "PalkaDPI.onlineStrategyCatalog.v2"
     private static let maximumCatalogSize = 512 * 1024
 
-    private var task: URLSessionDataTask?
+    private var tasks: [URLSessionDataTask] = []
+    private var cacheEntries: [PalkaCatalogCacheEntry] = []
 
     init() {
-        if let cachedData = UserDefaults.standard.data(forKey: Self.cacheKey) {
-            apply(data: cachedData, isCache: true)
+        if let cacheData = UserDefaults.standard.data(forKey: Self.cacheKey),
+           let entries = try? JSONDecoder().decode([PalkaCatalogCacheEntry].self, from: cacheData) {
+            cacheEntries = entries
+            if let latest = entries.first {
+                _ = apply(data: latest.data, signature: latest.signature, isCache: true)
+            }
         }
     }
 
     deinit {
-        task?.cancel()
+        tasks.forEach { $0.cancel() }
     }
+
+    var canUsePreviousVersion: Bool { cacheEntries.count > 1 }
 
     func load() {
         guard !isLoading else { return }
@@ -105,63 +127,149 @@ private final class OnlineStrategyCatalogStore: ObservableObject {
         isLoading = true
         errorText = nil
 
-        var request = URLRequest(
-            url: Constants.strategyCatalogURL,
+        tasks.forEach { $0.cancel() }
+        tasks.removeAll()
+
+        var signatureRequest = URLRequest(
+            url: Constants.strategyCatalogSignatureURL,
             cachePolicy: .reloadIgnoringLocalCacheData,
             timeoutInterval: 10
         )
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        signatureRequest.setValue("text/plain", forHTTPHeaderField: "Accept")
 
-        task?.cancel()
-        task = URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
-            DispatchQueue.main.async {
-                guard let self = self else { return }
-                self.isLoading = false
-
-                if let error = error {
-                    self.errorText = error.localizedDescription
-                    return
-                }
-
-                guard let httpResponse = response as? HTTPURLResponse,
-                      httpResponse.statusCode == 200,
-                      let data = data,
-                      data.count <= Self.maximumCatalogSize,
-                      self.apply(data: data, isCache: false) else {
-                    self.errorText = palkaLocalized("palkaCatalogInvalidResponse")
-                    return
-                }
-
-                UserDefaults.standard.set(data, forKey: Self.cacheKey)
+        let signatureTask = URLSession.shared.dataTask(with: signatureRequest) { [weak self] signatureText, response, error in
+            guard let self = self else { return }
+            guard error == nil,
+                  let httpResponse = response as? HTTPURLResponse,
+                  httpResponse.statusCode == 200,
+                  let signatureText = signatureText,
+                  let signatureString = String(data: signatureText, encoding: .utf8)?
+                    .trimmingCharacters(in: .whitespacesAndNewlines),
+                  let signature = Data(base64Encoded: signatureString) else {
+                DispatchQueue.main.async { self.finishWithNetworkError(error) }
+                return
             }
+
+            var catalogRequest = URLRequest(
+                url: Constants.strategyCatalogURL,
+                cachePolicy: .reloadIgnoringLocalCacheData,
+                timeoutInterval: 10
+            )
+            catalogRequest.setValue("application/json", forHTTPHeaderField: "Accept")
+
+            let catalogTask = URLSession.shared.dataTask(with: catalogRequest) { [weak self] data, catalogResponse, catalogError in
+                guard let self = self else { return }
+                DispatchQueue.main.async {
+                    self.isLoading = false
+
+                    guard catalogError == nil,
+                          let catalogHTTP = catalogResponse as? HTTPURLResponse,
+                          catalogHTTP.statusCode == 200,
+                          let data = data,
+                          data.count <= Self.maximumCatalogSize,
+                          self.apply(data: data, signature: signature, isCache: false) else {
+                        self.errorText = catalogError?.localizedDescription
+                            ?? palkaLocalized("palkaCatalogInvalidSignature")
+                        return
+                    }
+
+                    self.saveVerified(data: data, signature: signature)
+                }
+            }
+            self.tasks.append(catalogTask)
+            catalogTask.resume()
         }
-        task?.resume()
+        tasks.append(signatureTask)
+        signatureTask.resume()
+    }
+
+    func usePreviousVersion() {
+        guard cacheEntries.count > 1 else { return }
+        let previous = cacheEntries[1]
+        if apply(data: previous.data, signature: previous.signature, isCache: true) {
+            cacheEntries.remove(at: 1)
+            cacheEntries.insert(previous, at: 0)
+            persistCache()
+        }
+    }
+
+    private func finishWithNetworkError(_ error: Error?) {
+        isLoading = false
+        errorText = error?.localizedDescription ?? palkaLocalized("palkaCatalogInvalidSignature")
+    }
+
+    private func saveVerified(data: Data, signature: Data) {
+        let entry = PalkaCatalogCacheEntry(data: data, signature: signature, savedAt: Date())
+        cacheEntries.removeAll { $0.data == data }
+        cacheEntries.insert(entry, at: 0)
+        cacheEntries = Array(cacheEntries.prefix(3))
+        persistCache()
+    }
+
+    private func persistCache() {
+        UserDefaults.standard.set(
+            try? JSONEncoder().encode(cacheEntries),
+            forKey: Self.cacheKey
+        )
+    }
+
+    private func verify(data: Data, signature: Data) -> Bool {
+        guard let keyData = Data(base64Encoded: Constants.strategyCatalogPublicKeyBase64),
+              let key = try? Curve25519.Signing.PublicKey(rawRepresentation: keyData) else {
+            return false
+        }
+        return key.isValidSignature(signature, for: data)
     }
 
     @discardableResult
-    private func apply(data: Data, isCache: Bool) -> Bool {
-        guard data.count <= Self.maximumCatalogSize,
+    private func apply(data: Data, signature: Data, isCache: Bool) -> Bool {
+        guard verify(data: data, signature: signature),
+              data.count <= Self.maximumCatalogSize,
               let document = try? JSONDecoder().decode(OnlineStrategyCatalogDocument.self, from: data),
-              document.schemaVersion == 1,
+              document.schemaVersion == 2,
               !document.strategies.isEmpty,
-              document.strategies.count <= 100 else {
+              document.strategies.count <= 100,
+              version(Constants.PSEUDO_BUNDLE_VERSION, isAtLeast: document.minimumAppVersion),
+              version(ByeDPI.versionCode, isAtLeast: document.minimumEngineVersion) else {
             return false
         }
 
-        let uniqueIDs = Set(document.strategies.map(\.id))
-        guard uniqueIDs.count == document.strategies.count,
-              document.strategies.allSatisfy({
+        let revoked = Set(document.revokedStrategyIDs)
+        let compatible = document.strategies.filter { strategy in
+            !revoked.contains(strategy.id) &&
+            strategy.deprecated != true &&
+            version(Constants.PSEUDO_BUNDLE_VERSION, isAtLeast: strategy.minimumAppVersion ?? "0") &&
+            version(ByeDPI.versionCode, isAtLeast: strategy.minimumEngineVersion ?? "0")
+        }
+        let uniqueIDs = Set(compatible.map(\.id))
+        guard !compatible.isEmpty,
+              uniqueIDs.count == compatible.count,
+              compatible.allSatisfy({
                   !$0.id.isEmpty &&
                   !$0.name.isEmpty &&
                   $0.sourceLink != nil &&
-                  $0.resolvedCommandArgs() != nil
+                  $0.resolvedCommandArgs(serviceIDs: PalkaService.defaultIDs) != nil
               }) else {
             return false
         }
 
-        strategies = document.strategies
+        strategies = compatible
         updatedAt = document.updatedAt
+        generation = document.generation
         isUsingCache = isCache
+        errorText = nil
+        return true
+    }
+
+    private func version(_ current: String, isAtLeast required: String) -> Bool {
+        let lhs = current.split(separator: ".").map { Int($0) ?? 0 }
+        let rhs = required.split(separator: ".").map { Int($0) ?? 0 }
+        let count = max(lhs.count, rhs.count)
+        for index in 0..<count {
+            let left = index < lhs.count ? lhs[index] : 0
+            let right = index < rhs.count ? rhs[index] : 0
+            if left != right { return left > right }
+        }
         return true
     }
 }
@@ -170,7 +278,8 @@ struct OnlineStrategyCatalogScreen: View {
     @EnvironmentObject private var properties: AppProperties
     @EnvironmentObject private var neManager: NEObservableManager
 
-    @StateObject private var catalog = OnlineStrategyCatalogStore()
+    @EnvironmentObject private var catalog: OnlineStrategyCatalogStore
+    @EnvironmentObject private var library: StrategyLibraryStore
     @State private var searchText = ""
     @State private var appliedStrategyID: String? = nil
 
@@ -208,6 +317,15 @@ struct OnlineStrategyCatalogScreen: View {
                                 : palkaLocalized("palkaCatalogOfflineCache"),
                             kind: .error
                         )
+                    }
+
+                    if catalog.canUsePreviousVersion {
+                        Button {
+                            catalog.usePreviousVersion()
+                        } label: {
+                            Label(palkaLocalized("palkaCatalogRollback"), systemImage: "arrow.uturn.backward.circle")
+                        }
+                        .buttonStyle(PalkaSecondaryButtonStyle())
                     }
 
                     if catalog.isLoading && catalog.strategies.isEmpty {
@@ -365,9 +483,22 @@ struct OnlineStrategyCatalogScreen: View {
 
                 Spacer(minLength: 8)
 
-                if isActive || wasJustApplied {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(PalkaDesign.successText)
+                VStack(spacing: 6) {
+                    if isActive || wasJustApplied {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(PalkaDesign.successText)
+                    }
+                    Button {
+                        library.toggleFavorite(strategy: strategy)
+                    } label: {
+                        Image(systemName: library.isFavorite(strategy.id) ? "star.fill" : "star")
+                            .foregroundColor(library.isFavorite(strategy.id)
+                                             ? PalkaDesign.successText
+                                             : PalkaDesign.textMuted)
+                            .frame(width: 44, height: 44)
+                    }
+                    .buttonStyle(PalkaPressButtonStyle())
+                    .accessibilityLabel(palkaLocalized("palkaCatalogFavorite"))
                 }
             }
 
@@ -421,12 +552,15 @@ struct OnlineStrategyCatalogScreen: View {
 
     private func apply(_ strategy: OnlineStrategy) {
         guard !neManager.vpnRunning,
-              let commandArgs = strategy.resolvedCommandArgs() else { return }
+              strategy.resolvedCommandArgs(
+                serviceIDs: properties.selectedServiceIDs,
+                customDomains: properties.customServiceDomains
+              ) != nil else { return }
 
         properties.applyCatalogStrategy(
             id: strategy.id,
             name: strategy.displayName,
-            commandArgs: commandArgs
+            commandTemplate: strategy.commandArgs
         )
         withAnimation(.easeOut(duration: 0.18)) {
             appliedStrategyID = strategy.id
@@ -442,5 +576,7 @@ struct OnlineStrategyCatalogScreen: View {
     .preferredColorScheme(.dark)
     .environmentObject(previewProperties)
     .environmentObject(previewNeManager)
+    .environmentObject(OnlineStrategyCatalogStore())
+    .environmentObject(previewStrategyLibrary)
 }
 #endif

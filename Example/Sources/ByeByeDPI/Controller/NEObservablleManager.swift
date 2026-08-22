@@ -128,6 +128,7 @@ class NEObservableManager: ObservableObject {
                 vpnProtocol.excludeDeviceCommunication = true
             }
             manager.protocolConfiguration = vpnProtocol
+            self.applyOnDemandPreferences(to: manager)
             manager.saveToPreferences { saveErr in
                 if let safeSaveErr = saveErr {
                     if (self.vpnRunning) {
@@ -157,6 +158,49 @@ class NEObservableManager: ObservableObject {
                 }
             }
         }
+    }
+
+    func configureOnDemand(
+        enabled: Bool,
+        includeWiFi: Bool,
+        includeCellular: Bool,
+        completion: @escaping (Error?) -> Void
+    ) {
+        UserDefaultsAppProperties.onDemandEnabled = enabled
+        UserDefaultsAppProperties.onDemandWiFiEnabled = includeWiFi
+        UserDefaultsAppProperties.onDemandCellularEnabled = includeCellular
+
+        getOrInitNEManager { manager, error in
+            guard let manager = manager else {
+                completion(error)
+                return
+            }
+            manager.loadFromPreferences { loadError in
+                guard loadError == nil else {
+                    completion(loadError)
+                    return
+                }
+                self.applyOnDemandPreferences(to: manager)
+                manager.saveToPreferences(completionHandler: completion)
+            }
+        }
+    }
+
+    private func applyOnDemandPreferences(to manager: NETunnelProviderManager) {
+        let enabled = UserDefaultsAppProperties.onDemandEnabled
+        var rules: [NEOnDemandRule] = []
+        if enabled && UserDefaultsAppProperties.onDemandWiFiEnabled {
+            let rule = NEOnDemandRuleConnect()
+            rule.interfaceTypeMatch = .wiFi
+            rules.append(rule)
+        }
+        if enabled && UserDefaultsAppProperties.onDemandCellularEnabled {
+            let rule = NEOnDemandRuleConnect()
+            rule.interfaceTypeMatch = .cellular
+            rules.append(rule)
+        }
+        manager.onDemandRules = rules
+        manager.isOnDemandEnabled = enabled && !rules.isEmpty
     }
     
     fileprivate func getOrInitNEManager(completion: @escaping (NETunnelProviderManager?, (any Error)?) -> Void) {

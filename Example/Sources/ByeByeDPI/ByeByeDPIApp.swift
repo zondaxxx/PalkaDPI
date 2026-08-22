@@ -10,6 +10,9 @@ import SwByeDPI
 #if canImport(UIKit)
 import UIKit
 #endif
+#if canImport(WidgetKit)
+import WidgetKit
+#endif
 
 #if DEBUG
 let previewProperties = AppProperties()
@@ -26,6 +29,18 @@ let previewStrategiesManager = StrategiesManager(lists: [
 let previewByeDPIManager = ByeDPIManager()
 let previewTestManager = TestManager()
 let previewNeManager = NEObservableManager { _, _ in }
+let previewCatalogStore = OnlineStrategyCatalogStore()
+let previewStrategyLibrary = StrategyLibraryStore()
+let previewDiagnosticsMonitor = ServiceDiagnosticsMonitor()
+let previewNetworkMonitor = NetworkEnvironmentMonitor()
+let previewAutomationManager = StrategyAutomationManager(
+    properties: previewProperties,
+    neManager: previewNeManager,
+    catalog: previewCatalogStore,
+    library: previewStrategyLibrary,
+    diagnostics: previewDiagnosticsMonitor,
+    network: previewNetworkMonitor
+)
 #endif
 
 @main
@@ -38,6 +53,11 @@ struct ByeByeDPIApp: App {
     @StateObject fileprivate var byeDPIManager: ByeDPIManager
     @StateObject fileprivate var neManager: NEObservableManager
     @StateObject fileprivate var testManager: TestManager
+    @StateObject fileprivate var catalogStore: OnlineStrategyCatalogStore
+    @StateObject fileprivate var strategyLibrary: StrategyLibraryStore
+    @StateObject fileprivate var diagnosticsMonitor: ServiceDiagnosticsMonitor
+    @StateObject fileprivate var networkMonitor: NetworkEnvironmentMonitor
+    @StateObject fileprivate var automationManager: StrategyAutomationManager
     
     init() {
 #if canImport(UIKit)
@@ -119,8 +139,26 @@ struct ByeByeDPIApp: App {
         }
         _strategiesManager = StateObject(wrappedValue: strategiesMngr)
         _byeDPIManager = StateObject(wrappedValue: ByeDPIManager())
-        _neManager = StateObject(wrappedValue: NEObservableManager(initCompletion: { _, _ in }))
+        let neMngr = NEObservableManager(initCompletion: { _, _ in })
+        _neManager = StateObject(wrappedValue: neMngr)
         _testManager = StateObject(wrappedValue: TestManager())
+        let catalog = OnlineStrategyCatalogStore()
+        let library = StrategyLibraryStore()
+        let diagnostics = ServiceDiagnosticsMonitor()
+        let network = NetworkEnvironmentMonitor()
+        _catalogStore = StateObject(wrappedValue: catalog)
+        _strategyLibrary = StateObject(wrappedValue: library)
+        _diagnosticsMonitor = StateObject(wrappedValue: diagnostics)
+        _networkMonitor = StateObject(wrappedValue: network)
+        _automationManager = StateObject(wrappedValue: StrategyAutomationManager(
+            properties: props,
+            neManager: neMngr,
+            catalog: catalog,
+            library: library,
+            diagnostics: diagnostics,
+            network: network
+        ))
+        catalog.load()
     }
     
     var body: some Scene {
@@ -137,6 +175,40 @@ struct ByeByeDPIApp: App {
             .environmentObject(byeDPIManager)
             .environmentObject(neManager)
             .environmentObject(testManager)
+            .environmentObject(catalogStore)
+            .environmentObject(strategyLibrary)
+            .environmentObject(diagnosticsMonitor)
+            .environmentObject(networkMonitor)
+            .environmentObject(automationManager)
+            .onOpenURL { url in
+                guard url.scheme == "palkadpi", url.host == "toggle" else { return }
+                if neManager.vpnRunning {
+                    neManager.stopConnection()
+                } else {
+                    neManager.startConnection { _, _ in }
+                }
+            }
+            .onChange(of: neManager.vpnRunning) { _ in
+#if canImport(WidgetKit)
+                WidgetCenter.shared.reloadAllTimelines()
+#endif
+            }
+            .onChange(of: networkMonitor.kind) { networkKind in
+                guard networkKind != .offline,
+                      appProps.networkProfiles.contains(where: { $0.networkKind == networkKind }) else {
+                    return
+                }
+                let reconnect = neManager.vpnRunning
+                if reconnect {
+                    neManager.stopConnection()
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + (reconnect ? 1.0 : 0.0)) {
+                    guard appProps.applyNetworkProfile(for: networkKind) else { return }
+                    if reconnect {
+                        neManager.startConnection { _, _ in }
+                    }
+                }
+            }
         }
     }
 }

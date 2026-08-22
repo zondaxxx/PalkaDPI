@@ -1,10 +1,17 @@
 #!/usr/bin/env swift
 
 import Foundation
+import CryptoKit
+
+private let publicKeyBase64 = "lATSTsJ1ZQFNO0mPa+QgQ1Linig8wGK6/thNL9A6Osk="
 
 private struct Catalog: Decodable {
     let schemaVersion: Int
+    let generation: Int
     let updatedAt: String
+    let minimumAppVersion: String
+    let minimumEngineVersion: String
+    let revokedStrategyIDs: [String]
     let strategies: [Strategy]
 }
 
@@ -20,6 +27,9 @@ private struct Strategy: Decodable {
     let sourceName: String
     let sourceURL: String
     let commandArgs: [String]
+    let minimumAppVersion: String?
+    let minimumEngineVersion: String?
+    let deprecated: Bool?
 }
 
 private func fail(_ message: String) -> Never {
@@ -27,8 +37,8 @@ private func fail(_ message: String) -> Never {
     exit(1)
 }
 
-guard CommandLine.arguments.count == 2 else {
-    fail("usage: validate_strategy_catalog.swift <catalog.json>")
+guard CommandLine.arguments.count == 3 else {
+    fail("usage: validate_strategy_catalog.swift <catalog.json> <catalog.sig>")
 }
 
 let fileURL = URL(fileURLWithPath: CommandLine.arguments[1])
@@ -40,17 +50,33 @@ guard let catalog = try? JSONDecoder().decode(Catalog.self, from: data) else {
     fail("catalog does not match schema version 1")
 }
 
-guard catalog.schemaVersion == 1 else {
+let signatureURL = URL(fileURLWithPath: CommandLine.arguments[2])
+guard let signatureText = try? String(contentsOf: signatureURL, encoding: .utf8),
+      let signature = Data(base64Encoded: signatureText.trimmingCharacters(in: .whitespacesAndNewlines)),
+      let keyData = Data(base64Encoded: publicKeyBase64),
+      let publicKey = try? Curve25519.Signing.PublicKey(rawRepresentation: keyData),
+      publicKey.isValidSignature(signature, for: data) else {
+    fail("catalog signature is invalid")
+}
+
+guard catalog.schemaVersion == 2 else {
     fail("unsupported schemaVersion: \(catalog.schemaVersion)")
+}
+guard catalog.generation > 0 else {
+    fail("generation must be positive")
 }
 guard !catalog.updatedAt.isEmpty else {
     fail("updatedAt is empty")
+}
+guard !catalog.minimumAppVersion.isEmpty, !catalog.minimumEngineVersion.isEmpty else {
+    fail("minimum compatibility versions are required")
 }
 guard !catalog.strategies.isEmpty && catalog.strategies.count <= 100 else {
     fail("strategy count must be between 1 and 100")
 }
 
 var identifiers = Set<String>()
+let revoked = Set(catalog.revokedStrategyIDs)
 for strategy in catalog.strategies {
     guard identifiers.insert(strategy.id).inserted else {
         fail("duplicate strategy id: \(strategy.id)")
@@ -74,6 +100,9 @@ for strategy in catalog.strategies {
     }) else {
         fail("strategy \(strategy.id) contains an invalid command argument")
     }
+    guard !revoked.contains(strategy.id) || strategy.deprecated == true else {
+        fail("revoked strategy \(strategy.id) must also be marked deprecated")
+    }
 }
 
-print("Validated \(catalog.strategies.count) online strategies")
+print("Validated signed catalog generation \(catalog.generation) with \(catalog.strategies.count) strategies")

@@ -167,6 +167,93 @@ final class UserDefaultsAppProperties {
             )
         }
     }
+
+    static var activeStrategyTemplateArgs: [String] {
+        get {
+            return (_appGroupUserDefaults.array(
+                forKey: UserDefaultsAppKeys.activeStrategyTemplateArgs.rawValue
+            ) as? [String]) ?? PalkaPreset.recommendedTemplateArgs
+        }
+        set {
+            _appGroupUserDefaults.set(
+                newValue,
+                forKey: UserDefaultsAppKeys.activeStrategyTemplateArgs.rawValue
+            )
+        }
+    }
+
+    static var selectedServiceIDs: [String] {
+        get {
+            return (_appGroupUserDefaults.array(
+                forKey: UserDefaultsAppKeys.selectedServiceIDs.rawValue
+            ) as? [String]) ?? PalkaService.defaultIDs
+        }
+        set {
+            _appGroupUserDefaults.set(
+                newValue,
+                forKey: UserDefaultsAppKeys.selectedServiceIDs.rawValue
+            )
+        }
+    }
+
+    static var customServiceDomains: [String] {
+        get {
+            return (_appGroupUserDefaults.array(
+                forKey: UserDefaultsAppKeys.customServiceDomains.rawValue
+            ) as? [String]) ?? []
+        }
+        set {
+            _appGroupUserDefaults.set(
+                PalkaService.sanitizedCustomDomains(newValue),
+                forKey: UserDefaultsAppKeys.customServiceDomains.rawValue
+            )
+        }
+    }
+
+    static var smartRecoveryEnabled: Bool {
+        get { _appGroupUserDefaults.bool(forKey: UserDefaultsAppKeys.smartRecoveryEnabled.rawValue) }
+        set { _appGroupUserDefaults.set(newValue, forKey: UserDefaultsAppKeys.smartRecoveryEnabled.rawValue) }
+    }
+
+    static var onDemandEnabled: Bool {
+        get { _appGroupUserDefaults.bool(forKey: UserDefaultsAppKeys.onDemandEnabled.rawValue) }
+        set { _appGroupUserDefaults.set(newValue, forKey: UserDefaultsAppKeys.onDemandEnabled.rawValue) }
+    }
+
+    static var onDemandWiFiEnabled: Bool {
+        get {
+            guard _appGroupUserDefaults.object(forKey: UserDefaultsAppKeys.onDemandWiFiEnabled.rawValue) != nil else {
+                return true
+            }
+            return _appGroupUserDefaults.bool(forKey: UserDefaultsAppKeys.onDemandWiFiEnabled.rawValue)
+        }
+        set { _appGroupUserDefaults.set(newValue, forKey: UserDefaultsAppKeys.onDemandWiFiEnabled.rawValue) }
+    }
+
+    static var onDemandCellularEnabled: Bool {
+        get {
+            guard _appGroupUserDefaults.object(forKey: UserDefaultsAppKeys.onDemandCellularEnabled.rawValue) != nil else {
+                return true
+            }
+            return _appGroupUserDefaults.bool(forKey: UserDefaultsAppKeys.onDemandCellularEnabled.rawValue)
+        }
+        set { _appGroupUserDefaults.set(newValue, forKey: UserDefaultsAppKeys.onDemandCellularEnabled.rawValue) }
+    }
+
+    static var networkProfiles: [PalkaNetworkProfile] {
+        get {
+            guard let data = _appGroupUserDefaults.data(forKey: UserDefaultsAppKeys.networkProfiles.rawValue) else {
+                return []
+            }
+            return (try? JSONDecoder().decode([PalkaNetworkProfile].self, from: data)) ?? []
+        }
+        set {
+            _appGroupUserDefaults.set(
+                try? JSONEncoder().encode(newValue),
+                forKey: UserDefaultsAppKeys.networkProfiles.rawValue
+            )
+        }
+    }
     
     fileprivate init() {}
     

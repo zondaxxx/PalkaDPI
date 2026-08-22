@@ -1,7 +1,9 @@
-"appIntentStartByeDPIVPNTitle" = "Включить ByeByeDPI";
-"appIntentStartByeDPIVPNDesc" = "Включает ByeByeDPI и инициализирует VPN туннель";
-"appIntentStopByeDPIVPNTitle" = "Выключить ByeByeDPI";
-"appIntentStopByeDPIVPNDesc" = "Останавливает ByeByeDPI и VPN туннель";
-"appIntentToggleByeDPIVPNTitle" = "Переключить ByeByeDPI";
-"appIntentToggleByeDPIVPNDesc" = "Переключает состояние ByeByeDPI and VPN туннеля";
+"appIntentStartByeDPIVPNTitle" = "Включить PalkaDPI";
+"appIntentStartByeDPIVPNDesc" = "Включает локальный туннель PalkaDPI";
+"appIntentStopByeDPIVPNTitle" = "Выключить PalkaDPI";
+"appIntentStopByeDPIVPNDesc" = "Останавливает локальный туннель PalkaDPI";
+"appIntentToggleByeDPIVPNTitle" = "Переключить PalkaDPI";
+"appIntentToggleByeDPIVPNDesc" = "Переключает состояние туннеля PalkaDPI";
 "appIntentToggleByeDPIVPRunngingParamTitle" = "Включить";
+"appIntentCheckServicesTitle" = "Проверить сервисы PalkaDPI";
+"appIntentCheckServicesDesc" = "Проверяет выбранные сервисы через текущее подключение";

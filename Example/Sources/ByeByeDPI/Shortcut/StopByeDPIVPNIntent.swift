@@ -4,8 +4,8 @@ import AppIntents
 ///Stop network extension VPN (ByeDPI SOCKS to TUN) shortcut
 struct StopByeDPIVPNIntent: AppIntent {
     
-    static let title = LocalizedStringResource("appIntentStopByeDPIVPNTitle", defaultValue: "Stop ByeByeDPI", table: "AppIntent")
-    static let description = IntentDescription(LocalizedStringResource("appIntentStopByeDPIVPNDesc", defaultValue: "Stops ByeByeDPI and VPN TUNNEL session", table: "AppIntent"))
+    static let title = LocalizedStringResource("appIntentStopByeDPIVPNTitle", defaultValue: "Stop PalkaDPI", table: "AppIntent")
+    static let description = IntentDescription(LocalizedStringResource("appIntentStopByeDPIVPNDesc", defaultValue: "Stops PalkaDPI and its local packet tunnel", table: "AppIntent"))
     
     func perform() async throws -> some IntentResult {
         _ = NEObservableManager { manager, _ in

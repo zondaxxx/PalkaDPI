@@ -49,9 +49,10 @@ xcodebuild \
 
 app_path="$archive_path/Products/Applications/ByeByeDPI.app"
 extension_path="$app_path/PlugIns/ByeByeDPITun.appex"
+widget_path="$app_path/PlugIns/PalkaWidget.appex"
 
-if [[ ! -d "$app_path" || ! -d "$extension_path" ]]; then
-    echo "error: archive does not contain the host app and packet tunnel extension" >&2
+if [[ ! -d "$app_path" || ! -d "$extension_path" || ! -d "$widget_path" ]]; then
+    echo "error: archive does not contain the host app, packet tunnel, and widget extensions" >&2
     exit 1
 fi
 

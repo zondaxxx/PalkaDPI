@@ -25,10 +25,12 @@ struct SettingsScreen: View {
                         .palkaEntrance(delay: 0.05)
                     strategySection
                         .palkaEntrance(delay: 0.10)
-                    advancedSection
+                    connectionAutomationSection
                         .palkaEntrance(delay: 0.15)
-                    aboutSection
+                    advancedSection
                         .palkaEntrance(delay: 0.20)
+                    aboutSection
+                        .palkaEntrance(delay: 0.25)
                 }
                 .padding(.horizontal, PalkaDesign.screenPadding)
                 .padding(.top, 12)
@@ -58,6 +60,15 @@ struct SettingsScreen: View {
 
     private var quickSetupSection: some View {
         PalkaSettingsSection(palkaLocalized("palkaQuickSetupSection")) {
+            NavigationLink(destination: AutomationScreen()) {
+                SettingsStaticInfoView(
+                    title: palkaLocalized("palkaAutoTitle"),
+                    text: palkaLocalized("palkaAutoSettingsDescription"),
+                    leadingIcon: Image(systemName: "wand.and.stars")
+                )
+            }
+            .buttonStyle(PalkaPressButtonStyle())
+
             SettingsButtonView(
                 title: R.string.localizable.palkaApplyPreset(),
                 text: R.string.localizable.palkaApplyPresetDescription(),
@@ -86,6 +97,17 @@ struct SettingsScreen: View {
 
     private var strategySection: some View {
         PalkaSettingsSection(palkaLocalized("palkaStrategiesSection")) {
+            NavigationLink(destination: ServiceSelectionScreen()) {
+                SettingsStaticInfoView(
+                    title: palkaLocalized("palkaServicesTitle"),
+                    text: PalkaService.selected(from: properties.selectedServiceIDs)
+                        .map(\.name)
+                        .joined(separator: ", "),
+                    leadingIcon: Image(systemName: "square.grid.2x2")
+                )
+            }
+            .buttonStyle(PalkaPressButtonStyle())
+
             NavigationLink(destination: OnlineStrategyCatalogScreen()) {
                 SettingsStaticInfoView(
                     title: palkaLocalized("palkaCatalogTitle"),
@@ -94,6 +116,37 @@ struct SettingsScreen: View {
                         properties.activeStrategyName
                     ),
                     leadingIcon: Image(systemName: "icloud.and.arrow.down")
+                )
+            }
+            .buttonStyle(PalkaPressButtonStyle())
+
+            NavigationLink(destination: StrategyHistoryScreen()) {
+                SettingsStaticInfoView(
+                    title: palkaLocalized("palkaHistoryTitle"),
+                    text: palkaLocalized("palkaHistorySettingsDescription"),
+                    leadingIcon: Image(systemName: "clock.arrow.circlepath")
+                )
+            }
+            .buttonStyle(PalkaPressButtonStyle())
+        }
+    }
+
+    private var connectionAutomationSection: some View {
+        PalkaSettingsSection(palkaLocalized("palkaConnectionSection")) {
+            NavigationLink(destination: DiagnosticsScreen()) {
+                SettingsStaticInfoView(
+                    title: palkaLocalized("palkaDiagnosticsTitle"),
+                    text: palkaLocalized("palkaDiagnosticsSettingsDescription"),
+                    leadingIcon: Image(systemName: "stethoscope")
+                )
+            }
+            .buttonStyle(PalkaPressButtonStyle())
+
+            NavigationLink(destination: NetworkProfilesScreen()) {
+                SettingsStaticInfoView(
+                    title: palkaLocalized("palkaNetworkProfilesTitle"),
+                    text: palkaLocalized("palkaNetworkProfilesSettingsDescription"),
+                    leadingIcon: Image(systemName: "network")
                 )
             }
             .buttonStyle(PalkaPressButtonStyle())
@@ -423,5 +476,10 @@ struct AdvancedSettingsScreen: View {
     .environmentObject(previewStrategiesManager)
     .environmentObject(previewTestManager)
     .environmentObject(previewNeManager)
+    .environmentObject(previewCatalogStore)
+    .environmentObject(previewStrategyLibrary)
+    .environmentObject(previewDiagnosticsMonitor)
+    .environmentObject(previewNetworkMonitor)
+    .environmentObject(previewAutomationManager)
 }
 #endif

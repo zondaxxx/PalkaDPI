@@ -93,6 +93,68 @@ class AppProperties: Codable, ObservableObject
             UserDefaultsAppProperties.activeStrategyID = newValue
         }
     }
+
+    var selectedServiceIDs: [String] {
+        get { UserDefaultsAppProperties.selectedServiceIDs }
+        set {
+            objectWillChange.send()
+            let validIDs = Set(PalkaService.all.map(\.id))
+            let filtered = newValue.filter { validIDs.contains($0) }
+            UserDefaultsAppProperties.selectedServiceIDs = filtered.isEmpty
+                ? PalkaService.defaultIDs
+                : filtered
+            reapplyActiveTemplate()
+        }
+    }
+
+    var customServiceDomains: [String] {
+        get { UserDefaultsAppProperties.customServiceDomains }
+        set {
+            objectWillChange.send()
+            UserDefaultsAppProperties.customServiceDomains = newValue
+            reapplyActiveTemplate()
+        }
+    }
+
+    var smartRecoveryEnabled: Bool {
+        get { UserDefaultsAppProperties.smartRecoveryEnabled }
+        set {
+            objectWillChange.send()
+            UserDefaultsAppProperties.smartRecoveryEnabled = newValue
+        }
+    }
+
+    var onDemandEnabled: Bool {
+        get { UserDefaultsAppProperties.onDemandEnabled }
+        set {
+            objectWillChange.send()
+            UserDefaultsAppProperties.onDemandEnabled = newValue
+        }
+    }
+
+    var onDemandWiFiEnabled: Bool {
+        get { UserDefaultsAppProperties.onDemandWiFiEnabled }
+        set {
+            objectWillChange.send()
+            UserDefaultsAppProperties.onDemandWiFiEnabled = newValue
+        }
+    }
+
+    var onDemandCellularEnabled: Bool {
+        get { UserDefaultsAppProperties.onDemandCellularEnabled }
+        set {
+            objectWillChange.send()
+            UserDefaultsAppProperties.onDemandCellularEnabled = newValue
+        }
+    }
+
+    var networkProfiles: [PalkaNetworkProfile] {
+        get { UserDefaultsAppProperties.networkProfiles }
+        set {
+            objectWillChange.send()
+            UserDefaultsAppProperties.networkProfiles = newValue
+        }
+    }
     
 #if DEBUG
     init() {
@@ -184,22 +246,33 @@ class AppProperties: Codable, ObservableObject
     /// address, buffer, connection, TTL, and logging preferences.
     func applyRecommendedPreset() {
         byeDPILaunchConfig = byeDPILaunchConfig.copyWith(
-            commandArgs: PalkaPreset.recommendedCommandArgs
+            commandArgs: PalkaPreset.resolve(
+                template: PalkaPreset.recommendedTemplateArgs,
+                serviceIDs: selectedServiceIDs,
+                customDomains: customServiceDomains
+            )
         )
         activeStrategyName = PalkaPreset.name
         activeStrategyID = "builtin.recommended"
+        UserDefaultsAppProperties.activeStrategyTemplateArgs = PalkaPreset.recommendedTemplateArgs
         save()
     }
 
     /// Applies an already validated catalog strategy while preserving local
     /// proxy, DNS, buffer, logging, and tunnel settings.
-    func applyCatalogStrategy(id: String, name: String, commandArgs: [String]) {
-        let validatedArgs = SBDConfig(commandArgs: commandArgs).validatedCmdArgs
+    func applyCatalogStrategy(id: String, name: String, commandTemplate: [String]) {
+        let resolved = PalkaPreset.resolve(
+            template: commandTemplate,
+            serviceIDs: selectedServiceIDs,
+            customDomains: customServiceDomains
+        )
+        let validatedArgs = SBDConfig(commandArgs: resolved).validatedCmdArgs
         guard !validatedArgs.isEmpty else { return }
 
         byeDPILaunchConfig = byeDPILaunchConfig.copyWith(commandArgs: validatedArgs)
         activeStrategyName = name
         activeStrategyID = id
+        UserDefaultsAppProperties.activeStrategyTemplateArgs = commandTemplate
         save()
     }
 
@@ -210,6 +283,46 @@ class AppProperties: Codable, ObservableObject
         byeDPILaunchConfig = byeDPILaunchConfig.copyWith(commandArgs: validatedArgs)
         activeStrategyName = name
         activeStrategyID = "custom"
+        UserDefaultsAppProperties.activeStrategyTemplateArgs = []
+        save()
+    }
+
+    func saveCurrentStrategy(for networkKind: PalkaNetworkKind) {
+        guard networkKind != .offline else { return }
+        let profile = PalkaNetworkProfile(
+            networkKind: networkKind,
+            strategyID: activeStrategyID,
+            strategyName: activeStrategyName,
+            commandTemplate: UserDefaultsAppProperties.activeStrategyTemplateArgs
+        )
+        var profiles = networkProfiles.filter { $0.networkKind != networkKind }
+        profiles.append(profile)
+        networkProfiles = profiles
+    }
+
+    @discardableResult
+    func applyNetworkProfile(for networkKind: PalkaNetworkKind) -> Bool {
+        guard let profile = networkProfiles.first(where: { $0.networkKind == networkKind }),
+              !profile.commandTemplate.isEmpty else { return false }
+        applyCatalogStrategy(
+            id: profile.strategyID,
+            name: profile.strategyName,
+            commandTemplate: profile.commandTemplate
+        )
+        return true
+    }
+
+    private func reapplyActiveTemplate() {
+        let template = UserDefaultsAppProperties.activeStrategyTemplateArgs
+        guard !template.isEmpty else { return }
+        let resolved = PalkaPreset.resolve(
+            template: template,
+            serviceIDs: selectedServiceIDs,
+            customDomains: customServiceDomains
+        )
+        let validatedArgs = SBDConfig(commandArgs: resolved).validatedCmdArgs
+        guard !validatedArgs.isEmpty else { return }
+        byeDPILaunchConfig = byeDPILaunchConfig.copyWith(commandArgs: validatedArgs)
         save()
     }
     

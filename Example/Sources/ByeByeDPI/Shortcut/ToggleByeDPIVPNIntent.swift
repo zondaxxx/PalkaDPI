@@ -4,8 +4,8 @@ import AppIntents
 ///Toggle network extension VPN (ByeDPI SOCKS to TUN) shortcut
 struct ToggleByeDPIVPNIntent: SetValueIntent {
     
-    static let title = LocalizedStringResource("appIntentToggleByeDPIVPNTitle", defaultValue: "Toggle ByeByeDPI", table: "AppIntent")
-    static let description = IntentDescription(LocalizedStringResource("appIntentToggleByeDPIVPNDesc", defaultValue: "Toggles ByeByeDPI and VPN TUNNEL session state", table: "AppIntent"))
+    static let title = LocalizedStringResource("appIntentToggleByeDPIVPNTitle", defaultValue: "Toggle PalkaDPI", table: "AppIntent")
+    static let description = IntentDescription(LocalizedStringResource("appIntentToggleByeDPIVPNDesc", defaultValue: "Toggles the PalkaDPI packet tunnel", table: "AppIntent"))
     
     @Parameter(title: LocalizedStringResource("appIntentToggleByeDPIVPRunngingParamTitle", defaultValue: "On/Off state", table: "AppIntent"))
     var value: Bool
