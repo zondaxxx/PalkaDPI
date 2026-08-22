@@ -12,6 +12,15 @@ final class UserDefaultsAppProperties {
             _appGroupUserDefaults.set(newValue, forKey: UserDefaultsAppKeys.byeDPIVPNRunning.rawValue)
         }
     }
+
+    static var tunnelRuntimeLogs: Data? {
+        get {
+            return _appGroupUserDefaults.data(forKey: UserDefaultsAppKeys.tunnelRuntimeLogs.rawValue)
+        }
+        set {
+            _appGroupUserDefaults.set(newValue, forKey: UserDefaultsAppKeys.tunnelRuntimeLogs.rawValue)
+        }
+    }
     
     fileprivate init() {}
     

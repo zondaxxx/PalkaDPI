@@ -9,6 +9,7 @@ import CoreFoundation
 import SystemConfiguration
 import NetworkExtension
 import Tun2SocksKit
+import Darwin
 #if canImport(ByeDPIKit)
 import ByeDPIKit
 #elseif canImport(ByeDPIKitLib)
@@ -17,6 +18,11 @@ import ByeDPIKitLib
 //import OSLog
 
 class PacketTunnelProvider: NEPacketTunnelProvider {
+    private var tunnelStartedAt: Date?
+    private var activeSocksAddress = ""
+    private var activeSocksPort: UInt16 = 0
+    private let runtimeLogLock = NSLock()
+    private var runtimeLogs: [[String: Any]] = []
     
     // Redirects Tun2SOCKS, byedpi stdout/stderr to Console.app
     /*fileprivate static func setupLogRedirection() {
@@ -85,12 +91,19 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
     }
 
     override func startTunnel(options: [String : NSObject]?, completionHandler: @escaping (Error?) -> Void) {
+        resetRuntimeLogs()
+        appendRuntimeLog("Packet Tunnel start requested")
         let cachedConfig = protocolConfiguration as? NETunnelProviderProtocol
         let stockSocksListenIp = options?[UserDefaultsAppKeys.selectedByeDPIListenIpAddrKey.rawValue] as? String ?? cachedConfig?.byeDPIListenIp ?? "127.0.0.1"
         var socksListenIp = stockSocksListenIp
         if (socksListenIp == "127.0.0.1" || socksListenIp == "::1" || socksListenIp == "0.0.0.0" || socksListenIp == "::") {
-            //Update listen IP
-            if (PacketTunnelProvider.enabledNetworkInterface == .wifi) {
+            // iOS 18+ permits a Packet Tunnel extension to use loopback for its
+            // in-process SOCKS server. This avoids cellular-IP hairpinning and
+            // interface changes while the tunnel is active.
+            if #available(iOS 18.0, *) {
+                socksListenIp = "127.0.0.1"
+            } else if PacketTunnelProvider.enabledNetworkInterface == .wifi {
+                // Older iOS versions require a physical interface address.
                 //Wi-Fi or Ethernet -> Get device local IP address
                 if let localAddress = getLNWAddress(), !localAddress.isEmpty {
                     socksListenIp = localAddress
@@ -145,11 +158,12 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         
         if let safeArgs = options?[UserDefaultsAppKeys.selectedByeDPICmdArgsKey.rawValue] as? [String] ?? cachedConfig?.byeDPICmdArgs, !safeArgs.isEmpty {
             args = safeArgs
-            if (args[0] == "-i" && args.count > 1) {
-                //Override config bind ip address
-                args[1] = socksListenIp
-            }
+            Self.replaceOption(in: &args, names: ["-i", "--ip"], value: socksListenIp)
+            Self.replaceOption(in: &args, names: ["-p", "--port"], value: String(port))
         }
+
+        appendRuntimeLog("SOCKS endpoint: \(socksListenIp):\(port)")
+        appendRuntimeLog("ByeDPI args: \(Self.logSafeArgs(args))")
         
         let tunMtu = options?[UserDefaultsAppKeys.selectedTunMtuKey.rawValue] as? UInt16 ?? cachedConfig?.tunMtu ?? 1500
         let tunIpAddr = "10.0.0.1"
@@ -157,7 +171,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         //iOS 10..14 - 15 mb memory max
         //iOS 15+ - 50 mb memory max
         //iOS Low memory usage tips - https://github.com/heiher/hev-socks5-tunnel?tab=readme-ov-file#low-memory-usage
-        var tun2SocksConfigYAML = """
+        let tun2SocksConfigYAML = """
 tunnel:
   mtu: \(tunMtu)
 
@@ -170,6 +184,10 @@ misc:
   task-stack-size: 24576 # 20480 + tcp-buffer-size 
   tcp-buffer-size: 4096 
   max-session-count: 1200 
+  connect-timeout: 5000
+  tcp-read-write-timeout: 300000
+  udp-read-write-timeout: 30000
+  log-level: error
 """
 #if DEBUG
         //args.insert("-x2", at: 0)
@@ -252,13 +270,20 @@ misc:
     
         let tun2SocksConfig = Socks5Tunnel.Config.string(content: tun2SocksConfigYAML)
         
+        let launchArgs = args
+        let launchSocksAddress = socksListenIp
+        let launchSocksPort = port
+
         setTunnelNetworkSettings(tunnelSettings) { setErr in
             if let safeSetErr = setErr {
+                self.appendRuntimeLog("Network settings failed: \(safeSetErr.localizedDescription)", level: "error")
                 completionHandler(safeSetErr)
                 return
             }
+            self.appendRuntimeLog("Network settings applied (MTU \(tunMtu), IPv4 + IPv6)")
             Task(priority: .high) {
-                if let byeDPIStartErr = await ByeDPI.start(args: args) {
+                if let byeDPIStartErr = await ByeDPI.start(args: launchArgs) {
+                    self.appendRuntimeLog("ByeDPI failed: \(byeDPIStartErr.localizedDescription)", level: "error")
                     completionHandler(byeDPIStartErr)
                     UserDefaultsAppProperties.byeDPIVPNRunning = false
                     if let safeCenter = CFNotificationCenterGetDarwinNotifyCenter() {
@@ -266,15 +291,32 @@ misc:
                     }
                     return
                 }
+                self.appendRuntimeLog("ByeDPI listener started")
+                if let healthError = self.verifyLocalSocks5(
+                    address: launchSocksAddress,
+                    port: launchSocksPort
+                ) {
+                    self.appendRuntimeLog("SOCKS5 handshake failed: \(healthError.localizedDescription)", level: "error")
+                    _ = ByeDPI.forceStop()
+                    UserDefaultsAppProperties.byeDPIVPNRunning = false
+                    completionHandler(healthError)
+                    return
+                }
+                self.appendRuntimeLog("SOCKS5 handshake passed", level: "success")
                 let hevSocksStartOpCode = await Socks5Tunnel.run(with: tun2SocksConfig)
                 if (hevSocksStartOpCode == 0) {
+                    self.activeSocksAddress = launchSocksAddress
+                    self.activeSocksPort = launchSocksPort
+                    self.tunnelStartedAt = Date()
                     UserDefaultsAppProperties.byeDPIVPNRunning = true
                     if let safeCenter = CFNotificationCenterGetDarwinNotifyCenter() {
                         CFNotificationCenterPostNotification(safeCenter, .byeDPIVpnStarted, nil, nil, true)
                     }
+                    self.appendRuntimeLog("tun2socks started; tunnel is ready", level: "success")
                     completionHandler(nil)
                     return
                 }
+                self.appendRuntimeLog("tun2socks failed with code \(hevSocksStartOpCode)", level: "error")
                 _ = ByeDPI.forceStop()
                 UserDefaultsAppProperties.byeDPIVPNRunning = false
                 if let safeCenter = CFNotificationCenterGetDarwinNotifyCenter() {
@@ -286,11 +328,13 @@ misc:
     }
     
     override func stopTunnel(with reason: NEProviderStopReason, completionHandler: @escaping () -> Void) {
+        appendRuntimeLog("Packet Tunnel stopping (reason \(reason.rawValue))")
         UserDefaultsAppProperties.byeDPIVPNRunning = false
         if let safeCenter = CFNotificationCenterGetDarwinNotifyCenter() {
             CFNotificationCenterPostNotification(safeCenter, .byeDPIVpnStopped, nil, nil, true)
         }
         Socks5Tunnel.stop()
+        tunnelStartedAt = nil
         if (ByeDPI.proxyStarted) {
             _ = ByeDPI.forceStop()
         }
@@ -298,12 +342,24 @@ misc:
     }
     
     override func handleAppMessage(_ messageData: Data, completionHandler: ((Data?) -> Void)?) {
-        if let handler = completionHandler {
-            handler(messageData)
-        }
+        guard let handler = completionHandler else { return }
+        let stats = Socks5Tunnel.stats
+        let payload: [String: Any] = [
+            "coreRunning": ByeDPI.proxyStarted,
+            "socksAddress": activeSocksAddress,
+            "socksPort": Int(activeSocksPort),
+            "uptimeSeconds": tunnelStartedAt.map { Int(Date().timeIntervalSince($0)) } ?? 0,
+            "upPackets": stats.up.packets,
+            "upBytes": stats.up.bytes,
+            "downPackets": stats.down.packets,
+            "downBytes": stats.down.bytes,
+            "logs": runtimeLogSnapshot(),
+        ]
+        handler(try? JSONSerialization.data(withJSONObject: payload, options: [.sortedKeys]))
     }
     
     override func sleep(completionHandler: @escaping () -> Void) {
+        appendRuntimeLog("Device sleep notification received")
         UserDefaultsAppProperties.byeDPIVPNRunning = false
         if let safeCenter = CFNotificationCenterGetDarwinNotifyCenter() {
             CFNotificationCenterPostNotification(safeCenter, .byeDPIVpnStopped, nil, nil, true)
@@ -312,10 +368,132 @@ misc:
     }
     
     override func wake() {
+        appendRuntimeLog("Device wake notification received")
         UserDefaultsAppProperties.byeDPIVPNRunning = true
         if let safeCenter = CFNotificationCenterGetDarwinNotifyCenter() {
             CFNotificationCenterPostNotification(safeCenter, .byeDPIVpnStarted, nil, nil, true)
         }
+    }
+
+    private static func replaceOption(
+        in args: inout [String],
+        names: [String],
+        value: String
+    ) {
+        if let index = args.firstIndex(where: { names.contains($0) }), index + 1 < args.count {
+            args[index + 1] = value
+            return
+        }
+        guard let preferredName = names.first else { return }
+        args.insert(contentsOf: [preferredName, value], at: 0)
+    }
+
+    private static func logSafeArgs(_ args: [String]) -> String {
+        let joined = args.joined(separator: " ")
+        guard joined.count > 420 else { return joined }
+        return String(joined.prefix(420)) + "…"
+    }
+
+    private func resetRuntimeLogs() {
+        runtimeLogLock.lock()
+        runtimeLogs.removeAll(keepingCapacity: true)
+        runtimeLogLock.unlock()
+        UserDefaultsAppProperties.tunnelRuntimeLogs = try? JSONSerialization.data(
+            withJSONObject: [],
+            options: []
+        )
+    }
+
+    private func appendRuntimeLog(_ message: String, level: String = "info") {
+        let entry: [String: Any] = [
+            "timestamp": Date().timeIntervalSince1970,
+            "level": level,
+            "message": message,
+        ]
+        runtimeLogLock.lock()
+        runtimeLogs.append(entry)
+        if runtimeLogs.count > 80 {
+            runtimeLogs.removeFirst(runtimeLogs.count - 80)
+        }
+        let snapshot = runtimeLogs
+        runtimeLogLock.unlock()
+        UserDefaultsAppProperties.tunnelRuntimeLogs = try? JSONSerialization.data(
+            withJSONObject: snapshot,
+            options: [.sortedKeys]
+        )
+    }
+
+    private func runtimeLogSnapshot() -> [[String: Any]] {
+        runtimeLogLock.lock()
+        let snapshot = runtimeLogs
+        runtimeLogLock.unlock()
+        return snapshot
+    }
+
+    private func verifyLocalSocks5(address: String, port: UInt16) -> Error? {
+        let socketFD = Darwin.socket(AF_INET, SOCK_STREAM, 0)
+        guard socketFD >= 0 else {
+            return NSError(domain: NSPOSIXErrorDomain, code: Int(errno))
+        }
+        defer { Darwin.close(socketFD) }
+
+        var timeout = timeval(tv_sec: 2, tv_usec: 0)
+        _ = withUnsafePointer(to: &timeout) {
+            Darwin.setsockopt(socketFD, SOL_SOCKET, SO_RCVTIMEO, $0, socklen_t(MemoryLayout<timeval>.size))
+        }
+        _ = withUnsafePointer(to: &timeout) {
+            Darwin.setsockopt(socketFD, SOL_SOCKET, SO_SNDTIMEO, $0, socklen_t(MemoryLayout<timeval>.size))
+        }
+
+        var socketAddress = sockaddr_in()
+        socketAddress.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
+        socketAddress.sin_family = sa_family_t(AF_INET)
+        socketAddress.sin_port = in_port_t(port).bigEndian
+        guard inet_pton(AF_INET, address, &socketAddress.sin_addr) == 1 else {
+            return NSError(
+                domain: "PalkaDPI.Tunnel",
+                code: 2001,
+                userInfo: [NSLocalizedDescriptionKey: "Invalid local SOCKS address: \(address)"]
+            )
+        }
+
+        let connectResult = withUnsafePointer(to: &socketAddress) {
+            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
+                Darwin.connect(socketFD, $0, socklen_t(MemoryLayout<sockaddr_in>.size))
+            }
+        }
+        guard connectResult == 0 else {
+            return NSError(
+                domain: "PalkaDPI.Tunnel",
+                code: 2002,
+                userInfo: [NSLocalizedDescriptionKey: "ByeDPI SOCKS listener is unreachable (errno \(errno))"]
+            )
+        }
+
+        let greeting: [UInt8] = [0x05, 0x01, 0x00]
+        let sent = greeting.withUnsafeBytes {
+            Darwin.send(socketFD, $0.baseAddress, $0.count, 0)
+        }
+        guard sent == greeting.count else {
+            return NSError(
+                domain: "PalkaDPI.Tunnel",
+                code: 2003,
+                userInfo: [NSLocalizedDescriptionKey: "ByeDPI rejected the SOCKS greeting"]
+            )
+        }
+
+        var response = [UInt8](repeating: 0, count: 2)
+        let received = response.withUnsafeMutableBytes {
+            Darwin.recv(socketFD, $0.baseAddress, $0.count, 0)
+        }
+        guard received == 2, response == [0x05, 0x00] else {
+            return NSError(
+                domain: "PalkaDPI.Tunnel",
+                code: 2004,
+                userInfo: [NSLocalizedDescriptionKey: "ByeDPI SOCKS handshake failed"]
+            )
+        }
+        return nil
     }
     
     func getLNWAddress() -> String? {

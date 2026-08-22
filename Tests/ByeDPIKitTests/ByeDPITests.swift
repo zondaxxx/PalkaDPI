@@ -10,10 +10,69 @@ import XCTest
 #if canImport(FoundationNetworking)
 import FoundationNetworking
 #endif
+#if canImport(Darwin)
+import Darwin
+#endif
 
 final class ByeDPITests: XCTestCase {
     
     fileprivate static let _args: [String] = ["-i", "127.0.0.1", "-p", "10800", "--oob", "3"]
+
+    #if canImport(Darwin)
+    func testRawSocks5Handshake() async {
+        // Keep the port option first: this catches wrappers that incorrectly
+        // pass the first real option as argv[0], which getopt intentionally skips.
+        let testPort: UInt16 = 11880
+        let startError = await ByeDPI.start(args: [
+            "-p", String(testPort),
+            "-i", "127.0.0.1",
+            "--oob", "3",
+        ])
+        XCTAssertNil(startError, "ByeDPI failed to start")
+        guard startError == nil else { return }
+        defer { _ = ByeDPI.forceStop() }
+
+        let socketFD = Darwin.socket(AF_INET, SOCK_STREAM, 0)
+        XCTAssertGreaterThanOrEqual(socketFD, 0, "Unable to create test socket")
+        guard socketFD >= 0 else { return }
+        defer { Darwin.close(socketFD) }
+
+        var timeout = timeval(tv_sec: 2, tv_usec: 0)
+        _ = withUnsafePointer(to: &timeout) {
+            Darwin.setsockopt(socketFD, SOL_SOCKET, SO_RCVTIMEO, $0, socklen_t(MemoryLayout<timeval>.size))
+        }
+        _ = withUnsafePointer(to: &timeout) {
+            Darwin.setsockopt(socketFD, SOL_SOCKET, SO_SNDTIMEO, $0, socklen_t(MemoryLayout<timeval>.size))
+        }
+
+        var address = sockaddr_in()
+        address.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
+        address.sin_family = sa_family_t(AF_INET)
+        address.sin_port = in_port_t(testPort).bigEndian
+        XCTAssertEqual(inet_pton(AF_INET, "127.0.0.1", &address.sin_addr), 1)
+
+        let connectResult = withUnsafePointer(to: &address) {
+            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
+                Darwin.connect(socketFD, $0, socklen_t(MemoryLayout<sockaddr_in>.size))
+            }
+        }
+        XCTAssertEqual(connectResult, 0, "Unable to connect to ByeDPI SOCKS listener")
+        guard connectResult == 0 else { return }
+
+        let greeting: [UInt8] = [0x05, 0x01, 0x00]
+        let sent = greeting.withUnsafeBytes {
+            Darwin.send(socketFD, $0.baseAddress, $0.count, 0)
+        }
+        XCTAssertEqual(sent, greeting.count, "SOCKS greeting was not sent")
+
+        var response = [UInt8](repeating: 0, count: 2)
+        let received = response.withUnsafeMutableBytes {
+            Darwin.recv(socketFD, $0.baseAddress, $0.count, 0)
+        }
+        XCTAssertEqual(received, 2, "ByeDPI closed the accepted SOCKS connection")
+        XCTAssertEqual(response, [0x05, 0x00], "Unexpected SOCKS5 greeting response")
+    }
+    #endif
     
     func testDPISyncStartStop() async {
         let exp = self.expectation(description: "Test time-out expectation")

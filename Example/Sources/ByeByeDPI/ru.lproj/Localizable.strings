@@ -15,6 +15,15 @@
 "palkaLocalCore" = "Локальное ядро";
 "palkaOnDevice" = "На устройстве";
 "palkaLocalProxy" = "Локальный прокси";
+"palkaTunnelTraffic" = "ТРАФИК ЧЕРЕЗ ТУННЕЛЬ";
+"palkaTunnelChecking" = "Проверяем ядро и счётчики…";
+"palkaTunnelCoreStopped" = "Ядро ByeDPI не запущено";
+"palkaTunnelNoPackets" = "Пакетов пока нет — откройте любой сайт";
+"palkaRuntimeLogs" = "Журнал подключения";
+"palkaRuntimeLogsLive" = "В реальном времени · последние 14 событий";
+"palkaRuntimeLogsSaved" = "Последний сеанс · последние 14 событий";
+"palkaRuntimeLogsEmpty" = "События появятся после запуска подключения";
+"palkaRuntimeLogsCopy" = "Скопировать журнал подключения";
 "palkaActivePreset" = "Активный пресет";
 "palkaPresetScope" = "Работает локально на этом устройстве";
 "palkaSettingsLocked" = "Отключитесь для изменения настроек";

@@ -17,6 +17,12 @@ final class UserDefaultsAppProperties {
             return _appGroupUserDefaults.bool(forKey: UserDefaultsAppKeys.byeDPIVPNRunning.rawValue)
         }
     }
+
+    static var tunnelRuntimeLogs: Data? {
+        get {
+            return _appGroupUserDefaults.data(forKey: UserDefaultsAppKeys.tunnelRuntimeLogs.rawValue)
+        }
+    }
     
     static var byeDPIListenIp: String {
         get {

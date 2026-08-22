@@ -13,5 +13,6 @@ enum UserDefaultsAppKeys: String {
     case resolvedDnsServersKey = "resolvedDnsServers"
     case selectedDnsOverAddrKey = "dnsOverAddr"
     case selectedTunMtuKey = "tunMtu"
+    case tunnelRuntimeLogs = "palkaTunnelRuntimeLogs"
     
 }

@@ -9,6 +9,30 @@ import SwiftUI
 import CoreFoundation
 import NetworkExtension
 
+struct PalkaTunnelLogEntry: Codable, Equatable, Identifiable {
+    let timestamp: TimeInterval
+    let level: String
+    let message: String
+
+    var id: String {
+        "\(timestamp)-\(level)-\(message)"
+    }
+}
+
+struct PalkaTunnelRuntimeStats: Codable, Equatable {
+    let coreRunning: Bool
+    let socksAddress: String
+    let socksPort: Int
+    let uptimeSeconds: Int
+    let upPackets: Int
+    let upBytes: Int
+    let downPackets: Int
+    let downBytes: Int
+    let logs: [PalkaTunnelLogEntry]
+
+    var totalPackets: Int { upPackets + downPackets }
+}
+
 fileprivate func handleByeDPIVpnStart(notificationCenter: CFNotificationCenter?, observer: UnsafeMutableRawPointer?, notificationName: CFNotificationName?, object: UnsafeRawPointer?, info: CFDictionary?) {
     //UserDefaultsAppProperties.appGroupUserDefaults.set(true, forKey: UserDefaultsAppKeys.byeDPIVPNRunning.rawValue)
     DispatchQueue.main.async {
@@ -28,6 +52,8 @@ class NEObservableManager: ObservableObject {
     
     @Published fileprivate(set) var neTunnelProviderManager: NETunnelProviderManager?
     @Published fileprivate(set) var vpnRunning: Bool
+    @Published fileprivate(set) var tunnelStats: PalkaTunnelRuntimeStats?
+    @Published fileprivate(set) var runtimeLogs: [PalkaTunnelLogEntry]
     
     fileprivate let _cfNotificationCenter: CFNotificationCenter
     fileprivate var _startVpnObserver: UnsafeRawPointer?
@@ -35,16 +61,26 @@ class NEObservableManager: ObservableObject {
     fileprivate var _vpnStartedNotificationObserver: NSObjectProtocol?
     fileprivate var _vpnStoppedNotificationObserver: NSObjectProtocol?
     fileprivate var _vpnStatusNotificationObserver: NSObjectProtocol?
+    fileprivate var _statsTimer: Timer?
+    fileprivate var _lastObservedStatus: NEVPNStatus?
     
     init(initCompletion: @escaping (NETunnelProviderManager?, (any Error)?) -> Void) {
         neTunnelProviderManager = nil
         vpnRunning = UserDefaultsAppProperties.byeDPIVPNRunning
+        tunnelStats = nil
+        runtimeLogs = [PalkaTunnelLogEntry(
+            timestamp: Date().timeIntervalSince1970,
+            level: "info",
+            message: "PalkaDPI interface ready"
+        )]
         _cfNotificationCenter = CFNotificationCenterGetDarwinNotifyCenter()
         _startVpnObserver = nil
         _stopVpnObserver = nil
         _vpnStartedNotificationObserver = nil
         _vpnStoppedNotificationObserver = nil
         _vpnStatusNotificationObserver = nil
+        _statsTimer = nil
+        _lastObservedStatus = nil
         
         _vpnStartedNotificationObserver = NotificationCenter.default.addObserver(
             forName: .BBDVpnStarted,
@@ -72,6 +108,10 @@ class NEObservableManager: ObservableObject {
         CFNotificationCenterAddObserver(_cfNotificationCenter, _startVpnObserver, handleByeDPIVpnStart, CFNotificationName.byeDPIVpnStarted.rawValue, nil, .deliverImmediately)
         CFNotificationCenterAddObserver(_cfNotificationCenter, _stopVpnObserver, handleByeDPIVpnStop, CFNotificationName.byeDPIVpnStopped.rawValue, nil, .deliverImmediately)
         getOrInitNEManager(completion: initCompletion)
+        _statsTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
+            self?.refreshTunnelStats()
+        }
+        loadPersistedTunnelLogs()
     }
     
     deinit {
@@ -86,9 +126,11 @@ class NEObservableManager: ObservableObject {
         if let observer = _vpnStatusNotificationObserver {
             NotificationCenter.default.removeObserver(observer)
         }
+        _statsTimer?.invalidate()
     }
     
     func startConnection(completion: @escaping (_ success: Bool, _ error: Error?) -> Void) {
+        appendRuntimeLog("VPN start requested")
 #if DEBUG
         if (ProcessInfo.processInfo.previewMode) {
             //Disable real VPN connection for preview
@@ -113,6 +155,7 @@ class NEObservableManager: ObservableObject {
     func stopConnection(
         completion: @escaping (_ success: Bool, _ error: Error?) -> Void = { _, _ in }
     ) {
+        appendRuntimeLog("VPN stop requested")
 #if DEBUG
         if (ProcessInfo.processInfo.previewMode) {
             //Disable real VPN connection for preview
@@ -150,6 +193,7 @@ class NEObservableManager: ObservableObject {
     fileprivate func startConnection(manager: NETunnelProviderManager, completion: @escaping (_ success: Bool, _ error: Error?) -> Void) {
         manager.loadFromPreferences { loadErr in
             if let safeLoadErr = loadErr {
+                self.appendRuntimeLog("Loading VPN preferences failed: \(safeLoadErr.localizedDescription)", level: "error")
                 if (self.vpnRunning) {
                     self.vpnRunning = false
                 }
@@ -179,6 +223,7 @@ class NEObservableManager: ObservableObject {
             self.applyOnDemandPreferences(to: manager)
             manager.saveToPreferences { saveErr in
                 if let safeSaveErr = saveErr {
+                    self.appendRuntimeLog("Saving VPN preferences failed: \(safeSaveErr.localizedDescription)", level: "error")
                     if (self.vpnRunning) {
                         self.vpnRunning = false
                     }
@@ -191,6 +236,7 @@ class NEObservableManager: ObservableObject {
                     return
                 }
                 do {
+                    self.appendRuntimeLog("Launching Packet Tunnel extension")
                     try manager.connection.startVPNTunnel(options: startTunnelOptions)
                     self.waitForTunnel(
                         manager: manager,
@@ -199,6 +245,7 @@ class NEObservableManager: ObservableObject {
                         completion: completion
                     )
                 } catch {
+                    self.appendRuntimeLog("Packet Tunnel launch failed: \(error.localizedDescription)", level: "error")
 #if DEBUG
                     print("Start VPN error")
                     print(error)
@@ -299,14 +346,52 @@ class NEObservableManager: ObservableObject {
     
     fileprivate func handleVpnStop(_ notification: Notification) {
         vpnRunning = false
+        tunnelStats = nil
+        appendRuntimeLog("Packet Tunnel stopped")
+    }
+
+    func refreshTunnelStats() {
+        loadPersistedTunnelLogs()
+        guard vpnRunning,
+              let session = neTunnelProviderManager?.connection as? NETunnelProviderSession else {
+            if tunnelStats != nil {
+                tunnelStats = nil
+            }
+            return
+        }
+        do {
+            try session.sendProviderMessage(Data("stats".utf8)) { [weak self] data in
+                guard let data = data,
+                      let stats = try? JSONDecoder().decode(PalkaTunnelRuntimeStats.self, from: data) else {
+                    return
+                }
+                DispatchQueue.main.async {
+                    self?.tunnelStats = stats
+                    self?.mergeRuntimeLogs(stats.logs)
+                }
+            }
+        } catch {
+            // The session can transition between the status check and the
+            // message. The next timer tick will retry after it settles.
+        }
     }
 
     private func syncVpnState(manager: NETunnelProviderManager? = nil) {
         let update = {
             let activeManager = manager ?? self.neTunnelProviderManager
+            let status = activeManager?.connection.status ?? .invalid
             self.vpnRunning = activeManager.map {
                 NEObservableManager.isVpnRunning(status: $0.connection.status)
             } ?? false
+            if self._lastObservedStatus != status {
+                self._lastObservedStatus = status
+                self.appendRuntimeLog("VPN status: \(Self.statusLogName(status))")
+            }
+            if self.vpnRunning {
+                self.refreshTunnelStats()
+            } else {
+                self.tunnelStats = nil
+            }
         }
         if Thread.isMainThread {
             update()
@@ -336,6 +421,10 @@ class NEObservableManager: ObservableObject {
             }
 
             if reachedTarget {
+                self.appendRuntimeLog(
+                    shouldBeConnected ? "VPN connection is active" : "VPN connection is stopped",
+                    level: "success"
+                )
                 completion(true, nil)
                 return
             }
@@ -347,6 +436,10 @@ class NEObservableManager: ObservableObject {
                 let messageKey = shouldBeConnected
                     ? "palkaVPNConnectTimeout"
                     : "palkaVPNDisconnectTimeout"
+                self.appendRuntimeLog(
+                    "VPN transition timed out at status \(Self.statusLogName(status))",
+                    level: "error"
+                )
                 completion(
                     false,
                     NSError(
@@ -384,6 +477,60 @@ class NEObservableManager: ObservableObject {
             print("Unknown NEVPNStatus status")
             print(status)
             return false
+        }
+    }
+
+    func clearRuntimeLogs() {
+        runtimeLogs.removeAll()
+    }
+
+    private func appendRuntimeLog(_ message: String, level: String = "info") {
+        let append = {
+            self.mergeRuntimeLogs([PalkaTunnelLogEntry(
+                timestamp: Date().timeIntervalSince1970,
+                level: level,
+                message: message
+            )])
+        }
+        if Thread.isMainThread {
+            append()
+        } else {
+            DispatchQueue.main.async(execute: append)
+        }
+    }
+
+    private func mergeRuntimeLogs(_ entries: [PalkaTunnelLogEntry]) {
+        guard !entries.isEmpty else { return }
+        var mergedByID = Dictionary(uniqueKeysWithValues: runtimeLogs.map { ($0.id, $0) })
+        for entry in entries {
+            mergedByID[entry.id] = entry
+        }
+        let merged = mergedByID.values
+            .sorted { $0.timestamp < $1.timestamp }
+            .suffix(80)
+        let nextLogs = Array(merged)
+        if nextLogs != runtimeLogs {
+            runtimeLogs = nextLogs
+        }
+    }
+
+    private func loadPersistedTunnelLogs() {
+        guard let data = UserDefaultsAppProperties.tunnelRuntimeLogs,
+              let entries = try? JSONDecoder().decode([PalkaTunnelLogEntry].self, from: data) else {
+            return
+        }
+        mergeRuntimeLogs(entries)
+    }
+
+    private static func statusLogName(_ status: NEVPNStatus) -> String {
+        switch status {
+        case .invalid: return "invalid"
+        case .disconnected: return "disconnected"
+        case .connecting: return "connecting"
+        case .connected: return "connected"
+        case .reasserting: return "reasserting"
+        case .disconnecting: return "disconnecting"
+        @unknown default: return "unknown(\(status.rawValue))"
         }
     }
 }

@@ -30,5 +30,6 @@ enum UserDefaultsAppKeys: String {
     case onDemandWiFiEnabled = "onDemandWiFiEnabled"
     case onDemandCellularEnabled = "onDemandCellularEnabled"
     case networkProfiles = "networkProfiles"
+    case tunnelRuntimeLogs = "palkaTunnelRuntimeLogs"
     
 }

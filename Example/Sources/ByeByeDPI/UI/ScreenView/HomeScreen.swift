@@ -6,6 +6,9 @@
 //
 
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#endif
 #if canImport(ByeDPIKit)
 import ByeDPIKit
 #elseif canImport(ByeDPIKitLib)
@@ -36,6 +39,7 @@ struct HomeScreen: View {
     @State private var vpnStartFailErrorText = ""
     @State private var showAlertType: AlertType? = nil
     @State private var connectionActionInFlight = false
+    @State private var runtimeLogsCopied = false
     
     fileprivate var byeDPIProxyAddr: String {
         get {
@@ -65,6 +69,8 @@ struct HomeScreen: View {
                         .palkaEntrance(delay: 0.20)
                     settingsControl
                         .palkaEntrance(delay: 0.25)
+                    runtimeLogCard
+                        .palkaEntrance(delay: 0.30)
                 }
                 .padding(.horizontal, PalkaDesign.screenPadding)
                 .padding(.top, 18)
@@ -244,6 +250,30 @@ struct HomeScreen: View {
                     monospaced: true
                 )
             }
+
+            if neManager.vpnRunning {
+                HStack(spacing: 10) {
+                    Image(systemName: (neManager.tunnelStats?.totalPackets ?? 0) > 0
+                          ? "arrow.up.arrow.down.circle.fill"
+                          : "exclamationmark.circle.fill")
+                        .foregroundColor((neManager.tunnelStats?.totalPackets ?? 0) > 0
+                                         ? PalkaDesign.successText
+                                         : PalkaDesign.errorText)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(palkaLocalized("palkaTunnelTraffic"))
+                            .font(.system(size: 10, weight: .semibold))
+                            .tracking(0.45)
+                            .foregroundColor(PalkaDesign.textMuted)
+                        Text(tunnelTrafficText)
+                            .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                            .foregroundColor(PalkaDesign.textPrimary)
+                    }
+                    Spacer()
+                }
+                .padding(12)
+                .background(Color.white.opacity(0.045))
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            }
         }
         .padding(20)
         .palkaCard(radius: 24, selected: neManager.vpnRunning)
@@ -263,6 +293,23 @@ struct HomeScreen: View {
                 .minimumScaleFactor(0.72)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var tunnelTrafficText: String {
+        guard let stats = neManager.tunnelStats else {
+            return palkaLocalized("palkaTunnelChecking")
+        }
+        guard stats.coreRunning else {
+            return palkaLocalized("palkaTunnelCoreStopped")
+        }
+        guard stats.totalPackets > 0 else {
+            return palkaLocalized("palkaTunnelNoPackets")
+        }
+        let formatter = ByteCountFormatter()
+        formatter.countStyle = .binary
+        let uploaded = formatter.string(fromByteCount: Int64(stats.upBytes))
+        let downloaded = formatter.string(fromByteCount: Int64(stats.downBytes))
+        return "↑ \(uploaded) · ↓ \(downloaded) · \(stats.totalPackets) pkt"
     }
 
     private var presetCard: some View {
@@ -474,6 +521,114 @@ struct HomeScreen: View {
         }
         .padding(16)
         .palkaCard(selected: true)
+    }
+
+    private var runtimeLogCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 10) {
+                Image(systemName: "terminal.fill")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(PalkaDesign.successText)
+                    .frame(width: 34, height: 34)
+                    .background(Color.white.opacity(0.06))
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(palkaLocalized("palkaRuntimeLogs"))
+                        .font(.system(size: 15, weight: .bold))
+                    Text(neManager.vpnRunning
+                         ? palkaLocalized("palkaRuntimeLogsLive")
+                         : palkaLocalized("palkaRuntimeLogsSaved"))
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(PalkaDesign.textMuted)
+                }
+
+                Spacer(minLength: 8)
+
+                Button(action: copyRuntimeLogs) {
+                    Image(systemName: runtimeLogsCopied ? "checkmark" : "doc.on.doc")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(runtimeLogsCopied
+                                         ? PalkaDesign.successText
+                                         : PalkaDesign.textSecondary)
+                        .frame(width: 40, height: 40)
+                        .background(Color.white.opacity(0.055))
+                        .clipShape(Circle())
+                        .overlay(Circle().stroke(Color.white.opacity(0.07), lineWidth: 1))
+                }
+                .buttonStyle(PalkaPressButtonStyle())
+                .accessibilityLabel(palkaLocalized("palkaRuntimeLogsCopy"))
+            }
+
+            Rectangle()
+                .fill(Color.white.opacity(0.07))
+                .frame(height: 1)
+
+            if neManager.runtimeLogs.isEmpty {
+                Text(palkaLocalized("palkaRuntimeLogsEmpty"))
+                    .font(.system(size: 11, weight: .regular, design: .monospaced))
+                    .foregroundColor(PalkaDesign.textMuted)
+            } else {
+                VStack(alignment: .leading, spacing: 9) {
+                    ForEach(Array(neManager.runtimeLogs.suffix(14))) { entry in
+                        HStack(alignment: .top, spacing: 8) {
+                            Text(runtimeLogTime(entry.timestamp))
+                                .foregroundColor(PalkaDesign.textDim)
+                                .frame(width: 52, alignment: .leading)
+
+                            Circle()
+                                .fill(runtimeLogColor(entry.level))
+                                .frame(width: 5, height: 5)
+                                .padding(.top, 4)
+
+                            Text(entry.message)
+                                .foregroundColor(entry.level == "error"
+                                                 ? PalkaDesign.errorText
+                                                 : PalkaDesign.textSecondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .font(.system(size: 10, weight: .medium, design: .monospaced))
+                    }
+                }
+            }
+        }
+        .padding(16)
+        .palkaCard(selected: neManager.vpnRunning)
+    }
+
+    private func runtimeLogTime(_ timestamp: TimeInterval) -> String {
+        let components = Calendar.current.dateComponents(
+            [.hour, .minute, .second],
+            from: Date(timeIntervalSince1970: timestamp)
+        )
+        return String(
+            format: "%02d:%02d:%02d",
+            components.hour ?? 0,
+            components.minute ?? 0,
+            components.second ?? 0
+        )
+    }
+
+    private func runtimeLogColor(_ level: String) -> Color {
+        switch level {
+        case "success": return PalkaDesign.success
+        case "error": return PalkaDesign.errorText
+        default: return PalkaDesign.textMuted
+        }
+    }
+
+    private func copyRuntimeLogs() {
+        let text = neManager.runtimeLogs.map { entry in
+            "[\(runtimeLogTime(entry.timestamp))] [\(entry.level.uppercased())] \(entry.message)"
+        }.joined(separator: "\n")
+#if canImport(UIKit)
+        UIPasteboard.general.string = text
+#endif
+        runtimeLogsCopied = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            runtimeLogsCopied = false
+        }
     }
 
     @ViewBuilder

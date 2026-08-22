@@ -15,6 +15,15 @@
 "palkaLocalCore" = "Local core";
 "palkaOnDevice" = "On device";
 "palkaLocalProxy" = "Local proxy";
+"palkaTunnelTraffic" = "TRAFFIC THROUGH TUNNEL";
+"palkaTunnelChecking" = "Checking the core and counters…";
+"palkaTunnelCoreStopped" = "ByeDPI core is not running";
+"palkaTunnelNoPackets" = "No packets yet — open any website";
+"palkaRuntimeLogs" = "Connection log";
+"palkaRuntimeLogsLive" = "Live · latest 14 events";
+"palkaRuntimeLogsSaved" = "Last session · latest 14 events";
+"palkaRuntimeLogsEmpty" = "Events will appear after the connection starts";
+"palkaRuntimeLogsCopy" = "Copy connection log";
 "palkaActivePreset" = "Active preset";
 "palkaPresetScope" = "Runs locally on this device";
 "palkaSettingsLocked" = "Disconnect to change settings";

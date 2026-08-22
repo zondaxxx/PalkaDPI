@@ -40,8 +40,11 @@ open class ByeDPI {
         if (proxyStarted) {
             return -1
         }
-        let argc = Int32(clamping: args.count)
-        let utf8CStrings = args.map { $0.utf8CString }
+        // getopt expects argv[0] to be the process name. Passing the first real
+        // option there silently skipped it (normally the listener address).
+        let processArgs = ["byedpi"] + args
+        let argc = Int32(clamping: processArgs.count)
+        let utf8CStrings = processArgs.map { $0.utf8CString }
         var allocatedStrings: [UnsafeMutablePointer<CChar>] = []
         for utf8CString in utf8CStrings {
             let pointer = UnsafeMutablePointer<CChar>.allocate(capacity: utf8CString.count)
@@ -51,12 +54,12 @@ open class ByeDPI {
             allocatedStrings.append(pointer)
         }
             
-        let argv = UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>.allocate(capacity: args.count + 1)
+        let argv = UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>.allocate(capacity: processArgs.count + 1)
         for (index, pointer) in allocatedStrings.enumerated() {
             argv.advanced(by: index).pointee = pointer
         }
             
-        argv.advanced(by: args.count).pointee = nil
+        argv.advanced(by: processArgs.count).pointee = nil
             
         defer {
             allocatedStrings.forEach { $0.deallocate() }
@@ -74,9 +77,10 @@ open class ByeDPI {
             startErrCompletion(.alreadyRunning)
             return
         }
-        let argc = Int32(clamping: args.count)
+        let processArgs = ["byedpi"] + args
+        let argc = Int32(clamping: processArgs.count)
         let thread = Thread {
-            let utf8CStrings = args.map { $0.utf8CString }
+            let utf8CStrings = processArgs.map { $0.utf8CString }
             var allocatedStrings: [UnsafeMutablePointer<CChar>] = []
             for utf8CString in utf8CStrings {
                 let pointer = UnsafeMutablePointer<CChar>.allocate(capacity: utf8CString.count)
@@ -86,12 +90,12 @@ open class ByeDPI {
                 allocatedStrings.append(pointer)
             }
                 
-            let argv = UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>.allocate(capacity: args.count + 1)
+            let argv = UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>.allocate(capacity: processArgs.count + 1)
             for (index, pointer) in allocatedStrings.enumerated() {
                 argv.advanced(by: index).pointee = pointer
             }
                 
-            argv.advanced(by: args.count).pointee = nil
+            argv.advanced(by: processArgs.count).pointee = nil
                 
             defer {
                 allocatedStrings.forEach { $0.deallocate() }
@@ -117,11 +121,12 @@ open class ByeDPI {
         if (proxyStarted) {
             return .alreadyRunning
         }
-        let argc = Int32(clamping: args.count)
+        let processArgs = ["byedpi"] + args
+        let argc = Int32(clamping: processArgs.count)
         let startTask = Task {
             nonisolated(unsafe) var err: BDError? = nil
             let thread = Thread {
-                let utf8CStrings = args.map { $0.utf8CString }
+                let utf8CStrings = processArgs.map { $0.utf8CString }
                 var allocatedStrings: [UnsafeMutablePointer<CChar>] = []
                 for utf8CString in utf8CStrings {
                     let pointer = UnsafeMutablePointer<CChar>.allocate(capacity: utf8CString.count)
@@ -131,12 +136,12 @@ open class ByeDPI {
                     allocatedStrings.append(pointer)
                 }
                     
-                let argv = UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>.allocate(capacity: args.count + 1)
+                let argv = UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>.allocate(capacity: processArgs.count + 1)
                 for (index, pointer) in allocatedStrings.enumerated() {
                     argv.advanced(by: index).pointee = pointer
                 }
                     
-                argv.advanced(by: args.count).pointee = nil
+                argv.advanced(by: processArgs.count).pointee = nil
                     
                 defer {
                     allocatedStrings.forEach { $0.deallocate() }
