@@ -1,31 +1,17 @@
 //
 //  SettingsScreen.swift
-//  ByeByeDPI
-//
-//  Created by developer on 01.03.2026.
+//  PalkaDPI
 //
 
 import SwiftUI
 import SwByeDPI
 
+/// The short settings route intended for most people. Diagnostic tools and
+/// raw network parameters live one level deeper in AdvancedSettingsScreen.
 struct SettingsScreen: View {
+    @EnvironmentObject private var properties: AppProperties
 
-    @EnvironmentObject var properties: AppProperties
-    @EnvironmentObject var domainsManager: DomainsManager
-
-    @State private var dnsOverAddr = ""
-    @State private var resolvedDnsServers = ""
-    @State private var ipAddr = ""
-    @State private var port = ""
-    @State private var bufSize = ""
-
-    @State private var showShareActivityVC = false
     @State private var presetApplied = false
-
-    private var exportFileURL: URL {
-        FileManager.default.temporaryDirectory
-            .appendingPathComponent("palkadpi-config.json", isDirectory: false)
-    }
 
     var body: some View {
         ZStack {
@@ -37,14 +23,12 @@ struct SettingsScreen: View {
                         .palkaEntrance()
                     quickSetupSection
                         .palkaEntrance(delay: 0.05)
-                    connectionSection
+                    strategySection
                         .palkaEntrance(delay: 0.10)
                     advancedSection
                         .palkaEntrance(delay: 0.15)
-                    proxySection
-                        .palkaEntrance(delay: 0.20)
                     aboutSection
-                        .palkaEntrance(delay: 0.25)
+                        .palkaEntrance(delay: 0.20)
                 }
                 .padding(.horizontal, PalkaDesign.screenPadding)
                 .padding(.top, 12)
@@ -52,34 +36,19 @@ struct SettingsScreen: View {
             }
         }
         .foregroundColor(PalkaDesign.textPrimary)
-        .onAppear(perform: loadValues)
-        .onDisappear {
-            try? FileManager.default.removeItem(at: exportFileURL)
-        }
-#if canImport(UIKit) && !os(tvOS)
-        .sheet(isPresented: $showShareActivityVC, onDismiss: {
-            showShareActivityVC = false
-            try? FileManager.default.removeItem(at: exportFileURL)
-        }, content: {
-            ActivityVC(presented: $showShareActivityVC, activityItems: [exportFileURL])
-                .ignoresSafeArea(.all, edges: .bottom)
-        })
-#endif
-#if !os(tvOS)
         .navigationTitle(R.string.localizable.generalSettings())
 #if !os(macOS)
         .navigationBarTitleDisplayMode(.inline)
-#endif
 #endif
     }
 
     private var settingsHeader: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(palkaLocalized("palkaSettingsTitle"))
+            Text(palkaLocalized("palkaSimpleSettingsTitle"))
                 .font(.system(size: 28, weight: .heavy))
                 .tracking(-0.85)
 
-            Text(palkaLocalized("palkaSettingsDescription"))
+            Text(palkaLocalized("palkaSimpleSettingsDescription"))
                 .font(.system(size: 14, weight: .regular))
                 .foregroundColor(PalkaDesign.textSecondary)
                 .lineSpacing(4)
@@ -115,15 +84,142 @@ struct SettingsScreen: View {
         }
     }
 
+    private var strategySection: some View {
+        PalkaSettingsSection(palkaLocalized("palkaStrategiesSection")) {
+            NavigationLink(destination: OnlineStrategyCatalogScreen()) {
+                SettingsStaticInfoView(
+                    title: palkaLocalized("palkaCatalogTitle"),
+                    text: String(
+                        format: palkaLocalized("palkaCurrentStrategyFormat"),
+                        properties.activeStrategyName
+                    ),
+                    leadingIcon: Image(systemName: "icloud.and.arrow.down")
+                )
+            }
+            .buttonStyle(PalkaPressButtonStyle())
+        }
+    }
+
+    private var advancedSection: some View {
+        PalkaSettingsSection(palkaLocalized("palkaAdvancedSection")) {
+            NavigationLink(destination: AdvancedSettingsScreen()) {
+                SettingsStaticInfoView(
+                    title: palkaLocalized("palkaAdvancedSettings"),
+                    text: palkaLocalized("palkaAdvancedSettingsDescription"),
+                    leadingIcon: Image(systemName: "wrench.and.screwdriver")
+                )
+            }
+            .buttonStyle(PalkaPressButtonStyle())
+        }
+    }
+
+    private var aboutSection: some View {
+        PalkaSettingsSection(R.string.localizable.settingsAboutSecton()) {
+            Link(destination: URL(string: Constants.sourceCodeLink)!) {
+                SettingsStaticInfoView(
+                    title: R.string.localizable.settingsAboutSourceCode(),
+                    text: "GitHub",
+                    leadingIcon: Image(R.image.icGithub)
+                )
+            }
+            .buttonStyle(PalkaPressButtonStyle())
+
+            Link(destination: URL(string: Constants.acknowledgementsLink)!) {
+                SettingsStaticInfoView(
+                    title: palkaLocalized("palkaAcknowledgements"),
+                    text: palkaLocalized("palkaAcknowledgementsDescription"),
+                    leadingIcon: Image(systemName: "heart")
+                )
+            }
+            .buttonStyle(PalkaPressButtonStyle())
+
+            SettingsStaticInfoView(
+                title: R.string.localizable.settingsAboutAppVersionCode(),
+                text: Constants.PSEUDO_BUNDLE_VERSION,
+                leadingIcon: Image(R.image.icInfo),
+                showsDisclosure: false
+            )
+        }
+    }
+}
+
+struct AdvancedSettingsScreen: View {
+    @EnvironmentObject private var properties: AppProperties
+    @EnvironmentObject private var domainsManager: DomainsManager
+
+    @State private var dnsOverAddr = ""
+    @State private var resolvedDnsServers = ""
+    @State private var ipAddr = ""
+    @State private var port = ""
+    @State private var bufSize = ""
+    @State private var showShareActivityVC = false
+
+    private var exportFileURL: URL {
+        FileManager.default.temporaryDirectory
+            .appendingPathComponent("palkadpi-config.json", isDirectory: false)
+    }
+
+    var body: some View {
+        ZStack {
+            PalkaBackground()
+
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(alignment: .leading, spacing: PalkaDesign.sectionSpacing) {
+                    advancedHeader
+                        .palkaEntrance()
+                    connectionSection
+                        .palkaEntrance(delay: 0.05)
+                    toolsSection
+                        .palkaEntrance(delay: 0.10)
+                    proxySection
+                        .palkaEntrance(delay: 0.15)
+                }
+                .padding(.horizontal, PalkaDesign.screenPadding)
+                .padding(.top, 12)
+                .padding(.bottom, 28)
+            }
+        }
+        .foregroundColor(PalkaDesign.textPrimary)
+        .onAppear(perform: loadValues)
+        .onDisappear {
+            try? FileManager.default.removeItem(at: exportFileURL)
+        }
+#if canImport(UIKit) && !os(tvOS)
+        .sheet(isPresented: $showShareActivityVC, onDismiss: {
+            showShareActivityVC = false
+            try? FileManager.default.removeItem(at: exportFileURL)
+        }, content: {
+            ActivityVC(presented: $showShareActivityVC, activityItems: [exportFileURL])
+                .ignoresSafeArea(.all, edges: .bottom)
+        })
+#endif
+        .navigationTitle(palkaLocalized("palkaAdvancedSettings"))
+#if !os(macOS)
+        .navigationBarTitleDisplayMode(.inline)
+#endif
+    }
+
+    private var advancedHeader: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(palkaLocalized("palkaExpertTitle"))
+                .font(.system(size: 28, weight: .heavy))
+                .tracking(-0.85)
+
+            Text(palkaLocalized("palkaExpertDescription"))
+                .font(.system(size: 14, weight: .regular))
+                .foregroundColor(PalkaDesign.textSecondary)
+                .lineSpacing(4)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
     private var connectionSection: some View {
         PalkaSettingsSection(R.string.localizable.settingsGeneralSection()) {
             SettingsEditableInfoView(
                 title: R.string.localizable.settingsGeneralDNSOption(),
                 value: $dnsOverAddr,
                 leadingIcon: Image(R.image.icWorld),
-                validator: { input in
-                    !input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                },
+                validator: { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty },
                 onNewValue: { newValue in
                     guard properties.dnsOverAddr != newValue else { return }
                     dnsOverAddr = newValue
@@ -165,7 +261,7 @@ struct SettingsScreen: View {
         }
     }
 
-    private var advancedSection: some View {
+    private var toolsSection: some View {
         PalkaSettingsSection(R.string.localizable.settingsByeDPISection()) {
             settingsLink(
                 title: R.string.localizable.settingsByeDPIArgsOption(),
@@ -263,32 +359,6 @@ struct SettingsScreen: View {
         }
     }
 
-    private var aboutSection: some View {
-        PalkaSettingsSection(R.string.localizable.settingsAboutSecton()) {
-            Link(destination: URL(string: Constants.sourceCodeLink)!) {
-                SettingsStaticInfoView(
-                    title: R.string.localizable.settingsAboutSourceCode(),
-                    text: "GitHub",
-                    leadingIcon: Image(R.image.icGithub)
-                )
-            }
-            .buttonStyle(PalkaPressButtonStyle())
-
-            SettingsStaticInfoView(
-                title: R.string.localizable.settingsAboutAppVersionCode(),
-                text: Constants.PSEUDO_BUNDLE_VERSION,
-                leadingIcon: Image(R.image.icInfo),
-                showsDisclosure: false
-            )
-            SettingsStaticInfoView(
-                title: R.string.localizable.settingsAboutByeDPIVersion(),
-                text: ByeDPI.versionCode,
-                leadingIcon: Image(R.image.icInfo),
-                showsDisclosure: false
-            )
-        }
-    }
-
     private func settingsLink<Destination: View>(
         title: String,
         text: String,
@@ -352,5 +422,6 @@ struct SettingsScreen: View {
     .environmentObject(previewDomainsManager)
     .environmentObject(previewStrategiesManager)
     .environmentObject(previewTestManager)
+    .environmentObject(previewNeManager)
 }
 #endif

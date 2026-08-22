@@ -61,8 +61,10 @@ struct RecentByeDPICmdView: View {
                     if (_applied) {
                         return
                     }
-                    properties.byeDPILaunchConfig = properties.byeDPILaunchConfig.copyWith(commandArgs: _cmdArgs)
-                    properties.save()
+                    properties.applyCustomStrategy(
+                        name: palkaLocalized("palkaCustomStrategy"),
+                        commandArgs: _cmdArgs
+                    )
                 } label: {
                     Image(R.image.icCheck)
                         .resizable()

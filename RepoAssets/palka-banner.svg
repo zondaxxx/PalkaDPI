@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
+  <title id="title">PalkaDPI for iOS</title>
+  <desc id="desc">Dark monochrome PalkaDPI repository banner</desc>
+  <defs>
+    <pattern id="grid" width="44" height="44" patternUnits="userSpaceOnUse">
+      <path d="M44 0H0V44" fill="none" stroke="#ffffff" stroke-opacity=".045" stroke-width="1"/>
+    </pattern>
+    <radialGradient id="vignette" cx="50%" cy="48%" r="68%">
+      <stop offset="0" stop-color="#050508" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000000" stop-opacity=".78"/>
+    </radialGradient>
+    <linearGradient id="button" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#e8ecf8"/>
+    </linearGradient>
+    <filter id="glow" x="-200%" y="-200%" width="500%" height="500%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="1200" height="360" rx="24" fill="#050508"/>
+  <rect width="1200" height="360" rx="24" fill="url(#grid)"/>
+  <rect width="1200" height="360" rx="24" fill="url(#vignette)"/>
+  <g transform="translate(92 82)">
+    <circle cx="12" cy="13" r="6" fill="#4ade80" filter="url(#glow)"/>
+    <text x="32" y="19" fill="#ffffff" fill-opacity=".68" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="15" font-weight="600" letter-spacing="2">LOCAL · PRIVATE · SYSTEM-WIDE</text>
+    <text x="0" y="104" fill="#ffffff" fill-opacity=".97" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="78" font-weight="800" letter-spacing="-4">PalkaDPI</text>
+    <text x="3" y="151" fill="#ffffff" fill-opacity=".68" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="22">DPI bypass for iOS — without a remote VPN server</text>
+  </g>
+  <g transform="translate(923 91)">
+    <rect width="184" height="178" rx="24" fill="#ffffff" fill-opacity=".05" stroke="#ffffff" stroke-opacity=".10"/>
+    <circle cx="92" cy="66" r="34" fill="url(#button)"/>
+    <path d="M92 47v19m-14-10a20 20 0 1 0 28 0" fill="none" stroke="#07070e" stroke-width="5" stroke-linecap="round"/>
+    <text x="92" y="126" text-anchor="middle" fill="#ffffff" fill-opacity=".96" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="15" font-weight="700">READY</text>
+    <text x="92" y="150" text-anchor="middle" fill="#ffffff" fill-opacity=".43" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="12">iOS 14+</text>
+  </g>
+</svg>

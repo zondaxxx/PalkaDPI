@@ -20,5 +20,7 @@ enum UserDefaultsAppKeys: String {
     case resolvedDnsServersKey = "resolvedDnsServers"
     case selectedDnsOverAddrKey = "dnsOverAddr"
     case selectedTunMtuKey = "tunMtu"
+    case activeStrategyName = "activeStrategyName"
+    case activeStrategyID = "activeStrategyID"
     
 }

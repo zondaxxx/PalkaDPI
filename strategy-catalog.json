@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-08-22",
+  "strategies": [
+    {
+      "id": "palka.balanced.v1",
+      "name": "Balanced",
+      "nameRu": "Сбалансированная",
+      "summary": "Two-stage TLS handling plus Discord voice ranges. Recommended starting point.",
+      "summaryRu": "Двухэтапная обработка TLS и поддержка голосовых диапазонов Discord. Рекомендуется для начала.",
+      "services": ["Discord", "YouTube"],
+      "stability": "Recommended",
+      "stabilityRu": "Рекомендуется",
+      "sourceName": "PalkaDPI / ByeDPI",
+      "sourceURL": "https://github.com/hufrea/byedpi",
+      "commandArgs": [
+        "-Kt,h", "{palka_targets}", "-s1", "-d3+s", "-At,r,s",
+        "-Kt,h", "{palka_targets}", "-r1+s", "-s1+s", "-An",
+        "-Ku", "-V19294-19344", "-a6", "-An",
+        "-Ku", "-V50000-50100", "-a6", "-An"
+      ]
+    },
+    {
+      "id": "palka.light-split.v1",
+      "name": "Light Split",
+      "nameRu": "Лёгкое разделение",
+      "summary": "Minimal TLS split with low processing overhead and Discord voice support.",
+      "summaryRu": "Минимальное разделение TLS с небольшой нагрузкой и поддержкой голоса Discord.",
+      "services": ["Discord", "YouTube"],
+      "stability": "Fast",
+      "stabilityRu": "Быстрая",
+      "sourceName": "PalkaDPI / ByeDPI",
+      "sourceURL": "https://github.com/hufrea/byedpi",
+      "commandArgs": [
+        "-Kt,h", "{palka_targets}", "-s1", "-d3+s", "-An",
+        "-Ku", "-V19294-19344", "-a6", "-An",
+        "-Ku", "-V50000-50100", "-a6", "-An"
+      ]
+    },
+    {
+      "id": "palka.tls-record.v1",
+      "name": "TLS Record",
+      "nameRu": "TLS-запись",
+      "summary": "Fragments the ClientHello across TLS records when a simple split is not enough.",
+      "summaryRu": "Делит ClientHello между TLS-записями, если обычного разделения недостаточно.",
+      "services": ["Discord", "YouTube"],
+      "stability": "Alternative",
+      "stabilityRu": "Альтернатива",
+      "sourceName": "PalkaDPI / ByeDPI",
+      "sourceURL": "https://github.com/hufrea/byedpi",
+      "commandArgs": [
+        "-Kt,h", "{palka_targets}", "-r1+s", "-s1+s", "-An",
+        "-Ku", "-V19294-19344", "-a6", "-An",
+        "-Ku", "-V50000-50100", "-a6", "-An"
+      ]
+    },
+    {
+      "id": "palka.multisplit.v1",
+      "name": "Multi Split",
+      "nameRu": "Мульти-разделение",
+      "summary": "Uses several early TLS split points for providers with stricter filtering.",
+      "summaryRu": "Использует несколько ранних точек разделения TLS для более строгой фильтрации.",
+      "services": ["Discord", "YouTube"],
+      "stability": "Stronger",
+      "stabilityRu": "Усиленная",
+      "sourceName": "PalkaDPI / ByeDPI",
+      "sourceURL": "https://github.com/hufrea/byedpi",
+      "commandArgs": [
+        "-Kt,h", "{palka_targets}", "-d1", "-s1+s", "-s3+s", "-s6+s", "-s9+s", "-s12+s", "-An",
+        "-Ku", "-V19294-19344", "-a6", "-An",
+        "-Ku", "-V50000-50100", "-a6", "-An"
+      ]
+    },
+    {
+      "id": "palka.reorder.v1",
+      "name": "Reorder",
+      "nameRu": "Перестановка",
+      "summary": "Combines reordered writes and TLS fragmentation for difficult networks.",
+      "summaryRu": "Сочетает перестановку записей и фрагментацию TLS для сложных сетей.",
+      "services": ["Discord", "YouTube"],
+      "stability": "Experimental",
+      "stabilityRu": "Экспериментальная",
+      "sourceName": "PalkaDPI / ByeDPI",
+      "sourceURL": "https://github.com/hufrea/byedpi",
+      "commandArgs": [
+        "-Kt,h", "{palka_targets}", "-o1", "-d1", "-r1+s", "-s1+s", "-d3+s", "-An",
+        "-Ku", "-V19294-19344", "-a6", "-An",
+        "-Ku", "-V50000-50100", "-a6", "-An"
+      ]
+    },
+    {
+      "id": "palka.discord-voice.v1",
+      "name": "Discord Voice",
+      "nameRu": "Голос Discord",
+      "summary": "A focused Discord profile with TCP handling and common voice UDP ranges.",
+      "summaryRu": "Профиль Discord с обработкой TCP и распространённых UDP-диапазонов голосовой связи.",
+      "services": ["Discord"],
+      "stability": "Focused",
+      "stabilityRu": "Профильная",
+      "sourceName": "PalkaDPI / ByeDPI",
+      "sourceURL": "https://github.com/hufrea/byedpi",
+      "commandArgs": [
+        "-Kt,h", "{palka_targets}", "-s1", "-d3+s", "-At,r,s", "-An",
+        "-Ku", "-V19294-19344", "-a6", "-An",
+        "-Ku", "-V50000-50100", "-a6", "-An"
+      ]
+    }
+  ]
+}

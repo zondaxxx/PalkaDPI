@@ -139,6 +139,34 @@ final class UserDefaultsAppProperties {
             _appGroupUserDefaults.set(newValue, forKey: UserDefaultsAppKeys.selectedTunMtuKey.rawValue)
         }
     }
+
+    static var activeStrategyName: String {
+        get {
+            return _appGroupUserDefaults.string(
+                forKey: UserDefaultsAppKeys.activeStrategyName.rawValue
+            ) ?? PalkaPreset.name
+        }
+        set {
+            _appGroupUserDefaults.set(
+                newValue,
+                forKey: UserDefaultsAppKeys.activeStrategyName.rawValue
+            )
+        }
+    }
+
+    static var activeStrategyID: String {
+        get {
+            return _appGroupUserDefaults.string(
+                forKey: UserDefaultsAppKeys.activeStrategyID.rawValue
+            ) ?? "builtin.recommended"
+        }
+        set {
+            _appGroupUserDefaults.set(
+                newValue,
+                forKey: UserDefaultsAppKeys.activeStrategyID.rawValue
+            )
+        }
+    }
     
     fileprivate init() {}
     

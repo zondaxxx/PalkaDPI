@@ -29,6 +29,8 @@ struct HomeScreen: View {
     @EnvironmentObject fileprivate var properties: AppProperties
     @EnvironmentObject fileprivate var lnwPermissionManager: LNWPermissionManager
     @EnvironmentObject fileprivate var neManager: NEObservableManager
+
+    @StateObject private var latencyMonitor = ServiceLatencyMonitor()
     
     @State private var vpnStartFailErrorText = ""
     @State private var showAlertType: AlertType? = nil
@@ -50,10 +52,12 @@ struct HomeScreen: View {
                         .palkaEntrance()
                     connectionCard
                         .palkaEntrance(delay: 0.05)
-                    presetCard
+                    serviceLatencyCard
                         .palkaEntrance(delay: 0.10)
-                    settingsControl
+                    presetCard
                         .palkaEntrance(delay: 0.15)
+                    settingsControl
+                        .palkaEntrance(delay: 0.20)
                 }
                 .padding(.horizontal, PalkaDesign.screenPadding)
                 .padding(.top, 18)
@@ -62,6 +66,14 @@ struct HomeScreen: View {
         }
         .foregroundColor(PalkaDesign.textPrimary)
         .navigationBarHidden(true)
+        .onAppear {
+            latencyMonitor.refresh()
+        }
+        .onChange(of: neManager.vpnRunning) { _ in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                latencyMonitor.refresh()
+            }
+        }
         .alert(isPresented: Binding(get: {
             return showAlertType != nil
         }, set: { newVal in
@@ -241,7 +253,7 @@ struct HomeScreen: View {
                     .tracking(0.55)
                     .foregroundColor(PalkaDesign.textMuted)
 
-                Text(PalkaPreset.name)
+                Text(properties.activeStrategyName)
                     .font(.system(size: 15, weight: .bold))
                     .foregroundColor(PalkaDesign.textPrimary)
 
@@ -254,6 +266,116 @@ struct HomeScreen: View {
         }
         .padding(16)
         .palkaCard(selected: true)
+    }
+
+    private var serviceLatencyCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(palkaLocalized("palkaServicePingTitle"))
+                        .font(.system(size: 16, weight: .bold))
+
+                    Text(palkaLocalized("palkaServicePingDescription"))
+                        .font(.system(size: 11, weight: .regular))
+                        .foregroundColor(PalkaDesign.textMuted)
+                }
+
+                Spacer(minLength: 8)
+
+                Button(action: latencyMonitor.refresh) {
+                    Group {
+                        if latencyMonitor.isRefreshing {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: PalkaDesign.textPrimary))
+                        } else {
+                            Image(systemName: "arrow.clockwise")
+                                .font(.system(size: 14, weight: .semibold))
+                        }
+                    }
+                    .frame(width: 44, height: 44)
+                    .background(Color.white.opacity(0.055))
+                    .clipShape(Circle())
+                    .overlay(Circle().stroke(Color.white.opacity(0.07), lineWidth: 1))
+                }
+                .buttonStyle(PalkaPressButtonStyle())
+                .disabled(latencyMonitor.isRefreshing)
+                .accessibilityLabel(palkaLocalized("palkaServicePingRefresh"))
+            }
+
+            ForEach(latencyMonitor.services) { service in
+                serviceLatencyRow(service)
+            }
+        }
+        .padding(16)
+        .palkaCard()
+    }
+
+    private func serviceLatencyRow(_ service: PalkaServiceProbe) -> some View {
+        HStack(spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 11, style: .continuous)
+                    .fill(Color.white.opacity(0.06))
+                    .frame(width: 40, height: 40)
+
+                Text(String(service.name.prefix(1)))
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .foregroundColor(PalkaDesign.textPrimary)
+            }
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(service.name)
+                    .font(.system(size: 14, weight: .semibold))
+
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(serviceStatusColor(service.status))
+                        .frame(width: 7, height: 7)
+                        .shadow(
+                            color: service.status == .reachable
+                                ? PalkaDesign.success.opacity(0.75)
+                                : Color.clear,
+                            radius: 4
+                        )
+
+                    Text(serviceStatusText(service.status))
+                        .font(.system(size: 11, weight: .regular))
+                        .foregroundColor(PalkaDesign.textMuted)
+                }
+            }
+
+            Spacer(minLength: 8)
+
+            Text(service.latencyMilliseconds.map { "\($0) ms" } ?? "—")
+                .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                .foregroundColor(service.status == .reachable
+                                 ? PalkaDesign.textPrimary
+                                 : PalkaDesign.textMuted)
+        }
+        .frame(minHeight: 44)
+    }
+
+    private func serviceStatusText(_ status: PalkaServiceProbeStatus) -> String {
+        switch status {
+        case .idle:
+            return palkaLocalized("palkaServicePingIdle")
+        case .testing:
+            return palkaLocalized("palkaServicePingTesting")
+        case .reachable:
+            return palkaLocalized("palkaServicePingAvailable")
+        case .unavailable:
+            return palkaLocalized("palkaServicePingUnavailable")
+        }
+    }
+
+    private func serviceStatusColor(_ status: PalkaServiceProbeStatus) -> Color {
+        switch status {
+        case .reachable:
+            return PalkaDesign.success
+        case .unavailable:
+            return PalkaDesign.errorText
+        case .idle, .testing:
+            return PalkaDesign.textDim
+        }
     }
 
     @ViewBuilder

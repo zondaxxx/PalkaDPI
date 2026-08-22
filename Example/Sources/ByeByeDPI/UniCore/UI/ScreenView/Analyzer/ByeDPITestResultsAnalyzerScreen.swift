@@ -180,8 +180,10 @@ struct ByeDPITestResultsAnalyzerScreen: View {
                                     if (_synthesizedStrategyCmd.isEmpty) {
                                         return
                                     }
-                                    properties.byeDPILaunchConfig = properties.byeDPILaunchConfig.copyWith(commandArgs: _synthesizedStrategyCmd)
-                                    properties.save()
+                                    properties.applyCustomStrategy(
+                                        name: palkaLocalized("palkaAnalyzedStrategy"),
+                                        commandArgs: _synthesizedStrategyCmd
+                                    )
                                 } label: {
                                     Text(R.string.localizable.byeDPITestAnalyzerApply)
                                         .foregroundColor(Color(R.color.grPrimary))

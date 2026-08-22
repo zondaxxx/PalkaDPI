@@ -50,7 +50,8 @@ enum PalkaPreset {
         "ytimg.com",
     ]
 
-    private static let hostsArgument = "-H:" + targetDomains.joined(separator: " ")
+    static let catalogTargetsPlaceholder = "{palka_targets}"
+    static let hostsArgument = "-H:" + targetDomains.joined(separator: " ")
 
     /// Strategy groups:
     /// 1. Split and reorder the target TLS ClientHello.

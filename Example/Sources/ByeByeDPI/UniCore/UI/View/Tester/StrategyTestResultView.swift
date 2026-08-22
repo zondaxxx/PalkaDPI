@@ -79,8 +79,10 @@ struct StrategyTestResultView: View {
             .actionSheet(isPresented: $_strategyActionSheetShow) {
                 ActionSheet(title: Text(_strategyCmdLine), buttons: [
                     .default(Text(R.string.localizable.generalApply), action: {
-                        properties.byeDPILaunchConfig = properties.byeDPILaunchConfig.copyWith(commandArgs: _strategyCmdArgs)
-                        properties.save()
+                        properties.applyCustomStrategy(
+                            name: palkaLocalized("palkaTestedStrategy"),
+                            commandArgs: _strategyCmdArgs
+                        )
                     }),
                     .default(Text(R.string.localizable.generalCopy), action: {
                         UIPasteboard.general.string = _strategyCmdLine
@@ -94,8 +96,10 @@ struct StrategyTestResultView: View {
             .actionSheet(isPresented: $_strategyActionSheetShow) {
                 ActionSheet(title: Text(_strategyCmdLine), buttons: [
                     .default(Text(R.string.localizable.generalApply), action: {
-                        properties.byeDPILaunchConfig = properties.byeDPILaunchConfig.copyWith(commandArgs: _strategyCmdArgs)
-                        properties.save()
+                        properties.applyCustomStrategy(
+                            name: palkaLocalized("palkaTestedStrategy"),
+                            commandArgs: _strategyCmdArgs
+                        )
                     }),
                     .cancel(Text(R.string.localizable.generalCancel), action: {
                         _strategyActionSheetShow = false

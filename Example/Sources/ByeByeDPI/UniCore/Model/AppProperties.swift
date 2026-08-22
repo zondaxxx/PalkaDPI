@@ -71,6 +71,28 @@ class AppProperties: Codable, ObservableObject
             UserDefaultsAppProperties.tunMtu = tunMtu
         }
     }
+
+    /// Kept outside the Codable payload so existing saved settings remain
+    /// compatible when strategy catalog support is added.
+    var activeStrategyName: String {
+        get {
+            return UserDefaultsAppProperties.activeStrategyName
+        }
+        set {
+            objectWillChange.send()
+            UserDefaultsAppProperties.activeStrategyName = newValue
+        }
+    }
+
+    var activeStrategyID: String {
+        get {
+            return UserDefaultsAppProperties.activeStrategyID
+        }
+        set {
+            objectWillChange.send()
+            UserDefaultsAppProperties.activeStrategyID = newValue
+        }
+    }
     
 #if DEBUG
     init() {
@@ -164,6 +186,30 @@ class AppProperties: Codable, ObservableObject
         byeDPILaunchConfig = byeDPILaunchConfig.copyWith(
             commandArgs: PalkaPreset.recommendedCommandArgs
         )
+        activeStrategyName = PalkaPreset.name
+        activeStrategyID = "builtin.recommended"
+        save()
+    }
+
+    /// Applies an already validated catalog strategy while preserving local
+    /// proxy, DNS, buffer, logging, and tunnel settings.
+    func applyCatalogStrategy(id: String, name: String, commandArgs: [String]) {
+        let validatedArgs = SBDConfig(commandArgs: commandArgs).validatedCmdArgs
+        guard !validatedArgs.isEmpty else { return }
+
+        byeDPILaunchConfig = byeDPILaunchConfig.copyWith(commandArgs: validatedArgs)
+        activeStrategyName = name
+        activeStrategyID = id
+        save()
+    }
+
+    func applyCustomStrategy(name: String, commandArgs: [String]) {
+        let validatedArgs = SBDConfig(commandArgs: commandArgs).validatedCmdArgs
+        guard !validatedArgs.isEmpty else { return }
+
+        byeDPILaunchConfig = byeDPILaunchConfig.copyWith(commandArgs: validatedArgs)
+        activeStrategyName = name
+        activeStrategyID = "custom"
         save()
     }
     

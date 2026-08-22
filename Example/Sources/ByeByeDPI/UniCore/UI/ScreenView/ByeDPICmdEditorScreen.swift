@@ -19,8 +19,10 @@ struct ByeDPICmdEditorScreen: View {
                 return strategy.cmdArgsLine
             }, set: { newVal in
                 let newStrategy = SBDStrategy(cmdLine: newVal)
-                properties.byeDPILaunchConfig = properties.byeDPILaunchConfig.copyWith(commandArgs: newStrategy.cmdArgs)
-                properties.save()
+                properties.applyCustomStrategy(
+                    name: palkaLocalized("palkaCustomStrategy"),
+                    commandArgs: newStrategy.cmdArgs
+                )
             }), leadingIcon: Image(R.image.icCodeTags))
             Divider()
                 .padding(EdgeInsets(top: 12, leading: .zero, bottom: 12, trailing: .zero))

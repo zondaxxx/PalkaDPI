@@ -42,6 +42,7 @@ jobs:
             Example/Sources/ByeByeDPI/ByeByeDPI.entitlements \
             Example/Sources/ByeByeDPITun/ByeByeDPITun.entitlements
           bash -n scripts/build_unsigned_ipa.sh
+          swift scripts/validate_strategy_catalog.swift strategy-catalog.json
           xcodebuild -project SwByeDPI.xcodeproj -list
 
       - name: Build unsigned IPA
@@ -59,7 +60,7 @@ jobs:
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: BVDPI-IOS-${{ github.sha }}
+          name: PalkaDPI-${{ github.sha }}
           path: |
             packages/PalkaDPI-unsigned.ipa
             packages/PalkaDPI-unsigned.ipa.sha256
@@ -81,6 +82,6 @@ jobs:
             gh release create "$tag" \
               packages/PalkaDPI-unsigned.ipa \
               packages/PalkaDPI-unsigned.ipa.sha256 \
-              --title "BVDPI-IOS $tag" \
+              --title "PalkaDPI $tag" \
               --generate-notes
           fi

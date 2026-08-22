@@ -186,6 +186,30 @@ struct PalkaSecondaryButtonStyle: ButtonStyle {
     }
 }
 
+struct PalkaCompactPrimaryButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 13, weight: .bold))
+            .foregroundColor(Color(red: 0.027, green: 0.027, blue: 0.055))
+            .padding(.horizontal, 16)
+            .frame(minWidth: 88, minHeight: 44)
+            .background(
+                LinearGradient(
+                    gradient: Gradient(colors: [.white, Color(red: 0.91, green: 0.93, blue: 0.97)]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .clipShape(Capsule())
+            .overlay(Capsule().stroke(Color.white.opacity(0.90), lineWidth: 0.5))
+            .scaleEffect(configuration.isPressed && isEnabled ? 0.97 : 1)
+            .opacity(isEnabled ? 1 : 0.55)
+            .animation(.timingCurve(0.32, 0.72, 0, 1, duration: 0.15))
+    }
+}
+
 struct PalkaStatusDot: View {
     let isActive: Bool
 
