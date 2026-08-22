@@ -60,7 +60,8 @@ jobs:
           unzip -t packages/PalkaDPI-unsigned.ipa
           unzip -l packages/PalkaDPI-unsigned.ipa | grep -F "Payload/PalkaDPI.app/PlugIns/ByeByeDPITun.appex/"
           unzip -l packages/PalkaDPI-unsigned.ipa | grep -F "Payload/PalkaDPI.app/PlugIns/PalkaWidget.appex/"
-          shasum -a 256 packages/PalkaDPI-unsigned.ipa > packages/PalkaDPI-unsigned.ipa.sha256
+          cd packages
+          shasum -a 256 PalkaDPI-unsigned.ipa > PalkaDPI-unsigned.ipa.sha256
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
