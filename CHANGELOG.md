@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## PalkaDPI 0.4.7
+
+### 14.09.2026
+
+- Automatic setup can no longer stall: every step (VPN stop/start, pre-check, each tunnel test) has a hard deadline and moves on when a callback never arrives
+- The pre-check core listens on 127.0.0.1:10801 so it never collides with the packet tunnel extension that is still releasing port 10800
+- The next pre-check strategy waits for the previous ByeDPI core thread to exit before starting (fixes a race on the process-global listener)
+- Pre-check shows live progress per strategy; a run log with timestamps is shown on the automation screen
+- When none of the shortlisted strategies works through the tunnel, the remaining catalog strategies are tested instead of giving up
+
 ## PalkaDPI 0.4.6
 
 ### 14.09.2026

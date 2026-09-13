@@ -259,8 +259,11 @@ public class SBDTestController {
             completion(.failure(.general(errCode: -1, desc: "Strategy " + String(strategy.id) + " testing has been canceled")))
             return
         }
-        let byeDPIConfig = strategy.generateConfig()
+        let byeDPIConfig = strategy.generateConfig(listenPort: config.listenPort)
         _ = ByeDPI.stop()
+        // The previous core thread closes its listener asynchronously; starting the
+        // next one before it exits races on the process-global server socket.
+        _ = ByeDPI.waitUntilStopped(timeoutMilliseconds: 1500)
         ByeDPI.start(args: byeDPIConfig.args) { err in
 #if DEBUG
             print(err)
@@ -568,8 +571,9 @@ extension SBDTestController {
     ///   - totalDomainsCount: Total domains count
     ///   - totalDomainRequestsCount: Total requests to domains count
     private static func testStrategy(_ strategy: SBDStrategy, config: SBDTestConfig, taskDomains: [[String]], totalDomainsCount: Int, totalDomainRequestsCount: Int, cancelTkSource: ConcurrentCancellationTokenSource) async -> Result<SBDStrategyTestResult, SBDError> {
-        let byeDPIConfig = strategy.generateConfig()
+        let byeDPIConfig = strategy.generateConfig(listenPort: config.listenPort)
         _ = ByeDPI.stop()
+        _ = ByeDPI.waitUntilStopped(timeoutMilliseconds: 1500)
         if let launchErr = await ByeDPI.start(args: byeDPIConfig.args) {
             return .failure(.general(errCode: -1, desc: launchErr.errorDescription))
         }

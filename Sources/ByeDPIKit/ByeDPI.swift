@@ -172,8 +172,24 @@ open class ByeDPI {
     /// - Returns: byedpi stop status code
     public static func stop() -> Int32 {
         let stopRes = stop_proxy()
-        _dpiThread = nil
         return stopRes
+    }
+
+    /// Blocks until the core listener is closed and the worker thread has exited,
+    /// or until the timeout elapses. Safe to call when nothing is running.
+    /// - Returns: true when the core is fully stopped
+    @discardableResult
+    public static func waitUntilStopped(timeoutMilliseconds: Int) -> Bool {
+        let deadline = Date().addingTimeInterval(TimeInterval(timeoutMilliseconds) / 1000)
+        while Date() < deadline {
+            let threadDone = _dpiThread.map { $0.isFinished || !$0.isExecuting } ?? true
+            if !proxyStarted && threadDone {
+                _dpiThread = nil
+                return true
+            }
+            usleep(20_000)
+        }
+        return !proxyStarted
     }
     
     /// byedpi proxy stop
@@ -181,7 +197,6 @@ open class ByeDPI {
     /// - Returns: byedpi stop status code
     public static func forceStop() -> Int32 {
         let stopRes = stop_proxy_tun()
-        _dpiThread = nil
         return stopRes
     }
     

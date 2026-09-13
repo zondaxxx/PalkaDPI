@@ -91,6 +91,22 @@ struct AutomationScreen: View {
                     }
                 }
 
+                if !automation.logLines.isEmpty {
+                    PalkaSettingsSection(palkaLocalized("palkaAutoLog")) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            ForEach(Array(automation.logLines.suffix(40).enumerated()), id: \.offset) { _, line in
+                                Text(line)
+                                    .font(.system(size: 10, weight: .regular, design: .monospaced))
+                                    .foregroundColor(PalkaDesign.textMuted)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(12)
+                        .palkaCard()
+                    }
+                }
+
                 if catalog.strategies.isEmpty && catalog.isLoading {
                     HStack(spacing: 10) {
                         ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .white))

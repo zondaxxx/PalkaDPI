@@ -77,6 +77,9 @@
 "palkaAutoScreeningSummaryFormat" = "Предпроверка: %d из %d стратегий открыли сервисы, подтверждаем лучшие %d через туннель";
 "palkaAutoScreeningNone" = "Предпроверка не нашла рабочих стратегий, проверяем все профили через туннель";
 "palkaAutoStalledFormat" = "%d зависло";
+"palkaAutoLog" = "Журнал запуска";
+"palkaAutoScreeningTimeout" = "Предпроверка не уложилась в лимит времени, проверяем все профили через туннель";
+"palkaAutoTestingRest" = "Лучшие по предпроверке не сработали, проверяем остальные профили через туннель";
 "palkaDiagnosticBulk" = "256 КБ";
 "palkaDiagnosticStalledFormat" = "замёрз на %d КБ";
 "palkaQUICBlockEnabled" = "Блокировать QUIC (UDP 443)";

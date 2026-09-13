@@ -77,6 +77,9 @@
 "palkaAutoScreeningSummaryFormat" = "Pre-check: %d of %d strategies opened the services; confirming the best %d through the tunnel";
 "palkaAutoScreeningNone" = "Pre-check found no working strategy; testing every profile through the tunnel";
 "palkaAutoStalledFormat" = "%d stalled";
+"palkaAutoLog" = "Run log";
+"palkaAutoScreeningTimeout" = "Pre-check hit its time limit; testing every profile through the tunnel";
+"palkaAutoTestingRest" = "The shortlist did not work; testing the remaining profiles through the tunnel";
 "palkaDiagnosticBulk" = "256 KB";
 "palkaDiagnosticStalledFormat" = "froze at %d KB";
 "palkaQUICBlockEnabled" = "Block QUIC (UDP 443)";
