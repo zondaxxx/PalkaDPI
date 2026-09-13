@@ -96,6 +96,7 @@ struct desync_params {
     bool md5sig;
     struct packet fake_data;
     int udp_fake_count;
+    bool udp_drop;
     struct part fake_offset;
     int fake_sni_count;
     const char **fake_sni_list;

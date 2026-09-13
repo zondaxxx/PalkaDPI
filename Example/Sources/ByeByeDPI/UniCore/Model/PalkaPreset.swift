@@ -35,12 +35,19 @@ enum PalkaPreset {
         resolve(template: recommendedTemplateArgs, serviceIDs: PalkaService.defaultIDs)
     }
 
+    /// Leading group that silently drops QUIC (UDP/443). Placed first so it wins
+    /// over any UDP fake group in the template; TCP traffic never matches it.
+    static let quicDropGroupArgs: [String] = ["-Ku", "-V443", "--udp-drop", "-An"]
+
     static func resolve(
         template: [String],
         serviceIDs: [String],
-        customDomains: [String] = []
+        customDomains: [String] = [],
+        blockQUIC: Bool = UserDefaultsAppProperties.blockQUICEnabled
     ) -> [String] {
         let targets = PalkaService.targetsArgument(for: serviceIDs, customDomains: customDomains)
-        return template.map { $0 == catalogTargetsPlaceholder ? targets : $0 }
+        let resolved = template.map { $0 == catalogTargetsPlaceholder ? targets : $0 }
+        guard blockQUIC, !resolved.isEmpty, !resolved.contains("--udp-drop") else { return resolved }
+        return quicDropGroupArgs + resolved
     }
 }

@@ -26,6 +26,7 @@ enum UserDefaultsAppKeys: String {
     case selectedServiceIDs = "selectedServiceIDs"
     case customServiceDomains = "customServiceDomains"
     case smartRecoveryEnabled = "smartRecoveryEnabled"
+    case blockQUICEnabled = "blockQUICEnabled"
     case onDemandEnabled = "onDemandEnabled"
     case onDemandWiFiEnabled = "onDemandWiFiEnabled"
     case onDemandCellularEnabled = "onDemandCellularEnabled"

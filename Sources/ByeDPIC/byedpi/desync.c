@@ -706,6 +706,11 @@ int post_desync(int sfd, struct desync_params *dp)
 ssize_t desync_udp(int sfd, char *buffer, 
         ssize_t n, const struct sockaddr *dst, struct desync_params *dp)
 {
+    if (dp->udp_drop) {
+        // PalkaDPI: pretend the datagram was sent, but never forward it.
+        LOG(LOG_S, "udp drop: group=%d, %zd bytes\n", dp->id, n);
+        return n;
+    }
     if (LOG_ENABLED) {
         INIT_HEX_STR(buffer, (n > 16 ? 16 : n));
         LOG(LOG_S, "bytes: %s (%zd)\n", HEX_STR, n);

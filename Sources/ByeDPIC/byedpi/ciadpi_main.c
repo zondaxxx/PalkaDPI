@@ -119,6 +119,7 @@ static const char help_text[] = {
     "    -r, --tlsrec <pos_t>      Make TLS record at position\n"
     "    -m, --tlsminor <ver>      Change minor version of TLS\n"
     "    -a, --udp-fake <count>    UDP fakes count, default 0\n"
+    "    -k, --udp-drop            Silently drop matched UDP (PalkaDPI: QUIC -> TCP fallback)\n"
     #ifdef __linux__
     "    -Y, --drop-sack           Drop packets with SACK extension\n"
     #endif
@@ -180,6 +181,7 @@ const struct option options[] = {
     {"tlsrec",        1, 0, 'r'},
     {"tlsminor",      1, 0, 'm'},
     {"udp-fake",      1, 0, 'a'},
+    {"udp-drop",      0, 0, 'k'}, // PalkaDPI
     {"def-ttl",       1, 0, 'g'},
     {"wait-send",     0, 0, 'Z'}, //
     {"await-int",     1, 0, 'W'}, //
@@ -1271,6 +1273,12 @@ int parse_args(int argc, char **argv)
             
         case 'Y':
             dp->drop_sack = 1;
+            break;
+
+        case 'k':
+            // PalkaDPI: drop matched UDP datagrams (e.g. -Ku -V443) so QUIC
+            // clients fall back to TCP, where the TLS desync groups apply.
+            dp->udp_drop = 1;
             break;
         
         case 'Z':

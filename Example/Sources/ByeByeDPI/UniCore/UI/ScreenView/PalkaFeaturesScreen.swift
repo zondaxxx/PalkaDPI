@@ -62,6 +62,9 @@ struct AutomationScreen: View {
                 if let error = automation.errorText {
                     PalkaFeedbackBanner(text: error, kind: .error)
                 }
+                if let summary = automation.screeningSummary {
+                    PalkaFeedbackBanner(text: summary, kind: .success)
+                }
 
                 if !automation.scores.isEmpty {
                     PalkaSettingsSection(palkaLocalized("palkaAutoResults")) {
@@ -76,7 +79,7 @@ struct AutomationScreen: View {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(score.name)
                                         .font(.system(size: 14, weight: .semibold))
-                                    Text("\(score.succeededServices)/\(score.totalServices) · \(score.medianLatencyMilliseconds.map { "\($0) ms" } ?? "—")")
+                                    Text(scoreDetails(score))
                                         .font(.system(size: 11, weight: .regular, design: .monospaced))
                                         .foregroundColor(PalkaDesign.textMuted)
                                 }
@@ -263,6 +266,15 @@ struct DiagnosticsScreen: View {
                 diagnosticMetric("DNS", service.dnsMilliseconds)
                 diagnosticMetric("TLS", service.tlsMilliseconds)
                 diagnosticMetric("HTTP", service.latencyMilliseconds)
+                if service.bulkStalled == true {
+                    diagnosticMetricText(
+                        palkaLocalized("palkaDiagnosticBulk"),
+                        String(format: palkaLocalized("palkaDiagnosticStalledFormat"), service.bulkReceivedKilobytes ?? 0),
+                        highlighted: true
+                    )
+                } else if let kbps = service.bulkKilobytesPerSecond {
+                    diagnosticMetricText(palkaLocalized("palkaDiagnosticBulk"), "\(kbps) KB/s", highlighted: false)
+                }
             }
 
             Text("\(service.successfulAttempts)/\(service.totalAttempts) · HTTP \(service.statusCode.map(String.init) ?? "—")")
@@ -271,6 +283,19 @@ struct DiagnosticsScreen: View {
         }
         .padding(16)
         .palkaCard(selected: service.status == .reachable)
+    }
+
+    private func diagnosticMetricText(_ title: String, _ value: String, highlighted: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(title).font(.system(size: 9, weight: .semibold)).foregroundColor(PalkaDesign.textMuted)
+            Text(value)
+                .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                .foregroundColor(highlighted ? PalkaDesign.errorText : .primary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(10)
+        .background(Color.white.opacity(0.045))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 
     private func diagnosticMetric(_ title: String, _ value: Int?) -> some View {
@@ -338,6 +363,11 @@ struct NetworkProfilesScreen: View {
                         title: palkaLocalized("palkaRecoveryEnabled"),
                         text: palkaLocalized("palkaRecoveryDescription"),
                         isOn: Binding(get: { properties.smartRecoveryEnabled }, set: { properties.smartRecoveryEnabled = $0 })
+                    )
+                    featureToggle(
+                        title: palkaLocalized("palkaQUICBlockEnabled"),
+                        text: palkaLocalized("palkaQUICBlockDescription"),
+                        isOn: Binding(get: { properties.blockQUICEnabled }, set: { properties.blockQUICEnabled = $0 })
                     )
                 }
 
@@ -510,6 +540,19 @@ private func featureHeader(title: String, text: String, icon: String) -> some Vi
     }
 }
 
+private func scoreDetails(_ score: PalkaStrategyTestScore) -> String {
+    var parts = [
+        "\(score.succeededServices)/\(score.totalServices)",
+        score.medianLatencyMilliseconds.map { "\($0) ms" } ?? "—",
+    ]
+    if score.stalledServices > 0 {
+        parts.append(String(format: palkaLocalized("palkaAutoStalledFormat"), score.stalledServices))
+    } else if let kbps = score.bulkKilobytesPerSecond {
+        parts.append("\(kbps) KB/s")
+    }
+    return parts.joined(separator: " · ")
+}
+
 private func featureToggle(title: String, text: String, isOn: Binding<Bool>) -> some View {
     Toggle(isOn: isOn) {
         VStack(alignment: .leading, spacing: 4) {
@@ -583,6 +626,7 @@ enum PalkaSupportReportBuilder {
             "selected_services": properties.selectedServiceIDs,
             "custom_domain_count": properties.customServiceDomains.count,
             "smart_recovery": properties.smartRecoveryEnabled,
+            "block_quic": properties.blockQUICEnabled,
             "on_demand": properties.onDemandEnabled,
             "diagnostics": serviceReports,
         ]

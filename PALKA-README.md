@@ -86,10 +86,10 @@ retain the `packet-tunnel-provider` entitlement.
 - This is not a byte-for-byte port of Flowseal/zapret. iOS does not expose
   WinDivert, NFQUEUE, arbitrary raw TCP injection, or per-app VPN selection to a
   normal developer-signed app.
-- QUIC uses UDP/443 and cannot be filtered by SNI with this core. Clients usually
-  fall back to TCP/TLS, but the delay varies. Blocking all UDP would make the
-  fallback faster while breaking games, calls, and other UDP apps, so the
-  default preset does not do that.
+- QUIC uses UDP/443 and cannot be filtered by SNI with this core. By default
+  PalkaDPI drops UDP/443 inside the tunnel (`--udp-drop`, Settings -> "Block
+  QUIC"), so HTTP/3 clients fall back to TCP/TLS at once; games, calls and other
+  UDP apps use different ports and keep working. Turn it off if a site needs QUIC.
 - DPI strategies depend on the ISP. The included strategy is a conservative
   starting point, not a universal guarantee.
 - iOS 15 or newer is recommended because Network Extension has a larger memory

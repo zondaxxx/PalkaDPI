@@ -73,6 +73,14 @@
 "palkaAutoProbingThroughVPN" = "VPN connected — testing through the tunnel (up to 8 seconds)";
 "palkaAutoVerifyingTraffic" = "Verifying packet counters inside the tunnel…";
 "palkaAutoNoTunnelTraffic" = "The tunnel connected, but its core did not process any packets";
+"palkaAutoScreening" = "Quick pre-check of every strategy without the tunnel…";
+"palkaAutoScreeningSummaryFormat" = "Pre-check: %d of %d strategies opened the services; confirming the best %d through the tunnel";
+"palkaAutoScreeningNone" = "Pre-check found no working strategy; testing every profile through the tunnel";
+"palkaAutoStalledFormat" = "%d stalled";
+"palkaDiagnosticBulk" = "256 KB";
+"palkaDiagnosticStalledFormat" = "froze at %d KB";
+"palkaQUICBlockEnabled" = "Block QUIC (UDP 443)";
+"palkaQUICBlockDescription" = "The YouTube app and other HTTP/3 clients skip the TCP strategies over QUIC and hang until they time out. Dropping UDP 443 inside the tunnel forces an instant TCP fallback; games and calls use other ports and are not affected.";
 "palkaVPNConnectTimeout" = "The system VPN did not connect within 20 seconds";
 "palkaVPNDisconnectTimeout" = "The system VPN did not disconnect within 12 seconds";
 "palkaAutoSelectedFormat" = "Selected: %@";

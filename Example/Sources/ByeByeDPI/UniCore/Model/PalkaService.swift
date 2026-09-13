@@ -12,6 +12,10 @@ struct PalkaService: Identifiable, Codable, Hashable {
     let probeURL: URL
     let expectedResponseMarker: String?
     let domains: [String]
+    /// Larger object on a filtered domain. TSPU often lets a TLS handshake and a
+    /// few KB through and then freezes the flow, so a 256 KB Range download on
+    /// the real delivery host is what separates "connects" from "works".
+    var bulkProbeURL: URL? = nil
 
     static let all: [PalkaService] = [
         PalkaService(
@@ -28,7 +32,8 @@ struct PalkaService: Identifiable, Codable, Hashable {
                 "discordapp.com", "discordapp.net", "discordcdn.com",
                 "discordmerch.com", "discordpartygames.com", "discordsays.com",
                 "discordsez.com",
-            ]
+            ],
+            bulkProbeURL: URL(string: "https://discord.com/")
         ),
         PalkaService(
             id: "youtube",
@@ -41,7 +46,8 @@ struct PalkaService: Identifiable, Codable, Hashable {
                 "googlevideo.com", "returnyoutubedislikeapi.com", "youtu.be",
                 "youtube-nocookie.com", "youtube.com", "youtubekids.com",
                 "yt.be", "ytimg.com",
-            ]
+            ],
+            bulkProbeURL: URL(string: "https://i.ytimg.com/vi/dQw4w9WgXcQ/maxresdefault.jpg")
         ),
         PalkaService(
             id: "instagram",
@@ -49,7 +55,8 @@ struct PalkaService: Identifiable, Codable, Hashable {
             icon: "camera.fill",
             probeURL: URL(string: "https://www.instagram.com/robots.txt")!,
             expectedResponseMarker: "Instagram",
-            domains: ["cdninstagram.com", "instagram.com", "instagram.net"]
+            domains: ["cdninstagram.com", "instagram.com", "instagram.net"],
+            bulkProbeURL: URL(string: "https://www.instagram.com/")
         ),
         PalkaService(
             id: "tiktok",
@@ -61,7 +68,8 @@ struct PalkaService: Identifiable, Codable, Hashable {
                 "byteoversea.com", "ibytedtos.com", "ibyteimg.com", "muscdn.com",
                 "musical.ly", "sgpstatp.com", "tiktok.com", "tiktokcdn.com",
                 "tiktokcdn-us.com", "tiktokv.com",
-            ]
+            ],
+            bulkProbeURL: URL(string: "https://www.tiktok.com/")
         ),
         PalkaService(
             id: "x",
@@ -77,7 +85,8 @@ struct PalkaService: Identifiable, Codable, Hashable {
             icon: "paperplane.fill",
             probeURL: URL(string: "https://telegram.org/")!,
             expectedResponseMarker: "Telegram Messenger",
-            domains: ["t.me", "telegram.dog", "telegram.me", "telegram.org"]
+            domains: ["t.me", "telegram.dog", "telegram.me", "telegram.org"],
+            bulkProbeURL: URL(string: "https://telegram.org/img/t_logo_2x.png")
         ),
     ]
 
@@ -133,6 +142,24 @@ struct PalkaService: Identifiable, Codable, Hashable {
             )
         }
         return selected(from: serviceIDs) + custom
+    }
+
+    /// Bulk probes fetch HTML/images that may hop between subdomains of the same
+    /// service (instagram.com -> www.instagram.com), so only the registrable
+    /// domain has to match; a cross-site block page still fails.
+    func validatesBulkResponse(response: URLResponse?) -> Bool {
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200..<300).contains(httpResponse.statusCode),
+              let expectedHost = (bulkProbeURL ?? probeURL).host?.lowercased(),
+              let finalHost = httpResponse.url?.host?.lowercased() else {
+            return false
+        }
+        if finalHost == expectedHost || finalHost.hasSuffix("." + expectedHost) {
+            return true
+        }
+        let expectedRoot = expectedHost.split(separator: ".").suffix(2).joined(separator: ".")
+        let finalRoot = finalHost.split(separator: ".").suffix(2).joined(separator: ".")
+        return !expectedRoot.isEmpty && expectedRoot == finalRoot
     }
 
     func validatesProbeResponse(data: Data, response: URLResponse?) -> Bool {

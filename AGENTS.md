@@ -19,7 +19,8 @@ SwByeDPI/
 ├── Example/                    # Example iOS application
 │   └── ByeByeDPI/             # SwiftUI app (iOS 14+)
 ├── Assets/                     # Built-in domain lists and strategies
-├── CodeGen/                    # Code generation scripts for *.swift files
+├── assets_codegen.sh           # Code generation for Assets/*.domains|*.strategies
+├── patches/byedpi/             # PalkaDPI patches re-applied by update_byedpi.sh
 ├── Tests/                      # Unit tests
 ├── Experimental/               # Experimental features
 ├── Package.swift               # Swift Package Manager manifest
@@ -77,7 +78,7 @@ Built-in domains and strategies are generated from text files in `Assets/`:
 
 ```bash
 # Regenerate Swift files from Assets
-./CodeGen/generate.sh
+./assets_codegen.sh
 ```
 
 **File Formats**:
@@ -178,5 +179,6 @@ When working with this codebase:
 1. **Understand the layered architecture**: ByeDPIC (C) → ByeDPIKit (minimal Swift) → SwByeDPI (high-level Swift)
 2. **Network code requires careful testing**: Strategy testing involves real network requests - be aware of rate limits
 3. **Platform-specific behavior**: iOS has unique constraints (memory limits, binding addresses, Network Extension API)
-4. **Code generation**: Assets are text-based and auto-generated - always run `generate.sh` after modifying `Assets/`
+4. **Code generation**: Assets are text-based and auto-generated - always run `assets_codegen.sh` after modifying `Assets/`
+6. **Core patches**: `Sources/ByeDPIC/byedpi/` is a verbatim upstream clone plus `patches/byedpi/*.patch`; edit the core only through those patches (see `patches/byedpi/README.md`)
 5. **Security-sensitive**: This tool circumvents censorship - handle with care, don't expose user data or network patterns

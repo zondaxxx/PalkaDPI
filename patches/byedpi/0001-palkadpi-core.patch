@@ -1,0 +1,119 @@
+--- a/ciadpi_main.c
++++ b/ciadpi_main.c
+@@ -112,13 +112,14 @@
+     #endif
+     "    -t, --ttl <num>           TTL of fake packets, default 8\n"
+     "    -O, --fake-offset <pos_t> Fake data start offset\n"
+-    "    -l, --fake-data <f|:str>  Set custom fake packet\n"
++    "    -l, --fake-data <f|:str|hex:data> Set custom fake packet\n"
+     "    -Q, --fake-tls-mod <flag> Modify fake TLS CH: rand,orig,msize=<int>\n"
+     "    -e, --oob-data <char>     Set custom OOB data\n"
+     "    -M, --mod-http <h,d,r>    Modify HTTP: hcsmix,dcsmix,rmspace\n"
+     "    -r, --tlsrec <pos_t>      Make TLS record at position\n"
+     "    -m, --tlsminor <ver>      Change minor version of TLS\n"
+     "    -a, --udp-fake <count>    UDP fakes count, default 0\n"
++    "    -k, --udp-drop            Silently drop matched UDP (PalkaDPI: QUIC -> TCP fallback)\n"
+     #ifdef __linux__
+     "    -Y, --drop-sack           Drop packets with SACK extension\n"
+     #endif
+@@ -180,6 +181,7 @@
+     {"tlsrec",        1, 0, 'r'},
+     {"tlsminor",      1, 0, 'm'},
+     {"udp-fake",      1, 0, 'a'},
++    {"udp-drop",      0, 0, 'k'}, // PalkaDPI
+     {"def-ttl",       1, 0, 'g'},
+     {"wait-send",     0, 0, 'Z'}, //
+     {"await-int",     1, 0, 'W'}, //
+@@ -249,6 +251,43 @@
+     }
+     *size = i;
+     return m ? m : d;
++}
++
++
++static int hex_value(char c)
++{
++    if (c >= '0' && c <= '9') return c - '0';
++    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
++    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
++    return -1;
++}
++
++
++static char *data_from_hex(const char *str, ssize_t *size)
++{
++    size_t len = strlen(str);
++    if (len == 0 || len % 2 != 0) {
++        return 0;
++    }
++
++    size_t byte_count = len / 2;
++    char *data = malloc(byte_count);
++    if (!data) {
++        return 0;
++    }
++
++    for (size_t i = 0; i < byte_count; i++) {
++        int high = hex_value(str[i * 2]);
++        int low = hex_value(str[i * 2 + 1]);
++        if (high < 0 || low < 0) {
++            free(data);
++            return 0;
++        }
++        data[i] = (char)((high << 4) | low);
++    }
++
++    *size = (ssize_t)byte_count;
++    return data;
+ }
+ 
+ 
+@@ -256,6 +295,11 @@
+ {
+     if (*str == ':') {
+         return data_from_str(str + 1, sl);
++    }
++    // PalkaDPI signed catalogs use inline hex for binary QUIC/STUN payloads.
++    // This avoids filesystem paths that are inaccessible across iOS sandboxes.
++    if (strncmp(str, "hex:", 4) == 0) {
++        return data_from_hex(str + 4, sl);
+     }
+     char *buffer = 0;
+     long size;
+@@ -1230,6 +1274,12 @@
+         case 'Y':
+             dp->drop_sack = 1;
+             break;
++
++        case 'k':
++            // PalkaDPI: drop matched UDP datagrams (e.g. -Ku -V443) so QUIC
++            // clients fall back to TCP, where the TLS desync groups apply.
++            dp->udp_drop = 1;
++            break;
+         
+         case 'Z':
+             params.wait_send = 1;
+--- a/params.h
++++ b/params.h
+@@ -96,6 +96,7 @@
+     bool md5sig;
+     struct packet fake_data;
+     int udp_fake_count;
++    bool udp_drop;
+     struct part fake_offset;
+     int fake_sni_count;
+     const char **fake_sni_list;
+--- a/desync.c
++++ b/desync.c
+@@ -706,6 +706,11 @@
+ ssize_t desync_udp(int sfd, char *buffer, 
+         ssize_t n, const struct sockaddr *dst, struct desync_params *dp)
+ {
++    if (dp->udp_drop) {
++        // PalkaDPI: pretend the datagram was sent, but never forward it.
++        LOG(LOG_S, "udp drop: group=%d, %zd bytes\n", dp->id, n);
++        return n;
++    }
+     if (LOG_ENABLED) {
+         INIT_HEX_STR(buffer, (n > 16 ? 16 : n));
+         LOG(LOG_S, "bytes: %s (%zd)\n", HEX_STR, n);

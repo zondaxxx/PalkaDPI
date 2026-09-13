@@ -124,6 +124,15 @@ class AppProperties: Codable, ObservableObject
         }
     }
 
+    var blockQUICEnabled: Bool {
+        get { UserDefaultsAppProperties.blockQUICEnabled }
+        set {
+            objectWillChange.send()
+            UserDefaultsAppProperties.blockQUICEnabled = newValue
+            reapplyActiveTemplate()
+        }
+    }
+
     var onDemandEnabled: Bool {
         get { UserDefaultsAppProperties.onDemandEnabled }
         set {

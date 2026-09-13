@@ -221,6 +221,18 @@ final class UserDefaultsAppProperties {
         set { _appGroupUserDefaults.set(newValue, forKey: UserDefaultsAppKeys.smartRecoveryEnabled.rawValue) }
     }
 
+    /// Drop QUIC (UDP/443) inside the tunnel so HTTP/3 clients such as the
+    /// YouTube app fall back to TCP, where the TLS desync groups apply. On by default.
+    static var blockQUICEnabled: Bool {
+        get {
+            guard _appGroupUserDefaults.object(forKey: UserDefaultsAppKeys.blockQUICEnabled.rawValue) != nil else {
+                return true
+            }
+            return _appGroupUserDefaults.bool(forKey: UserDefaultsAppKeys.blockQUICEnabled.rawValue)
+        }
+        set { _appGroupUserDefaults.set(newValue, forKey: UserDefaultsAppKeys.blockQUICEnabled.rawValue) }
+    }
+
     static var onDemandEnabled: Bool {
         get { _appGroupUserDefaults.bool(forKey: UserDefaultsAppKeys.onDemandEnabled.rawValue) }
         set { _appGroupUserDefaults.set(newValue, forKey: UserDefaultsAppKeys.onDemandEnabled.rawValue) }

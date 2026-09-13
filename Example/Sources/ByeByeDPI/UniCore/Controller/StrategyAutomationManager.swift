@@ -5,6 +5,10 @@
 
 import Foundation
 import SwiftUI
+import SwByeDPI
+#if canImport(UIKit)
+import UIKit
+#endif
 
 struct PalkaStrategyTestScore: Identifiable, Equatable {
     let id: String
@@ -13,6 +17,10 @@ struct PalkaStrategyTestScore: Identifiable, Equatable {
     let totalServices: Int
     let medianLatencyMilliseconds: Int?
     let score: Int
+    /// Services whose bulk transfer started and then froze (TSPU signature).
+    var stalledServices: Int = 0
+    /// Median bulk throughput across services that completed the 256 KB probe.
+    var bulkKilobytesPerSecond: Int? = nil
 }
 
 struct PalkaRecoverySuggestion: Identifiable, Equatable {
@@ -22,6 +30,10 @@ struct PalkaRecoverySuggestion: Identifiable, Equatable {
 }
 
 final class StrategyAutomationManager: ObservableObject {
+    /// After the tunnel-free pre-check, only this many best candidates are
+    /// confirmed through the real packet tunnel (each tunnel cycle costs 10-20 s).
+    static let tunnelConfirmationLimit = 3
+
     @Published private(set) var isRunning = false
     @Published private(set) var currentStrategyName = ""
     @Published private(set) var currentStage = ""
@@ -30,6 +42,7 @@ final class StrategyAutomationManager: ObservableObject {
     @Published private(set) var scores: [PalkaStrategyTestScore] = []
     @Published private(set) var bestStrategyName: String? = nil
     @Published private(set) var errorText: String? = nil
+    @Published private(set) var screeningSummary: String? = nil
     @Published var recoverySuggestion: PalkaRecoverySuggestion? = nil
 
     private let properties: AppProperties
@@ -38,6 +51,7 @@ final class StrategyAutomationManager: ObservableObject {
     private let library: StrategyLibraryStore
     private let diagnostics: ServiceDiagnosticsMonitor
     private let network: NetworkEnvironmentMonitor
+    private let screener = SBDTestController()
     private var generation = UUID()
     private var failureStreak = 0
     private var recoveryTimer: Timer?
@@ -57,7 +71,7 @@ final class StrategyAutomationManager: ObservableObject {
         self.diagnostics = diagnostics
         self.network = network
 
-        recoveryTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+        recoveryTimer = Timer.scheduledTimer(withTimeInterval: 120, repeats: true) { [weak self] _ in
             self?.runRecoveryCheckIfNeeded()
         }
     }
@@ -90,21 +104,21 @@ final class StrategyAutomationManager: ObservableObject {
         currentStage = palkaLocalized("palkaAutoStoppingVPN")
         errorText = nil
         bestStrategyName = nil
+        screeningSummary = nil
         completedStrategies = 0
         totalStrategies = candidates.count
         scores = []
 
-        test(
-            candidates: candidates,
-            index: 0,
-            generation: currentGeneration
-        ) { [weak self] in
+        let finish: () -> Void = { [weak self] in
             guard let self = self, self.generation == currentGeneration else { return }
             let best = self.scores.sorted {
                 if $0.succeededServices != $1.succeededServices {
                     return $0.succeededServices > $1.succeededServices
                 }
-                return $0.score < $1.score
+                if $0.score != $1.score {
+                    return $0.score < $1.score
+                }
+                return ($0.bulkKilobytesPerSecond ?? 0) > ($1.bulkKilobytesPerSecond ?? 0)
             }.first
 
             guard let best = best,
@@ -152,6 +166,29 @@ final class StrategyAutomationManager: ObservableObject {
                 }
             }
         }
+
+        // Phase 1: stop the system VPN once and pre-check every candidate with the
+        // in-process ByeDPI SOCKS listener (no tunnel restarts, ~2-4 s per profile).
+        // Phase 2: confirm only the shortlist through the real packet tunnel with
+        // bulk probes and packet-counter verification.
+        neManager.stopConnection { [weak self] _, _ in
+            DispatchQueue.main.async {
+                guard let self = self, self.generation == currentGeneration else { return }
+                self.currentStage = palkaLocalized("palkaAutoScreening")
+                self.screen(candidates: candidates, generation: currentGeneration) { [weak self] shortlist, summary in
+                    guard let self = self, self.generation == currentGeneration else { return }
+                    self.screeningSummary = summary
+                    self.completedStrategies = 0
+                    self.totalStrategies = shortlist.count
+                    self.test(
+                        candidates: shortlist,
+                        index: 0,
+                        generation: currentGeneration,
+                        completion: finish
+                    )
+                }
+            }
+        }
     }
 
     func cancel() {
@@ -159,6 +196,7 @@ final class StrategyAutomationManager: ObservableObject {
         isRunning = false
         currentStrategyName = ""
         currentStage = palkaLocalized("palkaAutoStoppingVPN")
+        screener.cancelTest()
         neManager.stopConnection { [weak self] _, _ in
             DispatchQueue.main.async {
                 guard let self = self else { return }
@@ -223,12 +261,97 @@ final class StrategyAutomationManager: ObservableObject {
 
     private func runRecoveryCheckIfNeeded() {
         guard properties.smartRecoveryEnabled, neManager.vpnRunning, !isRunning else { return }
+        #if canImport(UIKit) && !os(watchOS)
+        // Do not burn battery and service quota while the app is in the background;
+        // the next foreground diagnostics refresh feeds evaluateRecovery anyway.
+        guard UIApplication.shared.applicationState == .active else { return }
+        #endif
         diagnostics.refresh(
             serviceIDs: properties.selectedServiceIDs,
             customDomains: properties.customServiceDomains,
-            attempts: 2
+            attempts: 2,
+            includeBulk: false
         ) { [weak self] results in
             self?.evaluateRecovery(results: results)
+        }
+    }
+
+    /// Tunnel-free pre-check: runs every candidate as an in-process SOCKS proxy and
+    /// fetches the service probe URLs through it. Returns the shortlist to confirm
+    /// through the tunnel, or all candidates when the pre-check is inconclusive
+    /// (listener busy, operator DNS poisoning without DoH, nothing passed).
+    private func screen(
+        candidates: [OnlineStrategy],
+        generation: UUID,
+        completion: @escaping ([OnlineStrategy], String?) -> Void
+    ) {
+        let serviceIDs = properties.selectedServiceIDs
+        let customDomains = properties.customServiceDomains
+        let domains = PalkaService.diagnosticTargets(
+            serviceIDs: serviceIDs,
+            customDomains: customDomains
+        ).map { $0.probeURL.absoluteString }
+
+        var lookup: [Int: OnlineStrategy] = [:]
+        var strategies: [SBDStrategy] = []
+        for candidate in candidates {
+            guard let args = candidate.resolvedCommandArgs(
+                serviceIDs: serviceIDs,
+                customDomains: customDomains
+            ) else { continue }
+            let strategy = SBDStrategy(cmdArgs: args)
+            guard lookup[strategy.id] == nil else { continue }
+            lookup[strategy.id] = candidate
+            strategies.append(strategy)
+        }
+
+        guard strategies.count > Self.tunnelConfirmationLimit,
+              !domains.isEmpty,
+              screener.canStartTest else {
+            completion(candidates, nil)
+            return
+        }
+
+        let config = SBDTestConfig(
+            domainRequestsCount: 1,
+            parallelRequestsCount: UInt8(min(max(domains.count, 1), 4)),
+            domainAnswerTimeoutInS: 4,
+            delayBetweenRequestsInS: 0,
+            fakeSNI: "google.com",
+            domainListIDs: Set<String>(),
+            strategyListIDs: Set<String>()
+        )
+        screener.test(config: config, domains: domains, strategies: strategies) { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self = self, self.generation == generation else { return }
+                switch result {
+                case .failure:
+                    completion(candidates, nil)
+                case .success(let results):
+                    let ranked = results.sorted {
+                        $0.successDomainRequestsCount > $1.successDomainRequestsCount
+                    }
+                    let passing = ranked.filter { $0.successDomainRequestsCount > 0 }
+                    guard !passing.isEmpty else {
+                        completion(candidates, palkaLocalized("palkaAutoScreeningNone"))
+                        return
+                    }
+                    let shortlist = passing
+                        .prefix(Self.tunnelConfirmationLimit)
+                        .compactMap { lookup[$0.strategy.id] }
+                    guard !shortlist.isEmpty else {
+                        completion(candidates, nil)
+                        return
+                    }
+                    let summary = String(
+                        format: palkaLocalized("palkaAutoScreeningSummaryFormat"),
+                        passing.count,
+                        results.count,
+                        shortlist.count
+                    )
+                    completion(shortlist, summary)
+                }
+            }
         }
     }
 
@@ -295,7 +418,8 @@ final class StrategyAutomationManager: ObservableObject {
                         self.diagnostics.refresh(
                             serviceIDs: self.properties.selectedServiceIDs,
                             customDomains: self.properties.customServiceDomains,
-                            attempts: 2
+                            attempts: 2,
+                            includeBulk: true
                         ) { [weak self] results in
                             guard let self = self, self.generation == generation else { return }
                             self.currentStage = palkaLocalized("palkaAutoVerifyingTraffic")
@@ -358,22 +482,32 @@ final class StrategyAutomationManager: ObservableObject {
     }
 
     private func appendScore(strategy: OnlineStrategy, results: [PalkaServiceProbe]) {
-        let successful = results.filter { $0.status == .reachable || $0.status == .partial }
+        // "Works" now means the bulk transfer on the real delivery host completed,
+        // not only that a tiny robots.txt came back: a stalled bulk probe counts as
+        // a failure for ranking even though the service is shown as "partial".
+        let successful = results.filter {
+            ($0.status == .reachable || $0.status == .partial) && $0.bulkStalled != true
+        }
+        let stalled = results.filter { $0.bulkStalled == true }
         let latencies = successful.compactMap(\.latencyMilliseconds).sorted()
         let median = latencies.isEmpty ? nil : latencies[latencies.count / 2]
+        let throughputs = successful.compactMap(\.bulkKilobytesPerSecond).sorted()
+        let medianThroughput = throughputs.isEmpty ? nil : throughputs[throughputs.count / 2]
         let targetCount = PalkaService.diagnosticTargets(
             serviceIDs: properties.selectedServiceIDs,
             customDomains: properties.customServiceDomains
         ).count
         let failures = max(targetCount - successful.count, 0)
-        let scoreValue = failures * 100_000 + (median ?? 99_999)
+        let scoreValue = failures * 100_000 + stalled.count * 20_000 + (median ?? 99_999)
         let score = PalkaStrategyTestScore(
             id: strategy.id,
             name: strategy.displayName,
             succeededServices: successful.count,
             totalServices: max(results.count, targetCount),
             medianLatencyMilliseconds: median,
-            score: scoreValue
+            score: scoreValue,
+            stalledServices: stalled.count,
+            bulkKilobytesPerSecond: medianThroughput
         )
         scores.append(score)
         library.record(

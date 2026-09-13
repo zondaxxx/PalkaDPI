@@ -40,3 +40,18 @@ rm -f "$SUBMODULE_PATH/README.md"
 # rm -f "$SUBMODULE_PATH/win_service.c"
 [ -f "$SUBMODULE_PATH/main.c" ] && mv "$SUBMODULE_PATH/main.c" "$SUBMODULE_PATH/ciadpi_main.c"
 sed -i "" "s|#define DAEMON|//#define DAEMON|g" "$SUBMODULE_PATH/ciadpi_main.c"
+
+# PalkaDPI keeps its core changes (inline hex fake payloads, --udp-drop) as
+# patches so that a fresh upstream clone never silently loses them.
+PATCH_DIR="patches/byedpi"
+for patch_file in "$PATCH_DIR"/*.patch; do
+    [ -f "$patch_file" ] || continue
+    echo "Applying $patch_file"
+    if ! patch -p1 -d "$SUBMODULE_PATH" --forward < "$patch_file"; then
+        echo "error: PalkaDPI patch failed against upstream byedpi: $patch_file" >&2
+        echo "Rebase the patch (see patches/byedpi/README.md) before building." >&2
+        exit 1
+    fi
+done
+grep -q 'udp_drop' "$SUBMODULE_PATH/desync.c" || { echo "error: --udp-drop patch missing after update" >&2; exit 1; }
+grep -q 'data_from_hex' "$SUBMODULE_PATH/ciadpi_main.c" || { echo "error: hex payload patch missing after update" >&2; exit 1; }

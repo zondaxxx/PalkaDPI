@@ -73,6 +73,14 @@
 "palkaAutoProbingThroughVPN" = "VPN подключён — проверяем сервисы через туннель (до 8 секунд)";
 "palkaAutoVerifyingTraffic" = "Проверяем счётчики пакетов внутри туннеля…";
 "palkaAutoNoTunnelTraffic" = "Туннель подключён формально, но его ядро не обработало ни одного пакета";
+"palkaAutoScreening" = "Быстрая предпроверка всех стратегий без туннеля…";
+"palkaAutoScreeningSummaryFormat" = "Предпроверка: %d из %d стратегий открыли сервисы, подтверждаем лучшие %d через туннель";
+"palkaAutoScreeningNone" = "Предпроверка не нашла рабочих стратегий, проверяем все профили через туннель";
+"palkaAutoStalledFormat" = "%d зависло";
+"palkaDiagnosticBulk" = "256 КБ";
+"palkaDiagnosticStalledFormat" = "замёрз на %d КБ";
+"palkaQUICBlockEnabled" = "Блокировать QUIC (UDP 443)";
+"palkaQUICBlockDescription" = "Приложение YouTube и другие HTTP/3-клиенты уходят по QUIC мимо TCP-стратегий и висят до таймаута. Сброс UDP 443 внутри туннеля даёт мгновенный откат на TCP; игры и звонки используют другие порты и не страдают.";
 "palkaVPNConnectTimeout" = "Системный VPN не подключился за 20 секунд";
 "palkaVPNDisconnectTimeout" = "Системный VPN не отключился за 12 секунд";
 "palkaAutoSelectedFormat" = "Выбрана стратегия: %@";

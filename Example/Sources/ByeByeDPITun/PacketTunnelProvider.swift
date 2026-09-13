@@ -358,20 +358,21 @@ misc:
         handler(try? JSONSerialization.data(withJSONObject: payload, options: [.sortedKeys]))
     }
     
+    // sleep/wake are power notifications: the tunnel, tun2socks and the ByeDPI
+    // listener all stay alive. Flipping byeDPIVPNRunning here made the widget
+    // and the home screen report "disconnected" on every screen lock.
     override func sleep(completionHandler: @escaping () -> Void) {
-        appendRuntimeLog("Device sleep notification received")
-        UserDefaultsAppProperties.byeDPIVPNRunning = false
-        if let safeCenter = CFNotificationCenterGetDarwinNotifyCenter() {
-            CFNotificationCenterPostNotification(safeCenter, .byeDPIVpnStopped, nil, nil, true)
-        }
+        appendRuntimeLog("Device sleep notification received; tunnel stays up")
         completionHandler()
     }
     
     override func wake() {
         appendRuntimeLog("Device wake notification received")
-        UserDefaultsAppProperties.byeDPIVPNRunning = true
-        if let safeCenter = CFNotificationCenterGetDarwinNotifyCenter() {
-            CFNotificationCenterPostNotification(safeCenter, .byeDPIVpnStarted, nil, nil, true)
+        if ByeDPI.proxyStarted, !UserDefaultsAppProperties.byeDPIVPNRunning {
+            UserDefaultsAppProperties.byeDPIVPNRunning = true
+            if let safeCenter = CFNotificationCenterGetDarwinNotifyCenter() {
+                CFNotificationCenterPostNotification(safeCenter, .byeDPIVpnStarted, nil, nil, true)
+            }
         }
     }
 

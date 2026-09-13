@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## PalkaDPI 0.4.6
+
+### 14.09.2026
+
+- Added `-k, --udp-drop` to the embedded ByeDPI core and a "Block QUIC (UDP 443)" switch (on by default): HTTP/3 clients such as the YouTube app fall back to TCP immediately instead of hanging until QUIC times out
+- Automatic setup now pre-checks every catalog strategy with the in-process SOCKS listener and confirms only the best three through the packet tunnel, cutting a full run roughly in half
+- Diagnostics download a 256 KB object from the real delivery host of each service (ytimg, discord.com, instagram.com, tiktok.com, telegram.org) and detect the TSPU "connects, then freezes" pattern; stalled services are ranked below working ones and shown with throughput
+- Screen lock no longer reports the tunnel as disconnected in the widget and home screen
+- Smart recovery probes run every two minutes and only while the app is in the foreground
+- Core changes now live in `Sources/ByeDPIC/patches/` and `update_byedpi.sh` re-applies them, so refreshing upstream byedpi no longer silently drops the hex payload support
+
+## PalkaDPI 0.4.5 / 0.4.4
+
+### 22.08.2026
+
+- Bundle branding, tunnel transport verification, runtime logs and bounded strategy tests (see git history)
+
 ## PalkaDPI 0.4.3
 
 ### 22.08.2026
