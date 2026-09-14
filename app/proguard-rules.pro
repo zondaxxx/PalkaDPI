@@ -32,3 +32,7 @@
 -adaptclassstrings
 -adaptresourcefilecontents **.xml,**.json
 -adaptresourcefilenames **.xml,**.json
+# net.i2p.crypto:eddsa references JDK-internal classes that do not exist on Android
+-dontwarn sun.security.x509.**
+-dontwarn sun.security.**
+-keep class net.i2p.crypto.eddsa.** { *; }
