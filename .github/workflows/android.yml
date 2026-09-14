@@ -8,6 +8,7 @@ on:
       - "android-v*"
     paths:
       - "android/**"
+      - ".gitmodules"
       - ".github/workflows/android.yml"
   pull_request:
     paths:
