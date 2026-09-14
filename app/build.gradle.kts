@@ -13,12 +13,12 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "io.github.romanvht.byedpi"
+        applicationId = "io.github.zondaxxx.palkadpi"
         minSdk = 21
         //noinspection OldTargetApi
         targetSdk = 34
-        versionCode = 1780
-        versionName = "1.7.8"
+        versionCode = 100
+        versionName = "0.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -32,8 +32,23 @@ android {
         viewBinding = true
     }
 
+    signingConfigs {
+        // Release signing comes only from the environment; without it the
+        // release APK stays unsigned and the debug key is used for debug builds.
+        val ks = System.getenv("PALKA_KEYSTORE")
+        if (ks != null && file(ks).exists()) {
+            create("palka") {
+                storeFile = file(ks)
+                storePassword = System.getenv("PALKA_KEYSTORE_PASS")
+                keyAlias = System.getenv("PALKA_KEY_ALIAS") ?: "palkadpi"
+                keyPassword = System.getenv("PALKA_KEYSTORE_PASS")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            signingConfigs.findByName("palka")?.let { signingConfig = it }
             buildConfigField("String", "VERSION_NAME",  "\"${defaultConfig.versionName}\"")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             isMinifyEnabled = true
@@ -90,6 +105,7 @@ dependencies {
     implementation("androidx.preference:preference-ktx:1.2.1")
     implementation("com.google.android.material:material:1.13.0")
     implementation("com.google.code.gson:gson:2.14.0")
+    implementation("net.i2p.crypto:eddsa:0.3.0")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")

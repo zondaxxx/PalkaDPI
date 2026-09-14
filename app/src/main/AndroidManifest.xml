@@ -60,6 +60,11 @@
             android:exported="true"/>
 
         <activity
+            android:name=".palka.PalkaCatalogActivity"
+            android:label="@string/palka_catalog_title"
+            android:exported="false" />
+
+        <activity
             android:name=".activities.FileActivity"
             android:exported="false" />
 
