@@ -36,6 +36,13 @@
 - русский и английский интерфейс;
 - автоматическая сборка проверенного unsigned IPA через GitHub Actions.
 
+## Android
+
+Android-версия живёт в [`android/`](./android/) (форк ByeByeDPI с тем же подписанным
+каталогом, применением стратегий в один тап, автоподбором и блокировкой QUIC).
+Готовые APK — в релизах с тегами `android-v*`; инструкция по сборке в
+[`android/PALKA-README.md`](./android/PALKA-README.md).
+
 ## Быстрый старт
 
 1. Скачайте [последний unsigned IPA](https://github.com/zondaxxx/PalkaDPI/releases/latest/download/PalkaDPI-unsigned.ipa).
@@ -98,6 +105,7 @@ Example/Sources/PalkaWidget/     WidgetKit extension
 Sources/ByeDPIC/                 встроенное C-ядро byedpi
 Sources/ByeDPIKit/               Swift-обёртка над ядром
 Sources/SwByeDPI/                модели, списки и диагностика
+android/                         Android-приложение (Kotlin, byedpi + hev-socks5-tunnel)
 strategy-catalog.json            обновляемый онлайн-каталог
 strategy-catalog.json.sig        подпись каталога Ed25519
 scripts/                         сборка и валидация

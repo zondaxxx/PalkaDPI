@@ -23,10 +23,10 @@ Android-версия PalkaDPI: локальный обход DPI без внеш
 ```bash
 export JAVA_HOME=/usr/local/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
 export ANDROID_HOME=/usr/local/share/android-commandlinetools   # нужны ndk;27.x и cmake;3.22.1
-./gradlew assembleDebug
+cd android && ./gradlew assembleDebug
 ```
 
-APK: `app/build/outputs/apk/debug/app-universal-debug.apk` (и по ABI рядом).
+APK: `android/app/build/outputs/apk/debug/app-universal-debug.apk` (и по ABI рядом).
 
 Внутренний Kotlin-пакет и JNI-имена оставлены как в upstream (`io.github.romanvht.byedpi`),
 изменён только `applicationId` (`io.github.zondaxxx.palkadpi`), чтобы приложение

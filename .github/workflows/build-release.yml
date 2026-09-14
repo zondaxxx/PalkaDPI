@@ -6,9 +6,13 @@ on:
       - main
     tags:
       - "v*"
+    paths-ignore:
+      - "android/**"
   pull_request:
     branches:
       - main
+    paths-ignore:
+      - "android/**"
   workflow_dispatch:
 
 permissions:
