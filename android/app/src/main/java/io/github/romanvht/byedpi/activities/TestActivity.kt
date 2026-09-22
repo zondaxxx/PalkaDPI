@@ -125,12 +125,6 @@ class TestActivity : BaseActivity() {
             override fun handleOnBackPressed() {
                 if (isTesting) {
                     stopTesting()
-                } else {
-                    if (appStatus.first == AppStatus.Running) {
-                        val intent = Intent(this@TestActivity, MainActivity::class.java)
-                        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-                        startActivity(intent)
-                    }
                 }
 
                 finish()

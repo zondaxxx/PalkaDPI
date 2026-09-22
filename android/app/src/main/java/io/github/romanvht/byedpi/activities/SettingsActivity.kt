@@ -10,6 +10,7 @@ import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
 import io.github.romanvht.byedpi.R
 import io.github.romanvht.byedpi.data.AppSettings
+import io.github.romanvht.byedpi.fragments.AppSelectionFragment
 import io.github.romanvht.byedpi.fragments.ByeDpiCMDSettingsFragment
 import io.github.romanvht.byedpi.fragments.ByeDpiUISettingsFragment
 import io.github.romanvht.byedpi.fragments.MainSettingsFragment
@@ -40,6 +41,12 @@ class SettingsActivity : BaseActivity() {
                     supportFragmentManager
                         .beginTransaction()
                         .replace(R.id.settings, ByeDpiCMDSettingsFragment())
+                        .commit()
+                }
+                "apps" -> {
+                    supportFragmentManager
+                        .beginTransaction()
+                        .replace(R.id.settings, AppSelectionFragment())
                         .commit()
                 }
                 "ui" -> {

@@ -269,11 +269,6 @@ class MainActivity : BaseActivity() {
         val (status, _) = appStatus
 
         return when (item.itemId) {
-            R.id.action_palka_catalog -> {
-                startActivity(Intent(this, io.github.romanvht.byedpi.palka.PalkaCatalogActivity::class.java))
-                true
-            }
-
             R.id.action_diagnostics -> {
                 showDiagnostics()
                 true

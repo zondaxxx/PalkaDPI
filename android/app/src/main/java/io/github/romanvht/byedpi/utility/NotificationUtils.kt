@@ -10,7 +10,7 @@ import android.os.Build
 import androidx.annotation.StringRes
 import androidx.core.app.NotificationCompat
 import io.github.romanvht.byedpi.R
-import io.github.romanvht.byedpi.activities.MainActivity
+import io.github.romanvht.byedpi.palka.ui.PalkaActivity
 import io.github.romanvht.byedpi.data.PAUSE_ACTION
 import io.github.romanvht.byedpi.data.RESUME_ACTION
 import io.github.romanvht.byedpi.data.STOP_ACTION
@@ -64,7 +64,7 @@ fun createConnectionNotification(
             PendingIntent.getActivity(
                 context,
                 0,
-                Intent(context, MainActivity::class.java),
+                Intent(context, PalkaActivity::class.java),
                 PendingIntent.FLAG_IMMUTABLE,
             )
         )
@@ -94,7 +94,7 @@ fun createPauseNotification(
             PendingIntent.getActivity(
                 context,
                 0,
-                Intent(context, MainActivity::class.java),
+                Intent(context, PalkaActivity::class.java),
                 PendingIntent.FLAG_IMMUTABLE,
             )
         )

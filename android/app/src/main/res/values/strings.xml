@@ -1,19 +1,6 @@
 <resources>
     <string name="byedpi_docs">https://github.com/hufrea/byedpi/blob/main/README.md</string>
     <string name="app_name">PalkaDPI</string>
-    <string name="palka_catalog_title">Каталог PalkaDPI</string>
-    <string name="palka_catalog_loading">Загружаем подписанный каталог…</string>
-    <string name="palka_catalog_loaded">Каталог поколения %1$d: %2$d стратегий, обновлён %3$s</string>
-    <string name="palka_catalog_cached">Каталог из кэша, поколение %1$d: %2$d стратегий (%3$s)</string>
-    <string name="palka_catalog_error">Каталог не обновлён: %1$s</string>
-    <string name="palka_catalog_empty">Каталог пуст, обновите его</string>
-    <string name="palka_catalog_refresh">Обновить</string>
-    <string name="palka_catalog_auto">Автоподбор по каталогу</string>
-    <string name="palka_catalog_apply">Применить</string>
-    <string name="palka_catalog_block_quic">Блокировать QUIC (UDP 443): HTTP/3-клиенты сразу уходят на TCP</string>
-    <string name="palka_catalog_hint">Нажмите стратегию, чтобы применить её как командную строку. Автоподбор прогонит весь каталог через встроенный тестер и отсортирует по проценту ответов.</string>
-    <string name="palka_catalog_test_prepared">В тестер загружено %1$d стратегий каталога. Нажмите «Начать проверку».</string>
-    <string name="palka_catalog_menu">Каталог PalkaDPI</string>
     <string name="cmd_documentation">Документация ByeDPI</string>
     <string name="toggle_connect">Вкл/Выкл</string>
     <string name="vpn_connect">Подключить</string>

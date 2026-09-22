@@ -1,11 +1,20 @@
 package io.github.romanvht.byedpi.palka
 
-import android.content.Context
 import android.util.Base64
 import android.util.Log
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
-import io.github.romanvht.byedpi.utility.getPreferences
+import com.google.gson.reflect.TypeToken
+import io.github.romanvht.byedpi.BuildConfig
+import io.github.romanvht.byedpi.R
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.i2p.crypto.eddsa.EdDSAEngine
 import net.i2p.crypto.eddsa.EdDSAPublicKey
 import net.i2p.crypto.eddsa.spec.EdDSANamedCurveTable
@@ -38,6 +47,12 @@ data class OnlineStrategy(
     val displayName: String get() = if (russian) (nameRu ?: name) else name
     val displaySummary: String get() = if (russian) (summaryRu ?: summary) else summary
     val displayStability: String get() = if (russian) (stabilityRu ?: stability ?: "") else (stability ?: "")
+
+    val searchableText: String
+        get() = (listOf(name, nameRu, summary, summaryRu, stability, stabilityRu, sourceName) + services.orEmpty())
+            .filterNotNull().joinToString(" ").lowercase()
+
+    val sourceLink: String? get() = sourceURL?.takeIf { it.startsWith("https://") }
 }
 
 data class OnlineStrategyCatalog(
@@ -50,10 +65,13 @@ data class OnlineStrategyCatalog(
     val strategies: List<OnlineStrategy>
 )
 
+private data class CatalogCacheEntry(val data: String, val signature: String, val savedAt: Long)
+
 /**
  * Signed PalkaDPI strategy catalog: the same Ed25519-signed JSON the iOS app
  * uses, fetched from GitHub and verified with the embedded public key before
- * anything from it is turned into a ByeDPI command line.
+ * anything from it is turned into a ByeDPI command line. Keeps the last three
+ * verified versions so a bad catalog can be rolled back from the UI.
  */
 object PalkaCatalog {
     private const val TAG = "PalkaCatalog"
@@ -61,41 +79,77 @@ object PalkaCatalog {
     const val SIGNATURE_URL = "https://raw.githubusercontent.com/zondaxxx/PalkaDPI/main/strategy-catalog.json.sig"
     private const val PUBLIC_KEY_BASE64 = "18bFOLUFcXXG6/56v8NnWS/SO6SxTxFIhdD5Vmz43jg="
     private const val MAX_BYTES = 512 * 1024
-    private const val CACHE_FILE = "palka_catalog.json"
-    private const val CACHE_SIG_FILE = "palka_catalog.sig"
-
-    const val PREF_BLOCK_QUIC = "palka_block_quic"
-    const val PREF_SERVICES = "palka_services"
-    const val PREF_CUSTOM_DOMAINS = "palka_custom_domains"
-    const val PREF_ACTIVE_STRATEGY_ID = "palka_active_strategy_id"
-    const val PREF_ACTIVE_STRATEGY_NAME = "palka_active_strategy_name"
+    private const val CACHE_FILE = "palka_catalog_cache.json"
+    /** byedpi version vendored in android/app/src/main/cpp/byedpi. */
+    const val ENGINE_VERSION = "0.17.3"
 
     private val gson = Gson()
+    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private var cache: List<CatalogCacheEntry> = emptyList()
+    private var loadedCache = false
+
+    var strategies by mutableStateOf(emptyList<OnlineStrategy>()); private set
+    var updatedAt by mutableStateOf(""); private set
+    var generation by mutableStateOf(0); private set
+    var isLoading by mutableStateOf(false); private set
+    var isUsingCache by mutableStateOf(false); private set
+    var errorText by mutableStateOf<String?>(null); private set
+
+    val canUsePreviousVersion: Boolean get() = cache.size > 1
 
     class CatalogException(message: String) : Exception(message)
 
-    fun loadCached(context: Context): OnlineStrategyCatalog? {
-        val data = File(context.filesDir, CACHE_FILE).takeIf { it.exists() }?.readBytes() ?: return null
-        val sig = File(context.filesDir, CACHE_SIG_FILE).takeIf { it.exists() }?.readText() ?: return null
-        return runCatching { verifyAndParse(data, sig) }.onFailure {
-            Log.w(TAG, "cached catalog rejected: ${it.message}")
-        }.getOrNull()
+    private val cacheFile get() = File(Palka.context.filesDir, CACHE_FILE)
+
+    fun loadCache() {
+        if (loadedCache) return
+        loadedCache = true
+        cache = runCatching {
+            gson.fromJson<List<CatalogCacheEntry>>(
+                cacheFile.readText(), object : TypeToken<List<CatalogCacheEntry>>() {}.type
+            )
+        }.getOrNull().orEmpty()
+        cache.firstOrNull()?.let { apply(it.data.toByteArray(), it.signature, isCache = true) }
     }
 
-    /** Downloads, verifies and caches the catalog. Must be called off the main thread. */
-    @Throws(CatalogException::class)
-    fun refresh(context: Context): OnlineStrategyCatalog {
-        val sig = String(download(SIGNATURE_URL, 4096)).trim()
-        val data = download(CATALOG_URL, MAX_BYTES)
-        val catalog = verifyAndParse(data, sig)
-        val cached = loadCached(context)
-        if (cached != null && catalog.generation < cached.generation) {
-            throw CatalogException("catalog generation ${catalog.generation} is older than cached ${cached.generation}")
+    fun load() {
+        loadCache()
+        if (isLoading) return
+        isLoading = true
+        errorText = null
+        scope.launch {
+            val result = withContext(Dispatchers.IO) {
+                runCatching {
+                    val sig = String(download(SIGNATURE_URL, 4096)).trim()
+                    val data = download(CATALOG_URL, MAX_BYTES)
+                    sig to data
+                }
+            }
+            isLoading = false
+            result.onSuccess { (sig, data) ->
+                if (apply(data, sig, isCache = false)) saveVerified(String(data), sig)
+                else if (errorText == null) errorText = Palka.context.getString(R.string.palka_catalog_invalid_signature)
+            }.onFailure {
+                errorText = it.message ?: Palka.context.getString(R.string.palka_catalog_invalid_response)
+            }
         }
-        File(context.filesDir, CACHE_FILE).writeBytes(data)
-        File(context.filesDir, CACHE_SIG_FILE).writeText(sig)
-        return catalog
     }
+
+    fun usePreviousVersion() {
+        if (cache.size < 2) return
+        val previous = cache[1]
+        if (apply(previous.data.toByteArray(), previous.signature, isCache = true)) {
+            cache = listOf(previous) + cache.filterIndexed { i, _ -> i != 1 }
+            persist()
+        }
+    }
+
+    private fun saveVerified(data: String, sig: String) {
+        cache = (listOf(CatalogCacheEntry(data, sig, System.currentTimeMillis())) + cache.filter { it.data != data }).take(3)
+        persist()
+    }
+
+    private fun persist() = runCatching { cacheFile.writeText(gson.toJson(cache)) }
 
     private fun download(url: String, limit: Int): ByteArray {
         val connection = URL(url).openConnection() as HttpURLConnection
@@ -104,15 +158,33 @@ object PalkaCatalog {
         connection.useCaches = false
         connection.setRequestProperty("Cache-Control", "no-cache")
         try {
-            if (connection.responseCode != 200) {
-                throw CatalogException("HTTP ${connection.responseCode} for $url")
-            }
+            if (connection.responseCode != 200) throw CatalogException("HTTP ${connection.responseCode}")
             val bytes = connection.inputStream.use { it.readBytes() }
             if (bytes.size > limit) throw CatalogException("response too large: ${bytes.size}")
             return bytes
         } finally {
             connection.disconnect()
         }
+    }
+
+    private fun apply(data: ByteArray, signatureBase64: String, isCache: Boolean): Boolean {
+        val catalog = runCatching { verifyAndParse(data, signatureBase64) }
+            .onFailure { Log.w(TAG, "catalog rejected: ${it.message}") }
+            .getOrNull() ?: return false
+        if (!isCache) {
+            val highest = cache.mapNotNull {
+                runCatching { gson.fromJson(it.data, OnlineStrategyCatalog::class.java).generation }.getOrNull()
+            }.maxOrNull() ?: 0
+            if (catalog.generation < highest) return false
+        }
+        val usable = usable(catalog)
+        if (usable.isEmpty()) return false
+        strategies = usable
+        updatedAt = catalog.updatedAt
+        generation = catalog.generation
+        isUsingCache = isCache
+        errorText = null
+        return true
     }
 
     @Throws(CatalogException::class)
@@ -128,6 +200,9 @@ object PalkaCatalog {
         if (catalog.generation <= 0 || catalog.strategies.isEmpty() || catalog.strategies.size > 100) {
             throw CatalogException("catalog has an invalid strategy list")
         }
+        if (!versionAtLeast(appVersion(), catalog.minimumAppVersion) ||
+            !versionAtLeast(ENGINE_VERSION, catalog.minimumEngineVersion)
+        ) throw CatalogException("catalog needs a newer app")
         val ids = catalog.strategies.map { it.id }
         if (ids.toSet().size != ids.size) throw CatalogException("duplicate strategy ids")
         return catalog
@@ -146,37 +221,29 @@ object PalkaCatalog {
         false
     }
 
-    /** Strategies that are not revoked or deprecated, catalog order preserved. */
+    private fun appVersion() = BuildConfig.VERSION_NAME.substringBefore('-')
+
+    private fun versionAtLeast(current: String, required: String?): Boolean {
+        if (required.isNullOrBlank()) return true
+        val l = current.split('.').map { it.toIntOrNull() ?: 0 }
+        val r = required.split('.').map { it.toIntOrNull() ?: 0 }
+        for (i in 0 until maxOf(l.size, r.size)) {
+            val a = l.getOrElse(i) { 0 }
+            val b = r.getOrElse(i) { 0 }
+            if (a != b) return a > b
+        }
+        return true
+    }
+
+    /** Strategies that are not revoked, deprecated or too new, catalog order preserved. */
     fun usable(catalog: OnlineStrategyCatalog): List<OnlineStrategy> {
         val revoked = catalog.revokedStrategyIDs?.toSet() ?: emptySet()
         return catalog.strategies.filter {
-            it.id !in revoked && it.deprecated != true && it.commandArgs.isNotEmpty() && it.commandArgs.size <= 160
+            it.id !in revoked && it.deprecated != true && it.id.isNotEmpty() &&
+                it.commandArgs.isNotEmpty() && it.commandArgs.size <= 160 &&
+                it.commandArgs.none { a -> a.length > 4096 || a.contains('\n') || a.contains('\u0000') } &&
+                versionAtLeast(appVersion(), it.minimumAppVersion) &&
+                versionAtLeast(ENGINE_VERSION, it.minimumEngineVersion)
         }
     }
-
-    /**
-     * Turns a catalog template into the single command line the app stores in
-     * `byedpi_cmd_args`. Arguments with spaces (the `-H:` host list) are quoted
-     * so `shellSplit` hands them to the core as one argv element.
-     */
-    fun resolveCommandLine(context: Context, strategy: OnlineStrategy): String {
-        val prefs = context.getPreferences()
-        val serviceIds = prefs.getStringSet(PREF_SERVICES, null) ?: PalkaServices.defaultIds
-        val custom = prefs.getString(PREF_CUSTOM_DOMAINS, "")
-            .orEmpty().split('\n', ' ', ',').filter { it.isNotBlank() }
-        val targets = PalkaServices.targetsArgument(serviceIds, custom)
-        val blockQuic = prefs.getBoolean(PREF_BLOCK_QUIC, true)
-
-        val args = ArrayList<String>()
-        if (blockQuic && strategy.commandArgs.none { it == "--udp-drop" }) {
-            args.addAll(listOf("-Ku", "-V443", "--udp-drop", "-An"))
-        }
-        strategy.commandArgs.forEach { arg ->
-            args.add(if (arg == PalkaServices.TARGETS_PLACEHOLDER) targets else arg)
-        }
-        return args.joinToString(" ") { quoteIfNeeded(it) }
-    }
-
-    private fun quoteIfNeeded(arg: String): String =
-        if (arg.any { it.isWhitespace() }) "\"" + arg.replace("\"", "") + "\"" else arg
 }

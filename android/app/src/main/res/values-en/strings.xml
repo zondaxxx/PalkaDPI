@@ -1,19 +1,6 @@
 <resources>
     <string name="byedpi_docs">https://github.com/hufrea/byedpi/blob/main/README.md</string>
     <string name="app_name">PalkaDPI</string>
-    <string name="palka_catalog_title">PalkaDPI catalog</string>
-    <string name="palka_catalog_loading">Loading the signed catalog…</string>
-    <string name="palka_catalog_loaded">Catalog generation %1$d: %2$d strategies, updated %3$s</string>
-    <string name="palka_catalog_cached">Cached catalog, generation %1$d: %2$d strategies (%3$s)</string>
-    <string name="palka_catalog_error">Catalog not updated: %1$s</string>
-    <string name="palka_catalog_empty">The catalog is empty, refresh it</string>
-    <string name="palka_catalog_refresh">Refresh</string>
-    <string name="palka_catalog_auto">Auto-select from catalog</string>
-    <string name="palka_catalog_apply">Apply</string>
-    <string name="palka_catalog_block_quic">Block QUIC (UDP 443): HTTP/3 clients fall back to TCP at once</string>
-    <string name="palka_catalog_hint">Tap a strategy to apply it as the command line. Auto-select runs the whole catalog through the built-in tester and sorts by response rate.</string>
-    <string name="palka_catalog_test_prepared">%1$d catalog strategies loaded into the tester. Tap “Start test”.</string>
-    <string name="palka_catalog_menu">PalkaDPI catalog</string>
     <string name="cmd_documentation">Documentation</string>
     <string name="toggle_connect">On/Off</string>
     <string name="vpn_connect">Connect</string>

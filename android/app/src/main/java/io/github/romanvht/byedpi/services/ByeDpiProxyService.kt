@@ -38,6 +38,8 @@ class ByeDpiProxyService : LifecycleService() {
 
     override fun onCreate() {
         super.onCreate()
+        // Network profiles, runtime log and status work even when only the service runs (boot, tile).
+        io.github.romanvht.byedpi.palka.Palka.init(this)
         registerNotificationChannel(
             this,
             NOTIFICATION_CHANNEL_ID,

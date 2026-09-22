@@ -33,7 +33,9 @@
         tools:targetApi="34">
 
         <activity
-            android:name=".activities.MainActivity"
+            android:name=".palka.ui.PalkaActivity"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|uiMode"
+            android:windowSoftInputMode="adjustResize"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -43,6 +45,11 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".activities.MainActivity"
+            android:label="@string/palka_classic_screen"
+            android:exported="false" />
 
         <activity
             android:name=".activities.ToggleActivity"
@@ -58,11 +65,6 @@
             android:name=".activities.SettingsActivity"
             android:label="@string/title_settings"
             android:exported="true"/>
-
-        <activity
-            android:name=".palka.PalkaCatalogActivity"
-            android:label="@string/palka_catalog_title"
-            android:exported="false" />
 
         <activity
             android:name=".activities.FileActivity"
@@ -114,6 +116,16 @@
                     android:name="android.service.quicksettings.action.QS_TILE"/>
             </intent-filter>
         </service>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.palka.files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/palka_file_paths" />
+        </provider>
 
         <receiver
             android:name=".receiver.BootReceiver"

@@ -4,11 +4,15 @@
         <item name="colorPrimaryVariant">#E5E5E5</item>
         <item name="colorOnPrimary">#000000</item>
 
-        <item name="colorSecondary">#5976DF</item>
-        <item name="colorSecondaryVariant">#3C52A3</item>
-        <item name="colorOnSecondary">#FFFFFF</item>
 
-        <item name="android:statusBarColor">#000000</item>
+        <item name="android:statusBarColor">@color/palka_background</item>
+        <item name="android:navigationBarColor">@color/palka_background</item>
+        <item name="android:windowBackground">@color/palka_background</item>
+        <item name="android:colorBackground">@color/palka_background</item>
+        <item name="colorSurface">#0E0E13</item>
+        <item name="colorOnSurface">#F5F6FA</item>
+        <item name="colorSecondary">#A8F0BF</item>
+        <item name="colorOnSecondary">#07070E</item>
         <item name="materialCardViewStyle">@style/SmallShadowCard</item>
     </style>
 

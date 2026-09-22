@@ -1,49 +1,66 @@
 <p align="center">
-  <img src="./RepoAssets/palka-banner.svg" width="100%" alt="PalkaDPI for iOS" />
+  <img src="./RepoAssets/palka-banner.svg" width="100%" alt="PalkaDPI for iOS and Android" />
 </p>
 
 <p align="center">
-  <a href="https://github.com/zondaxxx/PalkaDPI/actions/workflows/build-release.yml"><img src="https://github.com/zondaxxx/PalkaDPI/actions/workflows/build-release.yml/badge.svg" alt="Build and Release" /></a>
-  <a href="https://github.com/zondaxxx/PalkaDPI/releases/latest"><img src="https://img.shields.io/github/v/release/zondaxxx/PalkaDPI?color=ffffff&label=release&labelColor=09090d" alt="Latest release" /></a>
+  <a href="https://github.com/zondaxxx/PalkaDPI/actions/workflows/build-release.yml"><img src="https://github.com/zondaxxx/PalkaDPI/actions/workflows/build-release.yml/badge.svg" alt="iOS build" /></a>
+  <a href="https://github.com/zondaxxx/PalkaDPI/actions/workflows/android.yml"><img src="https://github.com/zondaxxx/PalkaDPI/actions/workflows/android.yml/badge.svg" alt="Android build" /></a>
+  <a href="https://github.com/zondaxxx/PalkaDPI/releases"><img src="https://img.shields.io/github/v/release/zondaxxx/PalkaDPI?color=ffffff&label=release&labelColor=09090d" alt="Latest release" /></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-ffffff?labelColor=09090d" alt="AGPL-3.0" /></a>
   <img src="https://img.shields.io/badge/iOS-14%2B-ffffff?labelColor=09090d" alt="iOS 14+" />
+  <img src="https://img.shields.io/badge/Android-5%2B-ffffff?labelColor=09090d" alt="Android 5+" />
 </p>
 
 # PalkaDPI
 
-Простое iOS-приложение для локального обхода DPI. Оно поднимает системный
-`NEPacketTunnelProvider`, направляет трафик через локальный SOCKS-туннель и
-обрабатывает его ядром ByeDPI прямо на iPhone. Внешний VPN-сервер не используется.
+Локальный обход DPI для **iPhone и Android** с одинаковым интерфейсом. Приложение
+поднимает системный VPN-туннель, направляет трафик в локальный SOCKS-прокси и
+обрабатывает его ядром [ByeDPI](https://github.com/hufrea/byedpi) прямо на телефоне.
+Внешний VPN-сервер не используется.
 
 > PalkaDPI не скрывает IP-адрес, не меняет страну и не добавляет VPN-шифрование.
-> VPN-профиль iOS нужен только для системной маршрутизации трафика в локальное ядро.
+> Системный VPN нужен только для маршрутизации трафика в локальное ядро.
+
 
 ## Возможности
 
+Общее для обеих платформ — один дизайн, один подписанный каталог, одни и те же пробы:
+
 - одно понятное действие «Подключить» на главном экране;
-- автоматический подбор стратегии: быстрая предпроверка всех профилей без туннеля,
-  затем подтверждение лучших через системный VPN;
+- автоматический подбор стратегии по выбранным сервисам;
 - Discord, YouTube, Instagram, TikTok, X/Twitter, Telegram и свои домены;
 - подробная диагностика DNS, TLS и HTTP плюс загрузка 256 КБ с реального домена доставки:
   видно, когда ТСПУ пропускает рукопожатие и замораживает поток;
-- безопасное восстановление: повторный тест, откат и предложение запасной стратегии;
-- On Demand-подключение и отдельные профили стратегий для Wi-Fi и сотовой сети;
+- умное восстановление: после двух неудачных проверок — предложение ранее рабочей стратегии;
+- профили стратегий для Wi-Fi и мобильной сети;
 - подписанный Ed25519 онлайн-каталог с поиском, избранным, историей и офлайн-откатом;
-- виджет состояния и команды Siri/Shortcuts для запуска, остановки и проверки сервисов;
+- блокировка QUIC (UDP 443), чтобы HTTP/3-клиенты сразу уходили на TCP-стратегию;
+- журнал подключения и счётчики трафика туннеля на главном экране;
 - приватный JSON-отчёт для поддержки без IP-адресов и содержимого трафика;
-- локальная работа без аккаунтов, аналитики и удалённого VPN-сервера;
-- отдельный экспертный раздел для DNS, прокси, доменных списков и диагностики;
-- русский и английский интерфейс;
-- автоматическая сборка проверенного unsigned IPA через GitHub Actions.
+- работа без аккаунтов, аналитики и удалённого сервера; русский и английский интерфейс.
 
-## Android
-
-Android-версия живёт в [`android/`](./android/) (форк ByeByeDPI с тем же подписанным
-каталогом, применением стратегий в один тап, автоподбором и блокировкой QUIC).
-Готовые APK — в релизах с тегами `android-v*`; инструкция по сборке в
-[`android/PALKA-README.md`](./android/PALKA-README.md).
+| | iOS | Android |
+|---|---|---|
+| Автоподбор | предпроверка без туннеля + подтверждение топ-3 через VPN | каждая стратегия проверяется прямо через локальное ядро — без перезапуска туннеля |
+| Стратегии | split / disorder / OOB / TLS-record + UDP-фейки | всё то же **плюс TCP-фейки** (`-f`, TTL) и «Расширенный подбор» из 59 стратегий ByeByeDPI |
+| Выбор приложений | — (iOS не умеет) | раздельное туннелирование: все / кроме / только выбранные |
+| Режим | VPN | VPN или только SOCKS5-прокси |
+| Автозапуск | VPN On Demand | при включении телефона, при открытии, «Постоянная VPN» Android |
+| Быстрый доступ | виджет, Siri/Shortcuts | плитка в шторке, ярлыки |
+| Экспертный режим | DNS, прокси, списки, тестер | классический экран ByeByeDPI: командная строка, UI-редактор, тестер |
 
 ## Быстрый старт
+
+### Android
+
+1. Скачайте APK из [релизов `android-v*`](https://github.com/zondaxxx/PalkaDPI/releases)
+   (`app-universal-release.apk` подходит для всех телефонов).
+2. Установите, откройте и нажмите «Подключить» — Android попросит разрешение на VPN.
+3. Если сервисы не открываются — «Автоматическая настройка» → «Подобрать и подключить».
+
+Сборка из исходников — в [android/PALKA-README.md](./android/PALKA-README.md).
+
+### iOS
 
 1. Скачайте [последний unsigned IPA](https://github.com/zondaxxx/PalkaDPI/releases/latest/download/PalkaDPI-unsigned.ipa).
 2. Подпишите `PalkaWidget.appex`, затем `ByeByeDPITun.appex`, затем основное приложение.
@@ -96,16 +113,25 @@ PALKA_APP_GROUP=group.your.unique.palkadpi \
 
 Результат: `packages/PalkaDPI-unsigned.ipa`.
 
+Android (JDK 17, Android SDK с `ndk;27.x` и `cmake;3.22.1`):
+
+```bash
+cd android
+./gradlew assembleRelease   # APK: android/app/build/outputs/apk/release/
+```
+
 ## Структура
 
 ```text
 Example/Sources/ByeByeDPI/       iOS-приложение и SwiftUI
 Example/Sources/ByeByeDPITun/    Packet Tunnel extension
 Example/Sources/PalkaWidget/     WidgetKit extension
+android/app/src/main/java/.../palka/  Android: модель, пробы, автоподбор, каталог
+android/app/src/main/java/.../palka/ui/  Android: Compose-интерфейс (порт SwiftUI 1:1)
 Sources/ByeDPIC/                 встроенное C-ядро byedpi
 Sources/ByeDPIKit/               Swift-обёртка над ядром
 Sources/SwByeDPI/                модели, списки и диагностика
-android/                         Android-приложение (Kotlin, byedpi + hev-socks5-tunnel)
+android/                         Android-приложение (Kotlin/Compose, byedpi + hev-socks5-tunnel)
 strategy-catalog.json            обновляемый онлайн-каталог
 strategy-catalog.json.sig        подпись каталога Ed25519
 scripts/                         сборка и валидация
@@ -141,3 +167,6 @@ Apple TCP-приёмы переведены в split/TLS-record/OOB, а две U
 
 Проект распространяется по [AGPL-3.0](./LICENSE). Встроенное ядро byedpi сохраняет
 свою MIT-лицензию в [Sources/ByeDPIC/byedpi/LICENSE](./Sources/ByeDPIC/byedpi/LICENSE).
+
+Android-приложение в [`android/`](./android/) — форк [romanvht/ByeDPIAndroid](https://github.com/romanvht/ByeDPIAndroid)
+и распространяется по [GPL-3.0](./android/LICENSE).

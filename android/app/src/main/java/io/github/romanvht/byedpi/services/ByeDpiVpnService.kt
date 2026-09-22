@@ -10,7 +10,7 @@ import android.os.ParcelFileDescriptor
 import android.util.Log
 import androidx.lifecycle.lifecycleScope
 import io.github.romanvht.byedpi.R
-import io.github.romanvht.byedpi.activities.MainActivity
+import io.github.romanvht.byedpi.palka.ui.PalkaActivity
 import io.github.romanvht.byedpi.core.ByeDpiProxy
 import io.github.romanvht.byedpi.core.ByeDpiProxyPreferences
 import io.github.romanvht.byedpi.core.TProxyService
@@ -43,6 +43,8 @@ class ByeDpiVpnService : LifecycleVpnService() {
 
     override fun onCreate() {
         super.onCreate()
+        // Network profiles, runtime log and status work even when only the service runs (boot, tile).
+        io.github.romanvht.byedpi.palka.Palka.init(this)
         registerNotificationChannel(
             this,
             NOTIFICATION_CHANNEL_ID,
@@ -381,7 +383,7 @@ class ByeDpiVpnService : LifecycleVpnService() {
             PendingIntent.getActivity(
                 this,
                 0,
-                Intent(this, MainActivity::class.java),
+                Intent(this, PalkaActivity::class.java),
                 PendingIntent.FLAG_IMMUTABLE,
             )
         )

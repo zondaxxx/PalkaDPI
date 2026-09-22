@@ -5,12 +5,6 @@
     tools:context=".activities.MainActivity">
 
     <item
-        android:id="@+id/action_palka_catalog"
-        android:orderInCategory="0"
-        android:title="@string/palka_catalog_menu"
-        app:showAsAction="never" />
-
-    <item
         android:id="@+id/action_diagnostics"
         android:orderInCategory="1"
         android:title="@string/diagnostics"

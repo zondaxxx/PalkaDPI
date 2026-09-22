@@ -36,3 +36,11 @@
 -dontwarn sun.security.x509.**
 -dontwarn sun.security.**
 -keep class net.i2p.crypto.eddsa.** { *; }
+# PalkaDPI models are (de)serialised with Gson by field name
+-keep class io.github.romanvht.byedpi.palka.OnlineStrategy { *; }
+-keep class io.github.romanvht.byedpi.palka.OnlineStrategyCatalog { *; }
+-keep class io.github.romanvht.byedpi.palka.CatalogCacheEntry { *; }
+-keep class io.github.romanvht.byedpi.palka.PalkaNetworkProfile { *; }
+-keep class io.github.romanvht.byedpi.palka.PalkaNetworkKind { *; }
+-keep class io.github.romanvht.byedpi.palka.PalkaStrategyStats { *; }
+-keep class io.github.romanvht.byedpi.palka.PalkaRuntimeLogEntry { *; }

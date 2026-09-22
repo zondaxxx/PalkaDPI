@@ -4,9 +4,30 @@
         <item name="android:navigationBarColor">?attr/colorSurface</item>
         <item name="android:statusBarColor">?attr/colorSurfaceContainer</item>
 
-        <item name="android:windowLightStatusBar">true</item>
-        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
 
+        <!-- PalkaDPI palette: near-black canvas, white accents (see palka/ui/PalkaDesign.kt) -->
+        <item name="android:windowBackground">@color/palka_background</item>
+        <item name="colorPrimary">#F5F6FA</item>
+        <item name="colorOnPrimary">#07070E</item>
+        <item name="colorPrimaryContainer">#1E1E26</item>
+        <item name="colorOnPrimaryContainer">#F5F6FA</item>
+        <item name="colorSecondary">#A8F0BF</item>
+        <item name="colorOnSecondary">#07070E</item>
+        <item name="colorSecondaryContainer">#1C2A21</item>
+        <item name="colorOnSecondaryContainer">#A8F0BF</item>
+        <item name="colorTertiary">#A8F0BF</item>
+        <item name="android:colorBackground">@color/palka_background</item>
+        <item name="colorSurface">@color/palka_background</item>
+        <item name="colorOnSurface">#F5F6FA</item>
+        <item name="colorOnSurfaceVariant">#ADADB5</item>
+        <item name="colorSurfaceContainer">#0E0E13</item>
+        <item name="colorSurfaceContainerLow">#0B0B10</item>
+        <item name="colorSurfaceContainerHigh">#16161C</item>
+        <item name="colorSurfaceContainerHighest">#1C1C23</item>
+        <item name="colorOutline">#2A2A33</item>
+        <item name="colorOutlineVariant">#1F1F27</item>
         <item name="colorControlActivated">?attr/colorPrimary</item>
         <item name="colorControlHighlight">?attr/colorSecondaryContainer</item>
 
@@ -45,10 +66,5 @@
 
     <style name="TextSummary" parent="TextAppearance.AppCompat.Subhead">
         <item name="android:textSize">14sp</item>
-    </style>
-
-    <style name="PillCard">
-        <item name="cornerFamily">rounded</item>
-        <item name="cornerSize">50%</item>
     </style>
 </resources>
