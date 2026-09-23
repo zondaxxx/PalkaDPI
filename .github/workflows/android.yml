@@ -41,6 +41,9 @@ jobs:
           java-version: "17"
 
       - uses: android-actions/setup-android@v3
+        with:
+          # The default "tools" package no longer exists in current sdkmanager builds.
+          packages: platform-tools
 
       - name: Install NDK and CMake
         run: sdkmanager "ndk;27.0.12077973" "cmake;3.22.1"
