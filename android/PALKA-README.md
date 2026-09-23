@@ -1,5 +1,5 @@
 <p align="center">
-  <img src=".../RepoAssets/palka-banner.svg" width="100%" alt="PalkaDPI for iOS and Android" />
+  <img src="../RepoAssets/palka-banner.png" width="100%" alt="PalkaDPI for iOS and Android" />
 </p>
 
 # PalkaDPI for Android
@@ -22,7 +22,7 @@ Android-версия PalkaDPI: локальный обход DPI без внеш
 передаёт пакеты в этот же SOCKS-прокси, поэтому проверка через ядро — это и есть
 реальная проверка; отдельное подтверждение через VPN, как на iOS, не нужно.
 Победитель применяется, запоминается для текущей сети и подключается.
-«Расширенный подбор» добавляет 59 стратегий ByeByeDPI с TCP-фейками (`-f`, TTL) —
+«Расширенный подбор» добавляет 60 стратегий ByeByeDPI с TCP-фейками (`-f`, TTL) —
 на iOS такие приёмы недоступны.
 
 **Каталог** (`palka/PalkaCatalog.kt`): тот же Ed25519-подписанный `strategy-catalog.json`,

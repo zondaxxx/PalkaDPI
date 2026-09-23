@@ -15,6 +15,7 @@ import re
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 IOS = os.path.join(ROOT, "Example/Sources/ByeByeDPI")
 RES = os.path.join(ROOT, "android/app/src/main/res")
+
 EXTRA = os.path.join(ROOT, "android/palka-strings")
 
 
@@ -58,10 +59,12 @@ def generate(lang, values_dir):
             key, value = line.split("=", 1)
             lines.append('    <string name="%s">%s</string>' % (key.strip(), android_value(value.strip())))
     lines.append("</resources>")
+    os.makedirs(os.path.join(RES, values_dir), exist_ok=True)
     with open(os.path.join(RES, values_dir, "palka_strings.xml"), "w", encoding="utf-8") as out:
         out.write("\n".join(lines) + "\n")
 
 
 if __name__ == "__main__":
-    generate("ru", "values")
-    generate("en", "values-en")
+    # English is the default so tr/kk/vi users fall back to English, not Russian.
+    generate("en", "values")
+    generate("ru", "values-ru")

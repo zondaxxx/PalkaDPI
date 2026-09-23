@@ -136,6 +136,15 @@ class ByeDpiVpnService : LifecycleVpnService() {
 
         try {
             mutex.withLock {
+                // Waiting for automatic setup to release the core suspends, so a second
+                // START (double tap on the tile) queues on the mutex and must re-check here.
+                if (status == ServiceStatus.Connected) {
+                    Log.w(TAG, "VPN already connected")
+                    updateStatus(ServiceStatus.Connected)
+                    return
+                }
+                // The native core is process-global: a running automatic setup gives it up first.
+                io.github.romanvht.byedpi.palka.PalkaAutomation.claimCoreForService()
                 startProxy()
                 startTun2Socks()
                 updateStatus(ServiceStatus.Connected)
@@ -163,13 +172,19 @@ class ByeDpiVpnService : LifecycleVpnService() {
     private suspend fun stop() {
         Log.i(TAG, "Stopping")
 
-        if (status != ServiceStatus.Connected) {
+        if (status != ServiceStatus.Connected && !mutex.isLocked) {
             Log.w(TAG, "VPN not connected")
             updateStatus(ServiceStatus.Disconnected)
             return
         }
 
         mutex.withLock {
+            // A START may have been waiting in the lock (automatic setup releasing the core).
+            if (status != ServiceStatus.Connected) {
+                Log.w(TAG, "VPN not connected")
+                updateStatus(ServiceStatus.Disconnected)
+                return
+            }
             try {
                 withContext(Dispatchers.IO) {
                     stopProxy()

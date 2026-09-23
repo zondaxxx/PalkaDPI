@@ -64,6 +64,9 @@ class SettingsActivity : BaseActivity() {
             }
         }
 
+        // Set on every creation: after a rotation the restored fragment keeps its own title.
+        if (intent.getStringExtra("open_fragment") == "apps") title = getString(R.string.palka_apps_title)
+
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
     }
 

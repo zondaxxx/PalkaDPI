@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.IosShare
@@ -48,6 +50,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.focus.onFocusChanged
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,6 +68,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.google.gson.GsonBuilder
 import io.github.romanvht.byedpi.BuildConfig
 import io.github.romanvht.byedpi.R
@@ -123,11 +130,15 @@ fun AutomationScreen() {
             ) { Palka.updateExtendedSearch(it) }
         }
 
-        PalkaAutomation.bestStrategyName?.let {
+        PalkaAutomation.bestStrategyName?.takeIf { it == Palka.activeStrategyName }?.let {
             PalkaFeedbackBanner(stringResource(R.string.palka_auto_selected_format, it), PalkaFeedbackKind.Success)
         }
-        PalkaAutomation.errorText?.let { PalkaFeedbackBanner(it, PalkaFeedbackKind.Error) }
-        PalkaAutomation.summary?.let { PalkaFeedbackBanner(it, PalkaFeedbackKind.Success) }
+        PalkaAutomation.errorText
+            ?.takeUnless { PalkaAutomation.errorNeedsCatalog && PalkaCatalog.strategies.isNotEmpty() }
+            ?.let { PalkaFeedbackBanner(it, PalkaFeedbackKind.Error) }
+        PalkaAutomation.summary?.let { (passed, checked) ->
+            PalkaFeedbackBanner(stringResource(R.string.palka_auto_screening_summary_short, passed, checked), PalkaFeedbackKind.Success)
+        }
 
         if (PalkaAutomation.scores.isNotEmpty()) {
             PalkaSection(stringResource(R.string.palka_auto_results)) {
@@ -201,8 +212,11 @@ fun serviceIcon(id: String): ImageVector = when (id) {
 
 @Composable
 fun ServiceSelectionScreen() {
-    val running = Palka.vpnRunning
+    val running = Palka.locked
     var customText by remember { mutableStateOf(Palka.customDomains.joinToString("\n")) }
+    // When the field gets focus, scroll so the save button sits above the keyboard too.
+    val saveInView = remember { BringIntoViewRequester() }
+    val scope = rememberCoroutineScope()
     PalkaScaffold(stringResource(R.string.palka_services_title)) {
         PalkaFeatureHeader(stringResource(R.string.palka_services_heading), stringResource(R.string.palka_services_description), Icons.Rounded.GridView)
         if (running) PalkaFeedbackBanner(stringResource(R.string.palka_services_stop_first), PalkaFeedbackKind.Error)
@@ -250,11 +264,21 @@ fun ServiceSelectionScreen() {
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 110.dp)
+                    .onFocusChanged { focus ->
+                        if (focus.isFocused) scope.launch {
+                            delay(350) // wait for the keyboard inset to settle
+                            saveInView.bringIntoView()
+                        }
+                    }
                     .clip(RoundedCornerShape(10.dp))
                     .background(Color.White.copy(alpha = 0.045f))
                     .padding(12.dp)
             )
-            PalkaSecondaryButton({ Palka.updateCustomDomains(customText.lines()); customText = Palka.customDomains.joinToString("\n") }, enabled = !running) {
+            PalkaSecondaryButton(
+                { Palka.updateCustomDomains(customText.lines()); customText = Palka.customDomains.joinToString("\n") },
+                modifier = Modifier.bringIntoViewRequester(saveInView),
+                enabled = !running
+            ) {
                 Text(stringResource(R.string.palka_custom_domains_save))
             }
         }
@@ -408,7 +432,12 @@ fun NetworkProfilesScreen() {
             PalkaNavRow(stringResource(R.string.palka_always_on), stringResource(R.string.palka_always_on_description), Icons.Rounded.VpnLock) {
                 host.open(Intent(Settings.ACTION_VPN_SETTINGS))
             }
-            val batteryFree = remember { PermissionUtils.isBatteryOptimizationDisabled(context) }
+            // Re-read on every resume: the exemption is granted in a system dialog.
+            var batteryFree by remember { mutableStateOf(PermissionUtils.isBatteryOptimizationDisabled(context)) }
+            LifecycleResumeEffect(Unit) {
+                batteryFree = PermissionUtils.isBatteryOptimizationDisabled(context)
+                onPauseOrDispose { }
+            }
             PalkaNavRow(
                 stringResource(R.string.palka_battery),
                 stringResource(if (batteryFree) R.string.palka_battery_done else R.string.palka_battery_description),
@@ -427,7 +456,7 @@ fun NetworkProfilesScreen() {
             PalkaToggleRow(stringResource(R.string.palka_recovery_enabled), stringResource(R.string.palka_recovery_description), Palka.smartRecovery) {
                 Palka.updateSmartRecovery(it)
             }
-            PalkaToggleRow(stringResource(R.string.palka_quic_block_enabled), stringResource(R.string.palka_quic_block_description), Palka.blockQuic, enabled = !Palka.vpnRunning) {
+            PalkaToggleRow(stringResource(R.string.palka_quic_block_enabled), stringResource(R.string.palka_quic_block_description), Palka.blockQuic, enabled = !Palka.locked) {
                 Palka.updateBlockQuic(it)
             }
         }
@@ -466,7 +495,7 @@ fun NetworkProfilesScreen() {
                 PalkaCompactPrimaryButton(
                     stringResource(R.string.palka_catalog_apply),
                     { Palka.applyNetworkProfile(profile.networkKind) },
-                    enabled = !Palka.vpnRunning
+                    enabled = !Palka.locked
                 )
             }
         }
@@ -509,7 +538,7 @@ fun HistoryScreen() {
                     PalkaCompactPrimaryButton(
                         stringResource(R.string.palka_catalog_apply),
                         { Palka.applyStrategy(record.id, record.name, record.commandTemplate) },
-                        enabled = !Palka.vpnRunning && record.commandTemplate.isNotEmpty()
+                        enabled = !Palka.locked && record.commandTemplate.isNotEmpty()
                     )
                     Box(Modifier.weight(1f))
                     PalkaCircleButton({ Palka.removeHistory(record.id) }) {

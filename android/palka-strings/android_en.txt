@@ -54,3 +54,6 @@ palka_tunnel_proxy_mode=Proxy mode: only apps configured with the SOCKS5 proxy u
 palka_report_share=Share report
 palka_quick_tile_hint=The “PalkaDPI” quick settings tile toggles the bypass in one tap
 palka_auto_screening_summary_short=Strategies checked: %2$d, opened services: %1$d
+palka_auto_notification=Checking strategies — keep the app open
+palka_apps_stop_first=Disconnect PalkaDPI or wait for automatic setup to finish to change the app list
+palka_auto_cancelled=Search stopped — the previous strategy is restored

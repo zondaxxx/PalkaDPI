@@ -3,12 +3,12 @@ package io.github.romanvht.byedpi.palka.ui
 import android.content.Intent
 import android.graphics.Color as AndroidColor
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -20,11 +20,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
@@ -60,9 +64,10 @@ import io.github.romanvht.byedpi.palka.Palka
 import io.github.romanvht.byedpi.palka.PalkaAutomation
 import io.github.romanvht.byedpi.palka.PalkaCatalog
 import io.github.romanvht.byedpi.utility.PermissionUtils
+import io.github.romanvht.byedpi.utility.SettingsUtils
+import io.github.romanvht.byedpi.utility.getStringNotNull
 import io.github.romanvht.byedpi.utility.ShortcutUtils
 import io.github.romanvht.byedpi.utility.getPreferences
-import kotlinx.coroutines.CompletableDeferred
 
 enum class PalkaRoute {
     Home, Settings, Automation, Services, Catalog, History, Diagnostics, Networks, Apps, Advanced
@@ -96,15 +101,17 @@ val LocalHost = compositionLocalOf<PalkaHost> { error("no host") }
  * PalkaDPI main screen on Android: the same SwiftUI layout as the iOS app,
  * rebuilt in Compose on top of the ByeByeDPI engine and services.
  */
-class PalkaActivity : ComponentActivity(), PalkaHost {
+class PalkaActivity : AppCompatActivity(), PalkaHost {
     private var alertState by mutableStateOf<Pair<String, String?>?>(null)
-    private var pendingConsent: CompletableDeferred<Boolean>? = null
+    /** The connect button asked for consent; survives recreation via the saved state. */
     private var connectAfterConsent = false
+    private val consentLauncher: (Intent) -> Unit = { vpnConsent.launch(it) }
 
+    // The result reaches whichever instance is alive (the registry survives recreation),
+    // so the automation's pending request lives in PalkaAutomation, not in this object.
     private val vpnConsent = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         val granted = it.resultCode == RESULT_OK
-        pendingConsent?.complete(granted)
-        pendingConsent = null
+        PalkaAutomation.pendingConsent?.complete(granted)
         if (connectAfterConsent) {
             connectAfterConsent = false
             if (granted) Palka.start()
@@ -113,6 +120,10 @@ class PalkaActivity : ComponentActivity(), PalkaHost {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Same as BaseActivity: in-app language (AppCompat locales work on API < 33
+        // only for AppCompat activities) and the dark-only theme.
+        SettingsUtils.setLang(getPreferences().getStringNotNull("language", "system"))
+        SettingsUtils.setTheme("dark")
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(AndroidColor.TRANSPARENT),
             navigationBarStyle = SystemBarStyle.dark(AndroidColor.TRANSPARENT)
@@ -120,16 +131,13 @@ class PalkaActivity : ComponentActivity(), PalkaHost {
         super.onCreate(savedInstanceState)
         Palka.init(this)
         PalkaCatalog.loadCache()
-        PalkaAutomation.requestVpnConsent = {
-            val deferred = CompletableDeferred<Boolean>()
-            pendingConsent = deferred
-            val intent = Palka.vpnConsentIntent()
-            if (intent == null) deferred.complete(true) else vpnConsent.launch(intent)
-            deferred.await()
-        }
+        connectAfterConsent = savedInstanceState?.getBoolean(KEY_CONNECT_AFTER_CONSENT) ?: false
+        // Automation outlives this activity; the launcher is bound to the current instance
+        // and released in onDestroy so a finished activity is never asked to show a dialog.
+        PalkaAutomation.launchVpnConsent = consentLauncher
 
         requestFirstRunPermissions()
-        if (savedInstanceState == null && Palka.connectOnLaunch) connect()
+        if (savedInstanceState == null && Palka.connectOnLaunch && !PalkaAutomation.isRunning && !Palka.vpnRunning) connect()
         ShortcutUtils.update(this)
 
         val navigator = PalkaNavigator()
@@ -164,7 +172,7 @@ class PalkaActivity : ComponentActivity(), PalkaHost {
                                         Text(stringResource(R.string.palka_ok), color = Color.White)
                                     }
                                 },
-                                title = { Text(title) },
+                                title = { Text(title, style = palkaText(17.sp, FontWeight.SemiBold)) },
                                 text = message?.let { { Text(it) } },
                                 containerColor = Color(0xFF16161C),
                                 titleContentColor = PalkaDesign.textPrimary,
@@ -177,8 +185,25 @@ class PalkaActivity : ComponentActivity(), PalkaHost {
         }
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean(KEY_CONNECT_AFTER_CONSENT, connectAfterConsent)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (PalkaAutomation.launchVpnConsent === consentLauncher) PalkaAutomation.launchVpnConsent = null
+        // Leaving for good: nobody will receive the dialog result, so answer "no" now.
+        if (isFinishing) PalkaAutomation.pendingConsent?.complete(false)
+    }
+
+    private companion object {
+        const val KEY_CONNECT_AFTER_CONSENT = "connect_after_consent"
+    }
+
     override fun onResume() {
         super.onResume()
+        PalkaAutomation.launchVpnConsent = consentLauncher
         Palka.refreshExternalSettings()
         Palka.syncStatus()
     }
@@ -232,23 +257,24 @@ private fun PalkaScreen(route: PalkaRoute) {
     }
 }
 
-/** Inline navigation bar: back chevron on the left, centered title (iOS inline title). */
+/** Inline navigation bar: round back button on the left, centered title (iOS 26 inline title). */
 @Composable
 fun PalkaTopBar(title: String) {
     val navigator = LocalNavigator.current
     Box(
-        Modifier.fillMaxWidth().height(48.dp).padding(horizontal = 6.dp),
+        Modifier.fillMaxWidth().height(60.dp).padding(horizontal = PalkaDesign.screenPadding),
         contentAlignment = Alignment.Center
     ) {
-        Row(
-            Modifier.align(Alignment.CenterStart)
-                .palkaPressable { navigator.pop() }
-                .padding(horizontal = 10.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically
+        PalkaCircleButton(
+            onClick = { navigator.pop() },
+            modifier = Modifier.align(Alignment.CenterStart),
+            size = 46.dp,
+            contentDescription = stringResource(R.string.palka_back)
         ) {
             Icon(
-                Icons.AutoMirrored.Rounded.ArrowBackIos, stringResource(R.string.palka_back),
-                tint = PalkaDesign.textPrimary, modifier = Modifier.size(18.dp)
+                Icons.AutoMirrored.Rounded.ArrowBackIos, null,
+                tint = PalkaDesign.textPrimary,
+                modifier = Modifier.size(18.dp).padding(start = 4.dp)
             )
         }
         Text(
@@ -256,7 +282,7 @@ fun PalkaTopBar(title: String) {
             style = palkaText(17.sp, FontWeight.SemiBold),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(horizontal = 56.dp)
+            modifier = Modifier.padding(horizontal = 60.dp)
         )
     }
 }
@@ -268,14 +294,22 @@ fun PalkaScaffold(
     spacing: androidx.compose.ui.unit.Dp = 18.dp,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
+    // The container shrinks by the keyboard (imePadding); the content only needs to clear the nav bar.
+    val bottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    Column(
+        Modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))
+            // The keyboard shrinks the viewport so focused fields (custom domains, search) stay visible.
+            .imePadding()
+    ) {
         if (title != null) PalkaTopBar(title)
         Column(
             Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = PalkaDesign.screenPadding)
-                .padding(top = if (title != null) 12.dp else 18.dp, bottom = 28.dp),
+                .padding(top = if (title != null) 12.dp else 18.dp, bottom = 28.dp + bottomInset),
             verticalArrangement = Arrangement.spacedBy(spacing)
         ) {
             content()

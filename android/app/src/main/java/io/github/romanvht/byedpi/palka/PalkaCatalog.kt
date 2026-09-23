@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.google.gson.Gson
+import com.google.gson.JsonParser
 import com.google.gson.annotations.SerializedName
 import com.google.gson.reflect.TypeToken
 import io.github.romanvht.byedpi.BuildConfig
@@ -128,9 +129,9 @@ object PalkaCatalog {
             isLoading = false
             result.onSuccess { (sig, data) ->
                 if (apply(data, sig, isCache = false)) saveVerified(String(data), sig)
-                else if (errorText == null) errorText = Palka.context.getString(R.string.palka_catalog_invalid_signature)
+                else if (errorText == null) errorText = Palka.str(R.string.palka_catalog_invalid_signature)
             }.onFailure {
-                errorText = it.message ?: Palka.context.getString(R.string.palka_catalog_invalid_response)
+                errorText = it.message ?: Palka.str(R.string.palka_catalog_invalid_response)
             }
         }
     }
@@ -193,7 +194,25 @@ object PalkaCatalog {
             .getOrElse { throw CatalogException("signature is not base64") }
         if (!verify(data, signature)) throw CatalogException("catalog signature is invalid")
 
-        val catalog = runCatching { gson.fromJson(String(data), OnlineStrategyCatalog::class.java) }
+        // Gson ignores Kotlin nullability, so required fields are checked on the raw
+        // JSON first; a signed but malformed catalog is rejected, never half-loaded.
+        val root = runCatching { JsonParser.parseString(String(data)).asJsonObject }
+            .getOrElse { throw CatalogException("catalog JSON is invalid") }
+        if (!root.has("updatedAt") || !root.get("updatedAt").isJsonPrimitive) throw CatalogException("catalog has no updatedAt")
+        val rawStrategies = root.get("strategies")?.takeIf { it.isJsonArray }?.asJsonArray
+            ?: throw CatalogException("catalog has no strategies")
+        rawStrategies.forEach { element ->
+            val o = element.takeIf { it.isJsonObject }?.asJsonObject ?: throw CatalogException("strategy is not an object")
+            for (field in listOf("id", "name", "summary")) {
+                if (o.get(field)?.takeIf { it.isJsonPrimitive && it.asJsonPrimitive.isString } == null) {
+                    throw CatalogException("strategy without $field")
+                }
+            }
+            val args = o.get("commandArgs")?.takeIf { it.isJsonArray }?.asJsonArray
+                ?: throw CatalogException("strategy without commandArgs")
+            if (args.any { !it.isJsonPrimitive || !it.asJsonPrimitive.isString }) throw CatalogException("non-string argument")
+        }
+        val catalog = runCatching { gson.fromJson(root, OnlineStrategyCatalog::class.java) }
             .getOrElse { throw CatalogException("catalog JSON is invalid") }
             ?: throw CatalogException("catalog JSON is empty")
         if (catalog.schemaVersion != 2) throw CatalogException("unsupported schema ${catalog.schemaVersion}")

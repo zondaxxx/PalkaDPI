@@ -64,7 +64,8 @@ class AppSelectionFragment : Fragment() {
             override fun onQueryTextSubmit(query: String?): Boolean = false
 
             override fun onQueryTextChange(newText: String?): Boolean {
-                adapter.filter.filter(newText)
+                // The SearchView restores its query on rotation before the app list loads.
+                if (::adapter.isInitialized) adapter.filter.filter(newText)
                 return true
             }
         })

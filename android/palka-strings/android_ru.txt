@@ -54,3 +54,6 @@ palka_tunnel_proxy_mode=Прокси-режим: трафик идёт толь�
 palka_report_share=Отправить отчёт
 palka_quick_tile_hint=Плитка «PalkaDPI» в шторке включает обход в одно касание
 palka_auto_screening_summary_short=Проверено стратегий: %2$d, открыли сервисы: %1$d
+palka_auto_notification=Проверяем стратегии — не закрывай приложение
+palka_apps_stop_first=Отключи PalkaDPI или дождись конца подбора, чтобы изменить список приложений
+palka_auto_cancelled=Проверка остановлена — прежняя стратегия восстановлена

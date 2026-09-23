@@ -7,11 +7,12 @@
 - New interface identical to the iOS app, rebuilt in Jetpack Compose: dark grid background, cards, white buttons, pulsing status, entrance and press animations; texts are generated from the iOS `Localizable.strings` (`scripts/sync_android_strings.py`)
 - Home: connection card with tunnel traffic counters, smart recovery suggestion, automatic setup, service response (HTTP round trip), active preset, connection log
 - Automatic setup: stops the VPN once, checks every signed catalog strategy through an in-process ByeDPI core on 127.0.0.1:10801 (marker probes + 256 KB bulk download with TSPU stall detection), applies the best, remembers it for the current network and connects
-- Extended search (Android only): adds the 59 ByeByeDPI strategies with TCP fakes (`-f`, TTL) to automatic setup
+- Extended search (Android only): adds the 60 ByeByeDPI strategies with TCP fakes (`-f`, TTL) to automatic setup
 - Protected services with custom domains, catalog with search/favorites/rollback, favorites and history with reliability, diagnostics (DNS/TLS/HTTP/256 KB) with a private JSON report
 - Networks: Wi-Fi/mobile strategy profiles that switch automatically on network change, autostart on boot, connect on launch, Android always-on VPN and battery shortcuts, smart recovery and QUIC blocking
 - Android only: split tunnelling by app, VPN or SOCKS5-proxy mode, quick settings tile; the classic ByeByeDPI screen and every engine parameter stay under expert settings (now dark themed)
 - PalkaDPI launcher icon, TV banner and the in-app icon replace the upstream ones
+- The signed catalog loads in release builds again (in 0.1.0 R8 stripped the Gson models and the catalog failed with "unsupported schema 0")
 
 ## PalkaDPI 0.4.7
 

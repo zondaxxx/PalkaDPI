@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:ignore="ForegroundServicesPolicy" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
@@ -34,6 +35,7 @@
 
         <activity
             android:name=".palka.ui.PalkaActivity"
+            android:launchMode="singleTask"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|uiMode"
             android:windowSoftInputMode="adjustResize"
             android:exported="true">
@@ -101,6 +103,11 @@
             android:foregroundServiceType="dataSync"
             android:exported="false">
         </service>
+
+        <service
+            android:name=".palka.PalkaAutomationService"
+            android:foregroundServiceType="dataSync"
+            android:exported="false" />
 
         <service
             android:name=".services.QuickTileService"

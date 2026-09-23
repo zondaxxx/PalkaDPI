@@ -5,17 +5,19 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.res.Configuration
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.VpnService
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.annotation.StringRes
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import com.google.gson.Gson
@@ -118,6 +120,21 @@ object Palka {
 
     private val prefs get() = context.getPreferences()
 
+    /**
+     * Strings built outside a screen (automation stages, errors, network names)
+     * follow the in-app language too: on API < 33 AppCompat localizes only
+     * activity contexts, so the application context is re-configured here.
+     */
+    fun str(@StringRes id: Int, vararg args: Any): String {
+        val locales = AppCompatDelegate.getApplicationLocales()
+        val ctx = if (locales.isEmpty) context else {
+            val config = Configuration(context.resources.configuration)
+            locales[0]?.let { config.setLocale(it) }
+            context.createConfigurationContext(config)
+        }
+        return ctx.getString(id, *args)
+    }
+
     val proxyAddress: String
         get() = prefs.getProxyIpAndPort().let { (ip, port) -> "$ip:$port" }
 
@@ -160,7 +177,7 @@ object Palka {
         runtimeLogs.addAll(readJson(PREF_RUNTIME_LOG, object : TypeToken<List<PalkaRuntimeLogEntry>>() {}) ?: emptyList())
     }
 
-    /** Reload the values the classic settings screens may have changed. */
+    /** Reload the values the classic settings screens may have changed (called on resume). */
     fun refreshExternalSettings() {
         val p = prefs
         mode = p.mode()
@@ -170,10 +187,31 @@ object Palka {
         connectOnLaunch = p.getBoolean("auto_connect", false)
         activeStrategyName = p.getString(PREF_ACTIVE_NAME, "").orEmpty()
         activeStrategyId = p.getString(PREF_ACTIVE_ID, "").orEmpty()
-        detectManualCommand()
+        // The classic tester runs in this process and rewrites the line temporarily.
+        detectManualCommand(honorRunningTest = true)
     }
 
     private fun migrateIfNeeded() {
+        // android-v0.1.0 stored the selected services as a string set and the
+        // active catalog strategy without its template.
+        if (!prefs.contains(PREF_SERVICES)) {
+            val legacy = prefs.getStringSet("palka_services", null)
+            val upgradedFrom010 = legacy != null || prefs.contains(PREF_ACTIVE_ID) ||
+                java.io.File(context.filesDir, "palka_catalog.json").exists()
+            if (upgradedFrom010) {
+                // 0.1.0 targeted all six services unless the set was stored.
+                selectedServiceIds = PalkaServices.all.map { it.id }
+                    .filter { legacy == null || it in legacy }
+                    .ifEmpty { PalkaServices.all.map { s -> s.id } }
+            }
+            // Persist once so later launches never mistake this install for a 0.1.0 upgrade.
+            prefs.edit(commit = true) { putString(PREF_SERVICES, selectedServiceIds.joinToString(",")) }
+        }
+        if (activeStrategyId.isNotEmpty() && activeStrategyId != "custom" && activeTemplate().isEmpty()) {
+            val template = legacyCatalogTemplate(activeStrategyId)
+            if (template != null) prefs.edit(commit = true) { putString(PREF_ACTIVE_TEMPLATE, gson.toJson(template)) }
+            else setActive("custom", activeStrategyName.ifBlank { str(R.string.palka_custom_strategy) }, emptyList(), null)
+        }
         if (activeStrategyId.isNotEmpty()) {
             detectManualCommand()
             return
@@ -182,20 +220,29 @@ object Palka {
         if (current.isNullOrBlank() || current == "-o1 -a1 -r-5+se") {
             applyRecommendedPreset()
         } else {
-            setActive("custom", context.getString(R.string.palka_custom_strategy), emptyList(), current)
+            setActive("custom", str(R.string.palka_custom_strategy), emptyList(), current)
         }
     }
+
+    private fun legacyCatalogTemplate(id: String): List<String>? = runCatching {
+        val data = java.io.File(context.filesDir, "palka_catalog.json").readBytes()
+        val sig = java.io.File(context.filesDir, "palka_catalog.sig").readText()
+        PalkaCatalog.verifyAndParse(data, sig).strategies.firstOrNull { it.id == id }?.commandArgs
+    }.getOrNull()?.takeIf { it.isNotEmpty() }
 
     /**
      * The classic editor can change `byedpi_cmd_args` behind our back; when the
      * stored line no longer matches what we resolved, show it as a custom one.
+     * The classic tester rewrites the line temporarily, so it is left alone then.
      */
-    private fun detectManualCommand() {
+    private fun detectManualCommand(honorRunningTest: Boolean = false) {
         val template = activeTemplate()
         if (template.isEmpty()) return
+        // In a fresh process the flag is stale (the tester died with the old one).
+        if (honorRunningTest && prefs.getBoolean("is_test_running", false)) return
         val expected = PalkaPreset.commandLine(resolve(template))
         if (prefs.getCmdArgs() != expected || !prefs.getBoolean("byedpi_enable_cmd_settings", true)) {
-            setActive("custom", context.getString(R.string.palka_custom_strategy), emptyList(), null)
+            setActive("custom", str(R.string.palka_custom_strategy), emptyList(), null)
         }
     }
 
@@ -204,6 +251,29 @@ object Palka {
 
     fun resolve(template: List<String>): List<String> =
         PalkaPreset.resolve(template, selectedServiceIds, customDomains, blockQuic)
+
+    /** Everything needed to put the active strategy back exactly as it was. */
+    data class ActiveSnapshot(
+        val id: String,
+        val name: String,
+        val template: List<String>,
+        val commandLine: String,
+        val cmdEnabled: Boolean
+    )
+
+    fun snapshotActive() = ActiveSnapshot(
+        activeStrategyId, activeStrategyName, activeTemplate(),
+        prefs.getCmdArgs(), prefs.getBoolean("byedpi_enable_cmd_settings", true)
+    )
+
+    /** Restores the previous strategy verbatim, including custom lines without a template. */
+    fun restoreActive(snapshot: ActiveSnapshot) {
+        setActive(snapshot.id, snapshot.name, snapshot.template, snapshot.commandLine)
+        if (!snapshot.cmdEnabled) prefs.edit(commit = true) { putBoolean("byedpi_enable_cmd_settings", false) }
+    }
+
+    /** Settings that change the strategy are frozen while connected or while automatic setup runs. */
+    val locked: Boolean get() = vpnRunning || PalkaAutomation.isRunning
 
     fun applyRecommendedPreset() =
         applyStrategy(PalkaPreset.ID, PalkaPreset.NAME, PalkaPreset.recommendedTemplate)
@@ -306,42 +376,33 @@ object Palka {
 
     fun networkTitle(kind: PalkaNetworkKind): String = when (kind) {
         PalkaNetworkKind.Wifi -> "Wi‑Fi"
-        PalkaNetworkKind.Cellular -> context.getString(R.string.palka_cellular)
-        PalkaNetworkKind.Wired -> context.getString(R.string.palka_wired)
-        PalkaNetworkKind.Other -> context.getString(R.string.palka_other_network)
-        PalkaNetworkKind.Offline -> context.getString(R.string.palka_offline)
+        PalkaNetworkKind.Cellular -> str(R.string.palka_cellular)
+        PalkaNetworkKind.Wired -> str(R.string.palka_wired)
+        PalkaNetworkKind.Other -> str(R.string.palka_other_network)
+        PalkaNetworkKind.Offline -> str(R.string.palka_offline)
     }
 
     private fun currentNetworkKind(): PalkaNetworkKind {
         val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            // Our own VPN is the default network while connected; look at the
-            // underlying transports instead so profiles follow the real uplink.
-            val networks = cm.allNetworks.mapNotNull { cm.getNetworkCapabilities(it) }
-                .filter { !it.hasTransport(NetworkCapabilities.TRANSPORT_VPN) &&
-                    it.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) }
-            if (networks.isEmpty()) return PalkaNetworkKind.Offline
-            return when {
-                networks.any { it.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) } -> PalkaNetworkKind.Wifi
-                networks.any { it.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) } -> PalkaNetworkKind.Wired
-                networks.any { it.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) } -> PalkaNetworkKind.Cellular
-                else -> PalkaNetworkKind.Other
-            }
-        }
+        // Our own VPN is the default network while connected; look at the
+        // underlying transports instead so profiles follow the real uplink.
+        // allNetworks/getNetworkCapabilities exist since API 21 (minSdk).
         @Suppress("DEPRECATION")
-        val info = cm.activeNetworkInfo ?: return PalkaNetworkKind.Offline
-        @Suppress("DEPRECATION")
-        return when (info.type) {
-            ConnectivityManager.TYPE_WIFI -> PalkaNetworkKind.Wifi
-            ConnectivityManager.TYPE_MOBILE -> PalkaNetworkKind.Cellular
-            ConnectivityManager.TYPE_ETHERNET -> PalkaNetworkKind.Wired
+        val networks = runCatching { cm.allNetworks.mapNotNull { cm.getNetworkCapabilities(it) } }
+            .getOrDefault(emptyList())
+            .filter { !it.hasTransport(NetworkCapabilities.TRANSPORT_VPN) &&
+                it.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) }
+        if (networks.isEmpty()) return PalkaNetworkKind.Offline
+        return when {
+            networks.any { it.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) } -> PalkaNetworkKind.Wifi
+            networks.any { it.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) } -> PalkaNetworkKind.Wired
+            networks.any { it.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) } -> PalkaNetworkKind.Cellular
             else -> PalkaNetworkKind.Other
         }
     }
 
     private fun registerNetworkCallback() {
         networkKind = currentNetworkKind()
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) return
         val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val recheck = Runnable { onNetworkMaybeChanged() }
         val callback = object : ConnectivityManager.NetworkCallback() {
@@ -366,7 +427,7 @@ object Palka {
         val profile = networkProfiles.firstOrNull { it.networkKind == kind } ?: return
         if (profile.strategyId == activeStrategyId || profile.commandTemplate.isEmpty()) return
         applyNetworkProfile(kind)
-        log("info", context.getString(R.string.palka_network_auto_applied, networkTitle(kind), profile.strategyName))
+        log("info", str(R.string.palka_network_auto_applied, networkTitle(kind), profile.strategyName))
         if (vpnRunning) ServiceManager.restart(context, runningMode)
     }
 
@@ -392,7 +453,12 @@ object Palka {
         }
         library.removeAll { it.id == id }
         library.add(0, record)
-        while (library.size > 40) library.removeAt(library.lastIndex)
+        // Trim the oldest non-favorite records; favorites are never evicted.
+        while (library.size > 40) {
+            val victim = library.indexOfLast { !it.isFavorite }
+            if (victim < 0) break
+            library.removeAt(victim)
+        }
         persistLibrary()
     }
 

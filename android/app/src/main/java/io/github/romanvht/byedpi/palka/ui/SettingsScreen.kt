@@ -56,6 +56,7 @@ import io.github.romanvht.byedpi.activities.SettingsActivity
 import io.github.romanvht.byedpi.activities.TestActivity
 import io.github.romanvht.byedpi.data.Mode
 import io.github.romanvht.byedpi.palka.Palka
+import io.github.romanvht.byedpi.palka.PalkaAutomation
 import io.github.romanvht.byedpi.palka.PalkaCatalog
 import io.github.romanvht.byedpi.palka.PalkaServices
 import kotlinx.coroutines.delay
@@ -87,7 +88,7 @@ fun SettingsScreen() {
                 }
                 PalkaNavRow(
                     stringResource(R.string.palka_apply_preset), stringResource(R.string.palka_apply_preset_description),
-                    Icons.Rounded.CheckCircle, showsDisclosure = false
+                    Icons.Rounded.CheckCircle, showsDisclosure = false, enabled = !Palka.locked
                 ) {
                     Palka.applyRecommendedPreset()
                     presetApplied = true
@@ -181,7 +182,7 @@ private fun ModePicker() {
         PalkaSegmented(
             options = listOf(stringResource(R.string.palka_mode_vpn), stringResource(R.string.palka_mode_proxy)),
             selected = if (Palka.mode == Mode.VPN) 0 else 1,
-            enabled = !Palka.vpnRunning
+            enabled = !Palka.locked
         ) { Palka.updateMode(if (it == 0) Mode.VPN else Mode.Proxy) }
         Text(
             stringResource(if (Palka.mode == Mode.VPN) R.string.palka_mode_vpn_description else R.string.palka_mode_proxy_description),
@@ -225,10 +226,10 @@ fun PalkaSegmented(options: List<String>, selected: Int, enabled: Boolean = true
 fun AppsScreen() {
     val host = LocalHost.current
     val context = LocalContext.current
-    val running = Palka.vpnRunning
+    val running = Palka.locked
     PalkaScaffold(stringResource(R.string.palka_apps_title)) {
         PalkaFeatureHeader(stringResource(R.string.palka_apps_heading), stringResource(R.string.palka_apps_screen_description), Icons.Rounded.Apps)
-        if (running) PalkaFeedbackBanner(stringResource(R.string.palka_services_stop_first), PalkaFeedbackKind.Error)
+        if (running) PalkaFeedbackBanner(stringResource(R.string.palka_apps_stop_first), PalkaFeedbackKind.Error)
         val types = listOf("disable", "blacklist", "whitelist")
         PalkaSegmented(
             options = listOf(
@@ -261,20 +262,22 @@ fun AdvancedScreen() {
         }
         Box(Modifier.palkaEntrance(50)) {
             PalkaSection("ByeDPI") {
-                PalkaNavRow(stringResource(R.string.palka_command_editor), stringResource(R.string.palka_command_editor_description), Icons.Rounded.Terminal) {
+                // The classic tools rewrite the strategy directly: frozen while automatic setup runs.
+                val expertEnabled = !PalkaAutomation.isRunning
+                PalkaNavRow(stringResource(R.string.palka_command_editor), stringResource(R.string.palka_command_editor_description), Icons.Rounded.Terminal, enabled = expertEnabled) {
                     host.open(Intent(context, SettingsActivity::class.java).putExtra("open_fragment", "cmd"))
                 }
-                PalkaNavRow(stringResource(R.string.palka_strategy_tester), stringResource(R.string.palka_strategy_tester_description), Icons.Rounded.Speed) {
+                PalkaNavRow(stringResource(R.string.palka_strategy_tester), stringResource(R.string.palka_strategy_tester_description), Icons.Rounded.Speed, enabled = expertEnabled) {
                     host.open(Intent(context, TestActivity::class.java))
                 }
-                PalkaNavRow(stringResource(R.string.palka_all_parameters), stringResource(R.string.palka_all_parameters_description), Icons.Rounded.DataObject) {
+                PalkaNavRow(stringResource(R.string.palka_all_parameters), stringResource(R.string.palka_all_parameters_description), Icons.Rounded.DataObject, enabled = expertEnabled) {
                     host.open(Intent(context, SettingsActivity::class.java))
                 }
             }
         }
         Box(Modifier.palkaEntrance(100)) {
             PalkaSection("ByeByeDPI") {
-                PalkaNavRow(stringResource(R.string.palka_classic_screen), stringResource(R.string.palka_classic_screen_description), Icons.AutoMirrored.Rounded.ViewList) {
+                PalkaNavRow(stringResource(R.string.palka_classic_screen), stringResource(R.string.palka_classic_screen_description), Icons.AutoMirrored.Rounded.ViewList, enabled = !PalkaAutomation.isRunning) {
                     host.open(Intent(context, MainActivity::class.java))
                 }
             }

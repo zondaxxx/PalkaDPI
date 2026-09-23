@@ -84,7 +84,7 @@ fun CatalogScreen() {
 
         SearchField(query, { query = it }, Modifier.palkaEntrance(50))
 
-        if (Palka.vpnRunning) PalkaFeedbackBanner(stringResource(R.string.palka_catalog_stop_first), PalkaFeedbackKind.Error)
+        if (Palka.locked) PalkaFeedbackBanner(stringResource(R.string.palka_catalog_stop_first), PalkaFeedbackKind.Error)
         PalkaCatalog.errorText?.let {
             PalkaFeedbackBanner(
                 if (PalkaCatalog.strategies.isEmpty()) it else stringResource(R.string.palka_catalog_offline_cache),
@@ -228,7 +228,7 @@ private fun StrategyCard(strategy: OnlineStrategy, justApplied: Boolean, onApply
             PalkaCompactPrimaryButton(
                 stringResource(if (active || justApplied) R.string.palka_catalog_applied else R.string.palka_catalog_apply),
                 onApply,
-                enabled = !Palka.vpnRunning && !active
+                enabled = !Palka.locked && !active
             )
         }
     }

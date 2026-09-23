@@ -61,21 +61,29 @@ import io.github.romanvht.byedpi.palka.PalkaAutomation
 import io.github.romanvht.byedpi.palka.PalkaDiagnostics
 import io.github.romanvht.byedpi.palka.PalkaProbeStatus
 import io.github.romanvht.byedpi.palka.PalkaServiceProbe
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.delay
 
 @Composable
 fun HomeScreen() {
     val nav = LocalNavigator.current
     val host = LocalHost.current
+    val context = LocalContext.current
     val running = Palka.vpnRunning
     var actionInFlight by remember { mutableStateOf(false) }
 
-    // Status + counters: broadcasts update Palka, this keeps the tunnel line live.
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    // Status + counters: broadcasts update Palka, this keeps the tunnel line live
+    // while the screen is visible (not in the background).
     LaunchedEffect(running) {
         actionInFlight = false
-        while (true) {
-            Palka.refreshTunnelStats()
-            delay(1000)
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            while (true) {
+                Palka.refreshTunnelStats()
+                delay(1000)
+            }
         }
     }
     // Refresh the service ping on open and a moment after each connect/disconnect.
@@ -84,25 +92,29 @@ fun HomeScreen() {
         delay(if (running) 1200 else 300)
         PalkaDiagnostics.refresh { PalkaAutomation.evaluateRecovery(it) }
     }
-    // Smart recovery check every two minutes while connected and on screen.
+    // Smart recovery check every two minutes while connected and on screen (as on iOS,
+    // never in the background: probes cost battery and a paused app cannot act on them).
     LaunchedEffect(running) {
-        while (running) {
-            delay(120_000)
-            if (Palka.smartRecovery && !PalkaAutomation.isRunning && !PalkaDiagnostics.isRefreshing) {
-                PalkaDiagnostics.refresh(attempts = 2, includeBulk = false) { PalkaAutomation.evaluateRecovery(it) }
+        if (!running) return@LaunchedEffect
+        lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            while (true) {
+                delay(120_000)
+                if (Palka.smartRecovery && !PalkaAutomation.isRunning && !PalkaDiagnostics.isRefreshing) {
+                    PalkaDiagnostics.refresh(attempts = 2, includeBulk = false) { PalkaAutomation.evaluateRecovery(it) }
+                }
             }
         }
     }
 
     val openSettings = {
-        if (running) host.alert(Palka.context.getString(R.string.palka_settings_locked), null)
+        if (running) host.alert(context.getString(R.string.palka_settings_locked), null)
         else nav.push(PalkaRoute.Settings)
     }
 
     PalkaScaffold(title = null, spacing = PalkaDesign.sectionSpacing) {
         Box(Modifier.palkaEntrance()) { Header(running, openSettings) }
         Box(Modifier.palkaEntrance(50)) {
-            ConnectionCard(running, actionInFlight) {
+            ConnectionCard(running, actionInFlight || PalkaAutomation.isRunning) {
                 if (actionInFlight) return@ConnectionCard
                 actionInFlight = true
                 if (running) host.disconnect() else host.connect()
@@ -471,5 +483,4 @@ private fun RuntimeLogCard(running: Boolean) {
             }
         }
     }
-    Spacer(Modifier.height(0.dp))
 }

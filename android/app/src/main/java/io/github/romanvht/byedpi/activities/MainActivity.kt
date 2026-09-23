@@ -230,9 +230,8 @@ class MainActivity : BaseActivity() {
             requestBatteryOptimization()
         }
 
-        if (getPreferences().getBoolean("auto_connect", false) && appStatus.first != AppStatus.Running) {
-            this.start()
-        }
+        // "Connect when the app opens" is handled by the PalkaDPI launcher screen;
+        // this classic screen is now opened from expert settings and must not connect by itself.
 
         ShortcutUtils.update(this)
     }

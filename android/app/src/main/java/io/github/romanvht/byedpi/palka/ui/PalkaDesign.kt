@@ -13,6 +13,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -53,6 +54,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.geometry.Offset
@@ -63,6 +65,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -161,11 +164,22 @@ fun Modifier.palkaCard(radius: Dp = PalkaDesign.cardRadius, selected: Boolean = 
         .border(1.dp, if (selected) PalkaDesign.borderStrong else PalkaDesign.border, shape)
 }
 
+/**
+ * Visible focus for D-pad, keyboard and TV (the app keeps the leanback launcher):
+ * the custom controls draw no ripple, so focus gets its own white outline.
+ */
+@Composable
+fun Modifier.palkaFocusRing(interaction: MutableInteractionSource, shape: Shape): Modifier {
+    val focused by interaction.collectIsFocusedAsState()
+    return if (focused) this.border(2.dp, Color.White.copy(alpha = 0.75f), shape) else this
+}
+
 /** PalkaPressButtonStyle: scale 0.975 and dim while pressed. */
 @Composable
 fun Modifier.palkaPressable(
     enabled: Boolean = true,
     pressedScale: Float = 0.975f,
+    shape: Shape = RoundedCornerShape(PalkaDesign.cardRadius),
     onClick: () -> Unit
 ): Modifier {
     val interaction = remember { MutableInteractionSource() }
@@ -176,6 +190,7 @@ fun Modifier.palkaPressable(
     val alpha by animateFloatAsState(if (pressed && enabled) 0.82f else 1f, tween(150), label = "pressAlpha")
     return this
         .graphicsLayer { scaleX = scale; scaleY = scale; this.alpha = alpha }
+        .palkaFocusRing(interaction, shape)
         .clickable(interaction, indication = null, enabled = enabled, role = Role.Button, onClick = onClick)
 }
 
@@ -201,6 +216,7 @@ fun PalkaPrimaryButton(
             .clip(shape)
             .background(whiteFill)
             .border(0.5.dp, Color.White.copy(alpha = 0.9f), shape)
+            .then(if (interaction.collectIsFocusedAsState().value) Modifier.border(3.dp, PalkaDesign.success, shape) else Modifier)
             .clickable(interaction, null, enabled = enabled, role = Role.Button, onClick = onClick)
             .padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
@@ -229,6 +245,7 @@ fun PalkaSecondaryButton(
             .clip(shape)
             .background(Color.White.copy(alpha = if (pressed) 0.11f else 0.07f))
             .border(1.dp, PalkaDesign.border, shape)
+            .palkaFocusRing(interaction, shape)
             .clickable(interaction, null, enabled = enabled, role = Role.Button, onClick = onClick)
             .padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
@@ -256,6 +273,7 @@ fun PalkaCompactPrimaryButton(
             .clip(CircleShape)
             .background(whiteFill)
             .border(0.5.dp, Color.White.copy(alpha = 0.9f), CircleShape)
+            .then(if (interaction.collectIsFocusedAsState().value) Modifier.border(3.dp, PalkaDesign.success, CircleShape) else Modifier)
             .clickable(interaction, null, enabled = enabled, role = Role.Button, onClick = onClick)
             .padding(horizontal = 16.dp),
         contentAlignment = Alignment.Center
@@ -318,7 +336,7 @@ fun PalkaCircleButton(
     Box(
         modifier
             .size(size)
-            .palkaPressable(enabled = enabled, onClick = onClick)
+            .palkaPressable(enabled = enabled, shape = CircleShape, onClick = onClick)
             .clip(CircleShape)
             .background(Color.White.copy(alpha = 0.055f))
             .border(1.dp, Color.White.copy(alpha = 0.07f), CircleShape)
@@ -371,7 +389,7 @@ fun PalkaFeedbackBanner(text: String, kind: PalkaFeedbackKind) {
     }
 }
 
-/** Icon tile + title/subtitle + chevron row, SettingsStaticInfoView on iOS. */
+/** Icon badge + uppercase caption + monospaced value + chevron: SettingsStaticInfoView on iOS. */
 @Composable
 fun PalkaNavRow(
     title: String,
@@ -381,17 +399,18 @@ fun PalkaNavRow(
     enabled: Boolean = true,
     onClick: (() -> Unit)? = null
 ) {
+    val shape = RoundedCornerShape(16.dp)
     val content: @Composable () -> Unit = {
         Row(
-            Modifier.fillMaxWidth().palkaCard().padding(horizontal = 14.dp, vertical = 12.dp),
+            Modifier.fillMaxWidth().palkaCard(16.dp).padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            PalkaIconTile(icon, size = 40.dp, iconSize = 19.dp, radius = 12.dp, background = Color.White.copy(alpha = 0.06f))
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(title, style = palkaText(15.sp, FontWeight.SemiBold))
+            PalkaIconBadge(icon)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(title.uppercase(), style = palkaText(11.sp, FontWeight.SemiBold, PalkaDesign.textMuted, tracking = 0.4.sp))
                 if (!text.isNullOrBlank()) {
-                    Text(text, style = palkaText(12.sp, color = PalkaDesign.textMuted), maxLines = 3)
+                    Text(text, style = palkaText(14.sp, color = PalkaDesign.textPrimary, mono = true, lineHeight = 20.sp))
                 }
             }
             if (showsDisclosure) {
@@ -399,8 +418,24 @@ fun PalkaNavRow(
             }
         }
     }
-    if (onClick != null) Box(Modifier.alpha(if (enabled) 1f else 0.55f).palkaPressable(enabled = enabled, onClick = onClick)) { content() }
+    if (onClick != null) Box(Modifier.alpha(if (enabled) 1f else 0.55f).palkaPressable(enabled = enabled, shape = shape, onClick = onClick)) { content() }
     else content()
+}
+
+/** PalkaIconBadge: 40 dp tile, 19 dp glyph, faint border. */
+@Composable
+fun PalkaIconBadge(icon: ImageVector) {
+    val shape = RoundedCornerShape(12.dp)
+    Box(
+        Modifier
+            .size(40.dp)
+            .clip(shape)
+            .background(Color.White.copy(alpha = 0.06f))
+            .border(1.dp, Color.White.copy(alpha = 0.07f), shape),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(icon, null, tint = PalkaDesign.textPrimary, modifier = Modifier.size(19.dp))
+    }
 }
 
 @Composable
@@ -437,19 +472,21 @@ fun PalkaToggleRow(title: String, text: String, checked: Boolean, enabled: Boole
 /** Uppercase pill used for catalog tags and the ON/OFF badge. */
 @Composable
 fun PalkaTag(text: String, mono: Boolean = false, height: Dp = 28.dp) {
+    val shape = RoundedCornerShape(14.dp)
     Box(
         Modifier
-            .height(height)
-            .clip(CircleShape)
+            .heightIn(min = height)
+            .clip(shape)
             .background(Color.White.copy(alpha = 0.055f))
-            .border(1.dp, Color.White.copy(alpha = 0.07f), CircleShape)
-            .padding(horizontal = 9.dp),
+            .border(1.dp, Color.White.copy(alpha = 0.07f), shape)
+            .padding(horizontal = 9.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text.uppercase(),
-            style = palkaText(if (mono) 11.sp else 10.sp, FontWeight.SemiBold, if (mono) PalkaDesign.textMuted else PalkaDesign.textSecondary, tracking = if (mono) TextUnit.Unspecified else 0.45.sp, mono = mono),
-            maxLines = 1
+            style = palkaText(if (mono) 11.sp else 10.sp, FontWeight.SemiBold, if (mono) PalkaDesign.textMuted else PalkaDesign.textSecondary, tracking = if (mono) TextUnit.Unspecified else 0.45.sp, mono = mono, lineHeight = 13.sp),
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }

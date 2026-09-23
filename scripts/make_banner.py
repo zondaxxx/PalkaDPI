@@ -4,7 +4,7 @@
 Usage: python3 scripts/make_banner.py IOS_SCREENSHOT.png ANDROID_SCREENSHOT.png
 
 Needs Pillow and macOS system fonts (SF Pro). The banner is drawn at 2x
-(2400x800) for high-density screens; both phones keep a margin on every side
+(2200x800) for high-density screens; both phones keep a margin on every side
 so nothing touches or crosses the banner edge.
 """
 import os
@@ -57,10 +57,13 @@ def background():
     return img
 
 
-def phone(screen_path, height, radius, notch):
+def phone(screen_path, height, notch):
+    """Frame a real screenshot; corner radius and cutout follow the device's own proportions."""
     screen = Image.open(screen_path).convert("RGBA")
     sw = int(height * screen.width / screen.height)
     screen = screen.resize((sw, height), Image.LANCZOS)
+    # iPhone 17: 55 pt corners on a 402 pt wide screen; Pixel 7: ~50 px on 1080 px.
+    radius = round(sw * (0.137 if notch == "island" else 0.05))
     bezel = 14
     frame = Image.new("RGBA", (sw + 2 * bezel, height + 2 * bezel), (0, 0, 0, 0))
     d = ImageDraw.Draw(frame)
@@ -68,10 +71,15 @@ def phone(screen_path, height, radius, notch):
                         outline=(255, 255, 255, 40), width=3)
     screen.putalpha(rounded_mask(screen.size, radius))
     frame.alpha_composite(screen, (bezel, bezel))
+    cx = frame.width / 2
     if notch == "island":
-        d.rounded_rectangle([frame.width / 2 - 62, bezel + 18, frame.width / 2 + 62, bezel + 54], 18, fill=(0, 0, 0, 255))
+        # Dynamic Island: 125x37 pt, 11 pt from the top of an 874 pt tall screen.
+        w, h, top = sw * 125 / 402, height * 37 / 874, height * 11 / 874
+        d.rounded_rectangle([cx - w / 2, bezel + top, cx + w / 2, bezel + top + h], h / 2, fill=(0, 0, 0, 255))
     elif notch == "punch":
-        d.ellipse([frame.width / 2 - 13, bezel + 20, frame.width / 2 + 13, bezel + 46], fill=(0, 0, 0, 255))
+        # Pixel 7 camera hole sits inside the status bar: centre ~2.4 % down, ~2.6 % of the width across.
+        r, cy = sw * 0.013, bezel + height * 0.024
+        d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(0, 0, 0, 255))
     shadow = Image.new("RGBA", (frame.width + 120, frame.height + 120), (0, 0, 0, 0))
     ImageDraw.Draw(shadow).rounded_rectangle([60, 70, 60 + frame.width, 70 + frame.height], radius + bezel,
                                              fill=(0, 0, 0, 200))
@@ -114,8 +122,8 @@ def main(ios_shot, android_shot):
 
     # Two phones, fully inside the canvas with >= 48 px (24 pt) of air at top and bottom.
     ph = H - 2 * 76 - 28
-    ios = phone(ios_shot, ph, 64, "island")
-    android = phone(android_shot, ph, 44, "punch")
+    ios = phone(ios_shot, ph, "island")
+    android = phone(android_shot, ph, "punch")
     # phone() pads each frame with 60 px of shadow on every side.
     android_left = W - 150 - (android.width - 120)
     ios_left = android_left - 56 - (ios.width - 120)

@@ -55,13 +55,13 @@
     <string name="byedpi_tlsrec_enabled_setting">Split TLS record</string>
     <string name="byedpi_tlsrec_position_setting">TLS record split position</string>
     <string name="byedpi_tlsrec_at_sni_setting">Split TLS record at SNI</string>
-    <string name="version">ByeByeDPI</string>
+    <string name="version">PalkaDPI</string>
     <string name="source_code_link">Source code</string>
     <string name="byedpi_readme_link">What does it all mean?</string>
     <string name="failed_to_start">Failed to start %1$s</string>
     <string name="vpn_channel_name">VPN</string>
     <string name="proxy_channel_name">Proxy</string>
-    <string name="notification_title">ByeByeDPI</string>
+    <string name="notification_title">PalkaDPI</string>
     <string name="vpn_notification_content">VPN is running</string>
     <string name="proxy_notification_content">Proxy is running</string>
     <string name="general_category">General</string>
@@ -94,7 +94,7 @@
     <string name="automation">Automation</string>
     <string name="autostart_settings">Autostart service on device startup</string>
     <string name="autohide_settings">Automatically hide application after autostart</string>
-    <string name="autoconnect_settings">Automatically connect when the ByeByeDPI start</string>
+    <string name="autoconnect_settings">Automatically connect when the PalkaDPI start</string>
     <string name="applist_setting">Apps filter</string>
     <string name="apps_select">Select apps</string>
     <string name="search_apps">Search apps</string>

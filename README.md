@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./RepoAssets/palka-banner.svg" width="100%" alt="PalkaDPI for iOS and Android" />
+  <img src="./RepoAssets/palka-banner.png" width="100%" alt="PalkaDPI for iOS and Android" />
 </p>
 
 <p align="center">
@@ -20,6 +20,15 @@
 
 > PalkaDPI не скрывает IP-адрес, не меняет страну и не добавляет VPN-шифрование.
 > Системный VPN нужен только для маршрутизации трафика в локальное ядро.
+
+<table align="center">
+  <tr>
+    <td align="center"><img src="./RepoAssets/screens/ios-home.jpg" width="200" alt="iOS: главный экран" /><br /><sub>iOS · главный экран</sub></td>
+    <td align="center"><img src="./RepoAssets/screens/android-home.jpg" width="200" alt="Android: подключено" /><br /><sub>Android · подключено</sub></td>
+    <td align="center"><img src="./RepoAssets/screens/android-auto.jpg" width="200" alt="Android: автонастройка" /><br /><sub>Android · автонастройка</sub></td>
+    <td align="center"><img src="./RepoAssets/screens/android-catalog.jpg" width="200" alt="Android: каталог стратегий" /><br /><sub>Android · каталог</sub></td>
+  </tr>
+</table>
 
 
 ## Возможности
@@ -42,7 +51,7 @@
 | | iOS | Android |
 |---|---|---|
 | Автоподбор | предпроверка без туннеля + подтверждение топ-3 через VPN | каждая стратегия проверяется прямо через локальное ядро — без перезапуска туннеля |
-| Стратегии | split / disorder / OOB / TLS-record + UDP-фейки | всё то же **плюс TCP-фейки** (`-f`, TTL) и «Расширенный подбор» из 59 стратегий ByeByeDPI |
+| Стратегии | split / disorder / OOB / TLS-record + UDP-фейки | всё то же **плюс TCP-фейки** (`-f`, TTL) и «Расширенный подбор» из 60 стратегий ByeByeDPI |
 | Выбор приложений | — (iOS не умеет) | раздельное туннелирование: все / кроме / только выбранные |
 | Режим | VPN | VPN или только SOCKS5-прокси |
 | Автозапуск | VPN On Demand | при включении телефона, при открытии, «Постоянная VPN» Android |

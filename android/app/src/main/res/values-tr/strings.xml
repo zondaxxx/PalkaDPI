@@ -55,13 +55,13 @@
     <string name="byedpi_tlsrec_enabled_setting">TLS kaydını böl</string>
     <string name="byedpi_tlsrec_position_setting">TLS kaydı bölme pozisyonu</string>
     <string name="byedpi_tlsrec_at_sni_setting">TLS kaydını SNIde böl</string>
-    <string name="version">ByeByeDPI</string>
+    <string name="version">PalkaDPI</string>
     <string name="source_code_link">Kaynak kodu</string>
     <string name="byedpi_readme_link">Hepsi ne anlama geliyor?</string>
     <string name="failed_to_start">Başlatırken hata oluştu ( %1$s )</string>
     <string name="vpn_channel_name">VPN</string>
     <string name="proxy_channel_name">Proxy</string>
-    <string name="notification_title">ByeByeDPI</string>
+    <string name="notification_title">PalkaDPI</string>
     <string name="vpn_notification_content">VPN çalışıyor</string>
     <string name="proxy_notification_content">Proxy çalışıyor</string>
     <string name="general_category">Genel</string>
@@ -94,7 +94,7 @@
     <string name="automation">Otomasyon</string>
     <string name="autostart_settings">Cihaz başlangıcında servisi otomatik başlat</string>
     <string name="autohide_settings">Oto başlatmadan sonra uygulamayı otomatik gizle</string>
-    <string name="autoconnect_settings">ByeByeDPI açılınca otomatik bağlan</string>
+    <string name="autoconnect_settings">PalkaDPI açılınca otomatik bağlan</string>
     <string name="applist_setting">Uygulama filtresi</string>
     <string name="apps_select">Uygulama seç</string>
     <string name="search_apps">Uygulama ara</string>

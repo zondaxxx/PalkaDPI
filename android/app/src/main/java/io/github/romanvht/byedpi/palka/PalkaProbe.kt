@@ -114,7 +114,8 @@ object PalkaProbe {
 
     private fun bulk(service: PalkaService, port: Int?, timeoutMs: Int): Measurement {
         val target = service.bulkUrl ?: service.probeUrl
-        val deadline = System.currentTimeMillis() + timeoutMs
+        val requestStartedAt = System.currentTimeMillis()
+        val deadline = requestStartedAt + timeoutMs
         var received = 0
         var firstByteAt = 0L
         var lastDataAt = 0L
@@ -152,8 +153,10 @@ object PalkaProbe {
             }
             val proof = minOf(expected, BULK_PROOF_BYTES)
             val ok = received >= proof
+            // From the request start: a body that fits in the socket buffer arrives
+            // "instantly" between first and last byte and would report absurd speeds.
             val kbps = if (ok && firstByteAt > 0) {
-                val seconds = maxOf(0.05, (lastDataAt - firstByteAt) / 1000.0)
+                val seconds = maxOf(0.05, (lastDataAt - requestStartedAt) / 1000.0)
                 (received / 1024.0 / seconds).toInt()
             } else null
             Measurement(

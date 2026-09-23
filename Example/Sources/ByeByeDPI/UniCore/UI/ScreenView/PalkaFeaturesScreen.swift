@@ -307,6 +307,8 @@ struct DiagnosticsScreen: View {
             Text(value)
                 .font(.system(size: 12, weight: .semibold, design: .monospaced))
                 .foregroundColor(highlighted ? PalkaDesign.errorText : .primary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(10)
@@ -547,11 +549,15 @@ private func featureHeader(title: String, text: String, icon: String) -> some Vi
             .background(Color.white.opacity(0.06))
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         VStack(alignment: .leading, spacing: 6) {
-            Text(title).font(.system(size: 24, weight: .heavy)).tracking(-0.65)
+            Text(title)
+                .font(.system(size: 24, weight: .heavy))
+                .tracking(-0.65)
+                .fixedSize(horizontal: false, vertical: true)
             Text(text)
                 .font(.system(size: 13, weight: .regular))
                 .foregroundColor(PalkaDesign.textSecondary)
                 .lineSpacing(3)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 }
